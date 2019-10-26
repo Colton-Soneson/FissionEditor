@@ -18,6 +18,7 @@
 //math / extras
 #include <assert.h>	//need this for NDEBUG i think
 #include <vector>
+#include <map>
 #include <cstring>
 
 //***************//
@@ -79,6 +80,17 @@ private:
 	//just a fast way to fill a debugCreateInfo
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo);
 
+	//choosing a GPU to do the job
+	void pickPhysicalDevice();
+	
+	//checks if GPU is suitable to perform operations we want
+	//returns true if is supported and has a geometry shader
+	bool isDeviceSuitable(VkPhysicalDevice device);
+
+	//more methodical way of picking a GPU, gives a score based on the 
+	//available features at hand, trumps isDeviceSuitable
+	int rateDeviceSuitability(VkPhysicalDevice device);
+
 	//static
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 														VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -103,5 +115,7 @@ private:
 
 	//storing extension property information (for myself)
 	std::vector<VkExtensionProperties>* mpExtensionsProps;
+
+	VkPhysicalDevice mPhysicalDevice;
 
 };

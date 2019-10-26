@@ -223,6 +223,7 @@ void HelloTriangleApplication::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
+	pickPhysicalDevice();
 }
 
 
@@ -244,12 +245,98 @@ void HelloTriangleApplication::initWindow()
 }
 
 
+bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
+{
+	/*
+	//this allows us to get name and vk version support (props) as well as cool features (features)
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	//if GPU is discrete and has a geometry shader we good fam send it
+	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+	*/
+	
+	QueueFamilyIndices indices = findQueueFamilies(device);
+	return indices.isComplete();
+}
+
+
 void HelloTriangleApplication::mainLoop() 
 {
 	while (!glfwWindowShouldClose(mpWindow))
 	{
 		glfwPollEvents(); //the min rec for this, keep it running till we get polled for an error
 	}
+}
+
+
+void HelloTriangleApplication::pickPhysicalDevice()
+{
+	mPhysicalDevice = VK_NULL_HANDLE;
+
+	//like how we handle listing extensions
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
+
+	//checking if there is support
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("No GPUs with Vulkan Support Present");
+	}
+
+	//if nothing was thrown continue
+
+	//create the list of devices
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
+
+	//go through list of devices, and if one is suitable to do Vulkan Ops then break out
+	//this is first come first serve, it wont choose the "best" device if there are multiple
+	//GPUs, it'll just do what it can with what it first finds to work
+	/*
+	for (const auto& device : devices)
+	{
+		if (isDeviceSuitable(device))
+		{
+			mPhysicalDevice = device;
+			break;
+		}
+	}
+
+	//if we couldnt get a graphics card that can handle Vulkan
+	if (mPhysicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Couldn't find suitable GPU");
+	}
+	*/
+
+	//this is a score based system instead of a "first come first serve"
+	//type of deal
+	
+	std::multimap<int, VkPhysicalDevice> candidates;
+
+	for (const auto& device : devices)
+	{
+		int deviceScore = rateDeviceSuitability(device);
+
+		//make_pair is a C++ 17 term, its like a dictionary in python
+		candidates.insert(std::make_pair(deviceScore, device));
+	}
+
+	//the rateDeviceSuitability will only return 0 if the device isnt
+	//suitable AT ALL
+	//top line will give the biggest value of the candidates and as long as its bigger than zero we set the device
+	if (candidates.rbegin()->first > 0)
+	{
+		mPhysicalDevice = candidates.rbegin()->second;
+	}
+	else
+	{
+		throw std::runtime_error("Couldn't find suitable GPU");
+	}
+	
 }
 
 
@@ -269,6 +356,41 @@ void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMess
 
 	//you can also pass pUserData via the param
 	debugCreateInfo.pfnUserCallback = debugCallback;
+}
+
+
+int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice device)
+{
+	//i strayed from tutorial here, they wanted to keep using the device suitable thing
+	//but i want to use this so here we are. 
+	QueueFamilyIndices indices = findQueueFamilies(device);
+
+	//numbers here are based on my own system of value, its very hard coded
+	int deviceScore = 0;
+
+	//this allows us to get name and vk version support (props) as well as cool features (features)
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	//discrete is better than a hybrid type GPU
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+	{
+		deviceScore += 1000;
+	}
+
+	//max texture size in the 2D space
+		//the .limits part has a bunch of things good for scoring
+	deviceScore += deviceProperties.limits.maxImageDimension2D;
+
+	//if you dont have a geometry shader for this app everything will break
+	if (!deviceFeatures.geometryShader || indices.isComplete() == false)		//LOOK: here is where i added the queue check compliance
+	{
+		return 0;
+	}
+
+	return deviceScore;
 }
 
 
