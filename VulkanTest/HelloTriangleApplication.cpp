@@ -41,6 +41,10 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
 
 void HelloTriangleApplication::cleanup()
 {
+	//device destruction
+	vkDestroyDevice(mDevice, nullptr);
+
+	//debug util destruction
 	if (enableValidationLayers)
 	{
 		DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
@@ -156,6 +160,49 @@ void HelloTriangleApplication::createInstance() {
 }
 
 
+void HelloTriangleApplication::createLogicalDevice()
+{
+	QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+
+	//filling the first of many structs for logical device
+	mDeviceQueueCreateInfo = {};
+	mDeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	mDeviceQueueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	mDeviceQueueCreateInfo.queueCount = 1;	//we wont really need more than one, because CBs can be created on multithreaded then submitted via main thread
+	
+	
+	float queuePriority = 1.0f;		//priority is a value between 0.0 and 1.0
+	mDeviceQueueCreateInfo.pQueuePriorities = &queuePriority;
+
+	//from this point on its very similar to VkInstanceCreateInfo but with device shit
+	mDeviceCreateInfo = {};
+	mDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	mDeviceCreateInfo.pQueueCreateInfos = &mDeviceQueueCreateInfo;
+	mDeviceCreateInfo.pEnabledFeatures = &mDeviceFeatures;
+
+	mDeviceCreateInfo.enabledExtensionCount = 0;
+
+	//Again, this way is how to do it without specific device extensions (like it was for the instance)
+	if (enableValidationLayers == true)
+	{
+		mDeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		mDeviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		mDeviceCreateInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateDevice(mPhysicalDevice, &mDeviceCreateInfo, nullptr, &mDevice) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create logical device");
+	}
+
+	//vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);					//What? mGraphicsQueue is NULL so how can this function be called***************
+}
+
+
+
 VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -224,6 +271,7 @@ void HelloTriangleApplication::initVulkan()
 	createInstance();
 	setupDebugMessenger();
 	pickPhysicalDevice();
+	createLogicalDevice();
 }
 
 

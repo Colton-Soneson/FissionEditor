@@ -82,6 +82,9 @@ private:
 
 	//choosing a GPU to do the job
 	void pickPhysicalDevice();
+
+	//logical device creation to link it to the physical GPU
+	void createLogicalDevice();
 	
 	//checks if GPU is suitable to perform operations we want
 	//returns true if is supported and has a geometry shader
@@ -109,6 +112,14 @@ private:
 	VkInstance mInstance;
 	VkApplicationInfo mAppInfo;
 	VkInstanceCreateInfo mCreateInfo;
+
+	//logical to physical
+	VkDevice mDevice;
+	VkDeviceQueueCreateInfo mDeviceQueueCreateInfo;
+	VkPhysicalDeviceFeatures mDeviceFeatures = {};	//when we first use this place the {} somewhere else
+													//this allows us to get the shit like geometry shaders
+	VkDeviceCreateInfo mDeviceCreateInfo;
+	VkQueue mGraphicsQueue;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
