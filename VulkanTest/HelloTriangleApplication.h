@@ -1,4 +1,5 @@
 #pragma once
+
 //manual glfw, will automatically load the vulkan.h alongside it
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -18,7 +19,6 @@
 #include <assert.h>	//need this for NDEBUG i think
 #include <vector>
 #include <cstring>
-#include <cstdlib>
 
 //***************//
 //    const      //
@@ -32,6 +32,8 @@ const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
 	//"VK_LAYER_KHRONOS_validation"  //this is the one the tutorial has, i found the other one works, 
 									 //all it is is a standard set of layers to pull from, may give troubles down the line
+									 //this comes from here:
+											//https://vulkan.lunarg.com/doc/view/1.0.13.0/windows/layers.html
 };
 
 
@@ -40,6 +42,7 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
+
 
 
 class HelloTriangleApplication {
@@ -73,7 +76,8 @@ private:
 	//returns list of extensions if validation layers are enabled
 	std::vector<const char*> getRequiredExtensions();
 
-
+	//just a fast way to fill a debugCreateInfo
+	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo);
 
 	//static
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

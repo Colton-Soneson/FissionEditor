@@ -1,5 +1,5 @@
 #include "HelloTriangleApplication.h"
-
+#include "DebugTools.h"
 
 bool HelloTriangleApplication::checkValidationLayerSupport()
 {
@@ -41,6 +41,11 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
 
 void HelloTriangleApplication::cleanup()
 {
+	if (enableValidationLayers)
+	{
+		DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
+	}
+
 	//clean up the instance right before program exit
 	vkDestroyInstance(mInstance, nullptr);
 
@@ -75,6 +80,8 @@ void HelloTriangleApplication::createInstance() {
 	mCreateInfo.pApplicationInfo = &mAppInfo;
 
 	//include the validation layer names (if enabled)
+	/*
+	//this got replaced
 	if (enableValidationLayers)
 	{
 		mCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -84,24 +91,33 @@ void HelloTriangleApplication::createInstance() {
 	{
 		mCreateInfo.enabledLayerCount = 0;	//no layer names
 	}
+	*/
 
 	//debug messaging
 	auto extensionsDebug = getRequiredExtensions();
 	mCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensionsDebug.size());	//set extensions count in info
 	mCreateInfo.ppEnabledExtensionNames = extensionsDebug.data();	//put actual data into create info
 
+	//final process
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+	
+	//if debugging is on
+	if (enableValidationLayers)
+	{
+		//enables global validator layers
+		mCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		mCreateInfo.ppEnabledLayerNames = validationLayers.data();
 
-	//agnostic API (extensions to interface with OS required)
-	uint32_t glfwExtensionCount = 0;		//maybe make these two member data
-	const char** glfwExtensions;
-
-	//GLFW offers built in extension handler
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-	mCreateInfo.enabledExtensionCount = glfwExtensionCount;
-	mCreateInfo.ppEnabledExtensionNames = glfwExtensions;
-
-	//enables global validator layers
-	mCreateInfo.enabledLayerCount = 0;
+		//fill debug
+		populateDebugMessengerCreateInfo(debugCreateInfo);
+		mCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+	}
+	else
+	{
+		//otherwise we have no layers because nother is there
+		mCreateInfo.enabledLayerCount = 0;
+		mCreateInfo.pNext = nullptr;
+	}
 
 	//finalized
 	//VkResult result = vkCreateInstance(&mCreateInfo, nullptr, &mInstance);	//everything can pass to VkResult, it can return the VK_SUCCESS code or errors
@@ -116,6 +132,8 @@ void HelloTriangleApplication::createInstance() {
 		std::cout << "instance created";
 	}
 
+	//go through extensions props manually inside (OVERWRITTEN)
+	/*
 	//go through extension array
 	uint32_t extensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -134,7 +152,7 @@ void HelloTriangleApplication::createInstance() {
 	}
 
 	//you can also go through glfwGetRequiredInstanceExtensions
-
+	*/
 }
 
 
@@ -143,6 +161,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
+	//this all now gets handled in setupDebugMessenger, but this is another simpler way of doing it without
+	//the callbacks, its easy and fast
+	/*
 	//cerr (like c error) is basically access to an error stream and can be loaded with <<
 	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
 
@@ -170,15 +191,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 
 	debugCreateInfo.pUserData = nullptr;
 
+	*/
+
 	return VK_FALSE;
 }
 
 
 std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 {
+	//agnostic API (extensions to interface with OS required)
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 
+	//GLFW offers built in extension handler
 	//get num of extensions in instance, and set the number of them on the uint32_t
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -228,7 +253,40 @@ void HelloTriangleApplication::mainLoop()
 }
 
 
+void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo)
+{
+	//setting up debug info
+	debugCreateInfo = {};
+	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+	//filter what types to be notified about 
+	debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+	//you can also pass pUserData via the param
+	debugCreateInfo.pfnUserCallback = debugCallback;
+}
+
+
 void HelloTriangleApplication::setupDebugMessenger()
 {
 	if (enableValidationLayers == false) return;
+
+	//create the debuge util info extension
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+
+	//use the populate function to set standards
+	populateDebugMessengerCreateInfo(debugCreateInfo);
+
+	//check to make sure that its running properly
+	if (CreateDebugUtilsMessengerEXT(mInstance, &debugCreateInfo, nullptr, &mDebugMessenger) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to set up debug messenger!");
+	}
+
+
 }
