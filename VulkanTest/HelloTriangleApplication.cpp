@@ -50,6 +50,9 @@ void HelloTriangleApplication::cleanup()
 		DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
 	}
 
+	//destroy the surface abstraction
+	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+
 	//clean up the instance right before program exit
 	vkDestroyInstance(mInstance, nullptr);
 
@@ -164,6 +167,22 @@ void HelloTriangleApplication::createLogicalDevice()
 {
 	QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
 
+	//creation of a queue from both families
+	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+	float queuePriority = 1.0f;
+	for (uint32_t queueFamily : uniqueQueueFamilies)
+	{
+		VkDeviceQueueCreateInfo queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;	//the priority here pased by reference to be changed as queue expands
+		mDeviceQueueCreateInfos.push_back(queueCreateInfo);
+	}
+
+	/*
+	//this was when mDeviceQueCreateInfo was one value from graphics fam, not queue fam aswell
 	//filling the first of many structs for logical device
 	mDeviceQueueCreateInfo = {};
 	mDeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -173,11 +192,18 @@ void HelloTriangleApplication::createLogicalDevice()
 	
 	float queuePriority = 1.0f;		//priority is a value between 0.0 and 1.0
 	mDeviceQueueCreateInfo.pQueuePriorities = &queuePriority;
+	*/
 
+	mDeviceFeatures = {};
+	
 	//from this point on its very similar to VkInstanceCreateInfo but with device shit
 	mDeviceCreateInfo = {};
 	mDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	mDeviceCreateInfo.pQueueCreateInfos = &mDeviceQueueCreateInfo;
+
+	//these two lines were modded to be for both graphics and present (surfacing) families
+	mDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(mDeviceQueueCreateInfos.size());
+	mDeviceCreateInfo.pQueueCreateInfos = mDeviceQueueCreateInfos.data();
+	
 	mDeviceCreateInfo.pEnabledFeatures = &mDeviceFeatures;
 
 	mDeviceCreateInfo.enabledExtensionCount = 0;
@@ -198,9 +224,19 @@ void HelloTriangleApplication::createLogicalDevice()
 		throw std::runtime_error("Failed to create logical device");
 	}
 
-	//vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);					//What? mGraphicsQueue is NULL so how can this function be called***************
+	vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);					//What? mGraphicsQueue is NULL so how can this function be called***************
+
+	vkGetDeviceQueue(mDevice, indices.presentFamily.value(), 0, &mPresentQueue);
 }
 
+
+void HelloTriangleApplication::createSurface()
+{
+	if (glfwCreateWindowSurface(mInstance, mpWindow, nullptr, &mSurface) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create window surface");
+	}
+}
 
 
 VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -244,6 +280,51 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 }
 
 
+QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices;
+
+	//typical vulkan enumeration
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	//create the queuefams vector by qFC, and then get their data to fill it
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+
+
+	//this will go through the queueFamilies, we need to make sure that 
+	//we have support for VK_QUEUE_GRAPHICS_BIT
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.graphicsFamily = i;
+		}
+
+		//surface support
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mSurface, &presentSupport);
+
+		if (presentSupport)
+		{
+			indices.presentFamily = i;
+		}
+
+		if (indices.isComplete())
+		{
+			break;
+		}
+
+		i++;
+	}
+
+	return indices;
+}
+
+
 std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 {
 	//agnostic API (extensions to interface with OS required)
@@ -270,6 +351,7 @@ void HelloTriangleApplication::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
+	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
 }

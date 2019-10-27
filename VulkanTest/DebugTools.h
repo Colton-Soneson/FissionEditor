@@ -11,52 +11,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <stdexcept>
-#include <optional>	//a wrapper that has no value until you assign something to it
 #include <vector>
-
-struct QueueFamilyIndices
-{
-	std::optional<uint32_t> graphicsFamily;
-
-	//bool check for device queue family when picking a GPU
-	bool isComplete()
-	{
-		return graphicsFamily.has_value();
-	}
-};
-
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
-{
-	QueueFamilyIndices indices;
-
-	//typical vulkan enumeration
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-	//create the queuefams vector by qFC, and then get their data to fill it
-	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-	//this will go through the queueFamilies, we need to make sure that 
-	//we have support for VK_QUEUE_GRAPHICS_BIT
-	int i = 0;
-	for (const auto& queueFamily : queueFamilies)
-	{
-		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			indices.graphicsFamily = i;
-		}
-
-		if (indices.isComplete())
-		{
-			break;
-		}
-
-		i++;
-	}
-
-	return indices;
-}
 
 
 //look up address for extension to DebugUtilsMessengerEXT

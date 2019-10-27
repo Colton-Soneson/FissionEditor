@@ -1,9 +1,4 @@
-//from lunarG, gives all funcs enums and structs
-//#include <vulkan/vulkan.h>	
-
-
 #include "HelloTriangleApplication.h"
-
 
 int main() {
 	HelloTriangleApplication app;
@@ -18,3 +13,4 @@ int main() {
 
 	return EXIT_SUCCESS;
 }
+

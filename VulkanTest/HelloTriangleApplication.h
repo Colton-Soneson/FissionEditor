@@ -14,12 +14,14 @@
 //macros for exit sucess and failure
 #include <cstdlib>
 
-
 //math / extras
 #include <assert.h>	//need this for NDEBUG i think
 #include <vector>
 #include <map>
 #include <cstring>
+#include <set>
+#include <optional>	//a wrapper that has no value until you assign something to it
+
 
 //***************//
 //    const      //
@@ -43,6 +45,23 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
+
+
+struct QueueFamilyIndices
+{
+	//for GPU pick and utils
+	std::optional<uint32_t> graphicsFamily;
+
+	//for the window surface and glfw abstraction
+	std::optional<uint32_t> presentFamily;
+
+	//bool check for device queue family when picking a GPU
+	//used in isDeviceSuitable and rateDeviceSuitability
+	bool isComplete()
+	{
+		return graphicsFamily.has_value() && presentFamily.has_value();
+	}
+};
 
 
 
@@ -80,6 +99,9 @@ private:
 	//just a fast way to fill a debugCreateInfo
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo);
 
+	//find Queue families for varies GPU shit
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+
 	//choosing a GPU to do the job
 	void pickPhysicalDevice();
 
@@ -93,6 +115,9 @@ private:
 	//more methodical way of picking a GPU, gives a score based on the 
 	//available features at hand, trumps isDeviceSuitable
 	int rateDeviceSuitability(VkPhysicalDevice device);
+
+	//GLFW dependent surface creation
+	void createSurface();
 
 	//static
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -115,11 +140,15 @@ private:
 
 	//logical to physical
 	VkDevice mDevice;
-	VkDeviceQueueCreateInfo mDeviceQueueCreateInfo;
-	VkPhysicalDeviceFeatures mDeviceFeatures = {};	//when we first use this place the {} somewhere else
+	std::vector<VkDeviceQueueCreateInfo> mDeviceQueueCreateInfos;	//was a single value
+	VkPhysicalDeviceFeatures mDeviceFeatures;	//when we first use this place the {} somewhere else
 													//this allows us to get the shit like geometry shaders
 	VkDeviceCreateInfo mDeviceCreateInfo;
 	VkQueue mGraphicsQueue;
+
+	//surfacing
+	VkSurfaceKHR mSurface;
+	VkQueue mPresentQueue;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
