@@ -152,6 +152,9 @@ private:
 	//finally create the swapchain given the properties functions
 	void createSwapChain();
 
+	//basic image views for every image in swapchain to use them as color targets
+	void createImageViews();
+
 	//static
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 														VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -186,9 +189,12 @@ private:
 	//swapchain
 	VkSwapchainCreateInfoKHR mSwapChainCreateInfo;
 	VkSwapchainKHR mSwapChain;
-	std::vector<VkImage> mSwapChainImages;
 	VkFormat mSwapChainImageFormat;
 	VkExtent2D mSwapChainExtent;
+
+	//Image
+	std::vector<VkImage> mSwapChainImages;
+	std::vector<VkImageView> mSwapChainImageViews;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

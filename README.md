@@ -8,6 +8,8 @@ retarget is required
 https://vulkan-tutorial.com/
 https://vulkan.lunarg.com/doc/view/1.0.13.0/windows/layers.html
 http://www.cplusplus.com/reference/iostream/cerr/
-
-
+http://www.cplusplus.com/reference/algorithm/max/
+https://en.cppreference.com/w/cpp/container/set
+https://stackoverflow.com/questions/46188302/c-error-c3646-unknown-override-specifier
+https://en.wikipedia.org/wiki/Stereoscopy
 
