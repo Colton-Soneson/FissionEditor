@@ -1,6 +1,30 @@
 #include "HelloTriangleApplication.h"
 #include "DebugTools.h"
 
+bool HelloTriangleApplication::checkDeviceExtensionSupport(VkPhysicalDevice device)
+{
+	//go through ext props of the device
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+
+	//go through ext prop list 
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	//https://en.cppreference.com/w/cpp/container/set
+	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+	//go through available extensions list and as keep erasing out them from required Extensions 
+	//until we finally know that every single one of the extensinos we need are fulfilled by the card
+	for (const auto& extension : availableExtensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
+
 bool HelloTriangleApplication::checkValidationLayerSupport()
 {
 	//find total number of layers and pass it into layerCount
@@ -39,8 +63,72 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
 }
 
 
+VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+{
+	//gonna be equal to resolution to window we draw to so use GLFW window height and width
+	if (capabilities.currentExtent.width != UINT32_MAX)
+	{
+		return capabilities.currentExtent;
+	}
+	else
+	{
+		//push our GLFW window size into extent struct
+		VkExtent2D actualExtent = { WINDOW_WIDTH, WINDOW_HEIGHT };
+
+		//get the extents of the surface bounds and sets them in actualExtent 
+		//max and min clamp width and height between the supported implementation
+		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
+		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
+	
+		return actualExtent;
+	}
+}
+
+
+VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+{
+	//Four modes:
+	//		VK_PRESENT_MODE_IMMEDIATE_KHR
+	//		VK_PRESENT_MODE_FIFO_KHR
+	//		VK_PRESENT_MODE_FIFO_RELAXED_KHR
+	//		VK_PRESENT_MODE_MAILBOX_KHR
+
+	for (const auto& availablePresentMode : availablePresentModes)
+	{
+		//This allows for triple buffering, so its preffered
+		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		{
+			return availablePresentMode;
+		}
+	}
+
+	//this is the only garaunteed one
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+
+VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+{
+	//color space, using VK_FORMAT_B8G8R8A8_UNORM as a color base instead of SRGB because its easy
+	//	that means 8 bits per each B R G (different order RGB) and A channels for a 32 bit color pixel
+	for (const auto& availableFormat : availableFormats)
+	{
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+		{
+			return availableFormat;
+		}
+	}
+
+	//the [0] is for if we want to have a rating system like for GPU selection
+	return availableFormats[0];
+}
+
+
 void HelloTriangleApplication::cleanup()
 {
+	//destroy swapchain
+	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
+
 	//device destruction
 	vkDestroyDevice(mDevice, nullptr);
 
@@ -206,7 +294,10 @@ void HelloTriangleApplication::createLogicalDevice()
 	
 	mDeviceCreateInfo.pEnabledFeatures = &mDeviceFeatures;
 
-	mDeviceCreateInfo.enabledExtensionCount = 0;
+	//to enable VK_KHR_swapchain extension
+	mDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+	mDeviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
 
 	//Again, this way is how to do it without specific device extensions (like it was for the instance)
 	if (enableValidationLayers == true)
@@ -277,6 +368,85 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 	*/
 
 	return VK_FALSE;
+}
+
+
+void HelloTriangleApplication::createSwapChain()
+{
+	//the properties are finally used
+	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(mPhysicalDevice);
+	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+
+	//there is a minimum image count we need to fullfill in a swapchain
+	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;	//we do +1 so we can have atleast one more than the minimum 
+
+	//
+	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+	{
+		imageCount = swapChainSupport.capabilities.maxImageCount;
+	}
+
+	//structure filling like usual
+	mSwapChainCreateInfo = {};
+	mSwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	mSwapChainCreateInfo.surface = mSurface;
+
+	//this has to come after surface def (more details in the defining functions)
+	mSwapChainCreateInfo.minImageCount = imageCount;
+	mSwapChainCreateInfo.imageFormat = surfaceFormat.format;
+	mSwapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+	mSwapChainCreateInfo.imageExtent = extent;
+	mSwapChainCreateInfo.imageArrayLayers = 1;								//ALWAYS ONE unless developing a stereoscopic 3D application
+	mSwapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	//specifies swapchain operation type to transfer the rendered image
+
+	//get all the indices for graphics fam and presentation queue
+	QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+	//draw fon images in the swap chain from graphics queue then submit to presentation queue
+	if (indices.graphicsFamily != indices.presentFamily)
+	{
+		mSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;	//no explicit ownership transfer
+		mSwapChainCreateInfo.queueFamilyIndexCount = 2;
+		mSwapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+	}
+	else
+	{
+		mSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;	//image owned by one queue fam and needs explicit transfer to another fam
+		mSwapChainCreateInfo.queueFamilyIndexCount = 0;
+		mSwapChainCreateInfo.pQueueFamilyIndices = nullptr;
+	}
+
+	//defining you want the transform to be, this is just the standard call
+	mSwapChainCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+	
+	//alpha channel used to blend with other windows in window system, this call ignores that option
+	mSwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+
+	mSwapChainCreateInfo.presentMode = presentMode;
+	mSwapChainCreateInfo.clipped = VK_TRUE;				//performance option, enable unless pixel reading and prediction required
+
+	//given time the swapchain may become unoptimized during runtime
+	mSwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	//the actual creation
+	if (vkCreateSwapchainKHR(mDevice, &mSwapChainCreateInfo, nullptr, &mSwapChain) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create swapchain");
+	}
+
+	//fill the vector of images from the swapchain
+	vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, nullptr);
+	mSwapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, mSwapChainImages.data());
+
+	//later change these
+	mSwapChainImageFormat = surfaceFormat.format;
+	mSwapChainExtent = extent;
+
 }
 
 
@@ -354,6 +524,7 @@ void HelloTriangleApplication::initVulkan()
 	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
+	createSwapChain();
 }
 
 
@@ -389,7 +560,22 @@ bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 	*/
 	
 	QueueFamilyIndices indices = findQueueFamilies(device);
-	return indices.isComplete();
+
+	//checking for EXT support to do swapchain 
+	bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+	//swapchain support check
+	bool swapChainAdequate = false;
+
+	if (extensionsSupported)
+	{
+		//returned from query make sure that the formats are good and present modes have support
+		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+	}
+
+
+	return indices.isComplete() && extensionsSupported && swapChainAdequate;
 }
 
 
@@ -489,6 +675,40 @@ void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMess
 }
 
 
+SwapChainSupportDetails HelloTriangleApplication::querySwapChainSupport(VkPhysicalDevice device)
+{
+	SwapChainSupportDetails details;
+
+	//returns into the struct, core of all these functions are parameters VkPhysicalDevice and VkSurfaceKHR 
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.capabilities);
+
+	//query list of structs of supported surface formats
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
+
+	//if there is shit in there
+	if (formatCount != 0)
+	{
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
+	}
+
+	//same way as above for presentation modes
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0)
+	{
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
+	}
+
+
+
+	return details;
+}
+
+
 int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice device)
 {
 	//i strayed from tutorial here, they wanted to keep using the device suitable thing
@@ -514,11 +734,25 @@ int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice device)
 		//the .limits part has a bunch of things good for scoring
 	deviceScore += deviceProperties.limits.maxImageDimension2D;
 
+	//checking for EXT support to do swapchain 
+	bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+	//swapchain support check
+	bool swapChainAdequate = false;
+
+	if (extensionsSupported)
+	{
+		//returned from query make sure that the formats are good and present modes have support
+		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+	}
+
 	//if you dont have a geometry shader for this app everything will break
-	if (!deviceFeatures.geometryShader || indices.isComplete() == false)		//LOOK: here is where i added the queue check compliance
+	if (!deviceFeatures.geometryShader || indices.isComplete() == false || extensionsSupported == false || swapChainAdequate == false)		//LOOK: here is where i added the queue check compliance
 	{
 		return 0;
 	}
+
 
 	return deviceScore;
 }

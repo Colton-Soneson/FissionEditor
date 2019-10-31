@@ -21,6 +21,8 @@
 #include <cstring>
 #include <set>
 #include <optional>	//a wrapper that has no value until you assign something to it
+#include <cstdint>  //needed for UINT32_MAX
+#include <algorithm>	//max and min
 
 
 //***************//
@@ -37,6 +39,11 @@ const std::vector<const char*> validationLayers = {
 									 //all it is is a standard set of layers to pull from, may give troubles down the line
 									 //this comes from here:
 											//https://vulkan.lunarg.com/doc/view/1.0.13.0/windows/layers.html
+};
+
+//list of required device Extensions
+const std::vector<const char*> deviceExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 
@@ -63,6 +70,14 @@ struct QueueFamilyIndices
 	}
 };
 
+
+//details to hold the data found for swapchain requirements
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
 
 
 class HelloTriangleApplication {
@@ -116,8 +131,26 @@ private:
 	//available features at hand, trumps isDeviceSuitable
 	int rateDeviceSuitability(VkPhysicalDevice device);
 
+	//part of swapchain stuff, also fits into device choice
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
 	//GLFW dependent surface creation
 	void createSurface();
+
+	//to fill data in struct for requirements of swapchain
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+
+	//SC PROP 1: surface format detailing search
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+
+	//SC PROP 2: Presentation modes: the only mode garaunteed is VK_PRESENT_MODE_FIFO_KHR
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+
+	//SC PROP 3: resolution of the swap chain images (usually just resolution of the window)
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+	//finally create the swapchain given the properties functions
+	void createSwapChain();
 
 	//static
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -149,6 +182,13 @@ private:
 	//surfacing
 	VkSurfaceKHR mSurface;
 	VkQueue mPresentQueue;
+
+	//swapchain
+	VkSwapchainCreateInfoKHR mSwapChainCreateInfo;
+	VkSwapchainKHR mSwapChain;
+	std::vector<VkImage> mSwapChainImages;
+	VkFormat mSwapChainImageFormat;
+	VkExtent2D mSwapChainExtent;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
