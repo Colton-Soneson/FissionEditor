@@ -158,6 +158,42 @@ void HelloTriangleApplication::cleanup()
 }
 
 
+void HelloTriangleApplication::createGraphicsPipeline()
+{
+	auto vertShaderCode = readFile("../shaders/vert.spv");
+	auto fragShaderCode = readFile("../shaders/frag.spv");
+
+	//create the modules (same way for both vetex and frag)
+	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+	//vertex shader graphics pipeline object fill
+	//	sType here describes which pipeline stage we are on
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+
+	//allows for combination of multiple fragment shaders into one shader module and 
+	// use different entry points for their behaviours, but instead just use the "main"
+	vertShaderStageInfo.module = vertShaderModule;
+	vertShaderStageInfo.pName = "main";
+
+	//frag shader
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = fragShaderModule;
+	fragShaderStageInfo.pName = "main";
+
+	//array to contain them
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	//MAKE SURE THIS IS LAST
+	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
+	vkDestroyShaderModule(mDevice, vertShaderModule, nullptr);
+}
+
+
 void HelloTriangleApplication::createImageViews()
 {
 	//be able to fit all the image views to be creating (same size as available images)
@@ -366,6 +402,27 @@ void HelloTriangleApplication::createLogicalDevice()
 }
 
 
+VkShaderModule HelloTriangleApplication::createShaderModule(const std::vector<char>& code)
+{
+	//based upon the SPIR-V code imported from file
+	//	we just want to delete it in here because its just easier, so no member data
+	VkShaderModuleCreateInfo shaderCreateInfo = {};
+	shaderCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shaderCreateInfo.codeSize = code.size();
+	shaderCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+	//we are gonna return from this func so dont make member function
+	VkShaderModule shaderModule;
+
+	if (vkCreateShaderModule(mDevice, &shaderCreateInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create shader module");
+	}
+
+	return shaderModule;
+}
+
+
 void HelloTriangleApplication::createSurface()
 {
 	if (glfwCreateWindowSurface(mInstance, mpWindow, nullptr, &mSurface) != VK_SUCCESS)
@@ -571,6 +628,7 @@ void HelloTriangleApplication::initVulkan()
 	createLogicalDevice();
 	createSwapChain();
 	createImageViews();
+	createGraphicsPipeline();
 }
 
 
@@ -801,6 +859,27 @@ int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice device)
 
 
 	return deviceScore;
+}
+
+
+std::vector<char> HelloTriangleApplication::readFile(const std::string& filename)
+{
+	//ate: start reading at eof
+	//binary: read file as binary
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+	//by starting at the end of the file we can determine size based on position
+	size_t filesize = (size_t)file.tellg();
+	std::vector<char> buffer(filesize);
+
+	//go back to beginning, then read all the bytes at once
+	file.seekg(0);
+	file.read(buffer.data(), filesize);
+
+	//close the file
+	file.close();
+
+	return buffer;
 }
 
 

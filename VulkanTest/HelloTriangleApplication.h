@@ -23,6 +23,7 @@
 #include <optional>	//a wrapper that has no value until you assign something to it
 #include <cstdint>  //needed for UINT32_MAX
 #include <algorithm>	//max and min
+#include <fstream>		//shader loading
 
 
 //***************//
@@ -155,12 +156,23 @@ private:
 	//basic image views for every image in swapchain to use them as color targets
 	void createImageViews();
 
-	//static
+	//graphicsPipleine creation (vertex shader -> tesselation -> geometry shader ...)
+	void createGraphicsPipeline();
+
+	//a wrapper for SPIR-V code to get into the pipeline
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+
+
+	//----------------------//
+	//		static stuff	//
+	//----------------------//
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 														VkDebugUtilsMessageTypeFlagsEXT messageType,
 														const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 														void* pUserData);
 
+	//shader loading
+	static std::vector<char> readFile(const std::string& filename);
 
 	//*********************//
 	//     Member Data     //
