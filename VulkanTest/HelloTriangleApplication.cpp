@@ -126,6 +126,9 @@ VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::
 
 void HelloTriangleApplication::cleanup()
 {
+	//pipeline layout destruction
+	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+
 	//we need to destroy images via loop through
 	for (auto imageView : mSwapChainImageViews)
 	{
@@ -187,6 +190,138 @@ void HelloTriangleApplication::createGraphicsPipeline()
 
 	//array to contain them
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	//formatting the vertex data
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	
+	//fill this shit later
+	vertexInputInfo.vertexBindingDescriptionCount = 0;
+	vertexInputInfo.pVertexBindingDescriptions = nullptr;
+	vertexInputInfo.vertexAttributeDescriptionCount = 0;
+	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+	//How we draw vertices from data
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.primitiveRestartEnable = VK_FALSE;   //true will break up lines and triangles in the _STRIP topolgy modes using index of 0xFFFF or 0xFFFFFFF
+
+	//viewport (region of framebuffer output renders to)
+	VkViewport viewport = {};
+
+	//top left corner
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+
+	//bottom right corner (use what the swapchain defines these as)
+	viewport.width = (float)mSwapChainExtent.width;
+	viewport.height = (float)mSwapChainExtent.height;
+
+	//depth shit (has to be within 0 an 1, but min may be higher then max
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	//ignore the scissor filter by just drawing the full framebuffer
+	VkRect2D scissor = {};
+	scissor.offset = { 0,0 };
+	scissor.extent = mSwapChainExtent;
+
+	//combining the viewport and scissor
+	VkPipelineViewportStateCreateInfo viewportState = {};
+	viewportState.viewportCount = 1;	//possiblility depending on card to have more than one viewport
+	viewportState.pViewports = &viewport;
+	viewportState.scissorCount = 1;
+	viewportState.pScissors = &scissor;
+
+	//depth testing, face culling, wireframe rendering
+	VkPipelineRasterizationStateCreateInfo rasterizer = {};
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.depthClampEnable = VK_FALSE;				//true, frags past near or far planes are clamped instead of discarding. Requires GPU feature
+	rasterizer.rasterizerDiscardEnable = VK_FALSE;		//true, geometry never passes through rasterizer phase (nothing gets to framebuffer)
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;		//(FILL, LINE, or POINT) for entire poly filled, draw wireframe, or draw just points
+	rasterizer.lineWidth = 1.0f;						//thickness defined by number of fragments
+	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasConstantFactor = 0.0f;			//opt
+	rasterizer.depthBiasClamp = 0.0f;					//opt
+	rasterizer.depthBiasSlopeFactor = 0.0f;				//opt
+
+
+	//Multisampling (anti-aliasing is sharper edges and without running frag shader a lot)
+	VkPipelineMultisampleStateCreateInfo multisampling = {};
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.sampleShadingEnable = VK_FALSE;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.minSampleShading = 1.0f;			//opt
+	multisampling.pSampleMask = nullptr;			//opt
+	multisampling.alphaToCoverageEnable = VK_FALSE; //opt
+	multisampling.alphaToOneEnable = VK_FALSE;		//opt
+
+	//DEPTH STENCIL TESTING ALSO DONE IN HERE
+
+	//color blending
+	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;		//opt
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;	//opt
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;				//opt
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;		//opt
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;	//opt
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;				//opt
+
+	//psuedocode for a way to color blend
+	/*if (blendEnable) {
+		finalColor.rgb = (srcColorBlendFactor * newColor.rgb) < colorBlendOp > (dstColorBlendFactor * oldColor.rgb);
+		finalColor.a = (srcAlphaBlendFactor * newColor.a) < alphaBlendOp > (dstAlphaBlendFactor * oldColor.a);
+	}
+	else {
+		finalColor = newColor;
+	}
+
+	finalColor = finalColor & colorWriteMask;*/
+
+	//second way is simpler, uses alpha blending
+	//finalColor.rgb = newAlpha * newColor + (1 - newAlpha) * oldColor;
+	//finalColor.a = newAlpha.a;
+
+	//the above is done like here
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	//color blending for all of the framebuffers
+	VkPipelineColorBlendStateCreateInfo colorBlending = {};
+	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colorBlending.logicOpEnable = VK_FALSE;
+	colorBlending.logicOp = VK_LOGIC_OP_COPY;
+	colorBlending.attachmentCount = 1;
+	colorBlending.pAttachments = &colorBlendAttachment;
+	colorBlending.blendConstants[0] = 0.0f;
+	colorBlending.blendConstants[1] = 0.0f;
+	colorBlending.blendConstants[2] = 0.0f;
+	colorBlending.blendConstants[3] = 0.0f;
+
+
+	//uniform values for pipeline
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 0;
+	pipelineLayoutInfo.pSetLayouts = nullptr;
+
+	//push constants can pass dynamic values to shaders
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+	if (vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout");
+	}
+
 
 	//MAKE SURE THIS IS LAST
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
@@ -432,47 +567,6 @@ void HelloTriangleApplication::createSurface()
 }
 
 
-VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-	void* pUserData)
-{
-	//this all now gets handled in setupDebugMessenger, but this is another simpler way of doing it without
-	//the callbacks, its easy and fast
-	/*
-	//cerr (like c error) is basically access to an error stream and can be loaded with <<
-	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
-
-	//this style allows for comparison statements what to do for what level of message
-	//you can find what each had in Vulkan Part 4 of notes or on validation layers chapter
-	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-	{
-		std::cout << "\nWATCH OUT\n";
-	}
-
-	//setting up debug info
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
-	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-										VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-										VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-	
-	//filter what types to be notified about 
-	debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-									VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-									VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-
-	//you can also pass pUserData via the param
-	debugCreateInfo.pfnUserCallback = debugCallback;
-
-	debugCreateInfo.pUserData = nullptr;
-
-	*/
-
-	return VK_FALSE;
-}
-
-
 void HelloTriangleApplication::createSwapChain()
 {
 	//the properties are finally used
@@ -523,7 +617,7 @@ void HelloTriangleApplication::createSwapChain()
 
 	//defining you want the transform to be, this is just the standard call
 	mSwapChainCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-	
+
 	//alpha channel used to blend with other windows in window system, this call ignores that option
 	mSwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -549,6 +643,47 @@ void HelloTriangleApplication::createSwapChain()
 	mSwapChainImageFormat = surfaceFormat.format;
 	mSwapChainExtent = extent;
 
+}
+
+
+VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT messageType,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData)
+{
+	//this all now gets handled in setupDebugMessenger, but this is another simpler way of doing it without
+	//the callbacks, its easy and fast
+	/*
+	//cerr (like c error) is basically access to an error stream and can be loaded with <<
+	std::cerr << "Validation Layer: " << pCallbackData->pMessage << std::endl;
+
+	//this style allows for comparison statements what to do for what level of message
+	//you can find what each had in Vulkan Part 4 of notes or on validation layers chapter
+	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		std::cout << "\nWATCH OUT\n";
+	}
+
+	//setting up debug info
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
+	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+										VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+										VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	
+	//filter what types to be notified about 
+	debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+									VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+									VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+	//you can also pass pUserData via the param
+	debugCreateInfo.pfnUserCallback = debugCallback;
+
+	debugCreateInfo.pUserData = nullptr;
+
+	*/
+
+	return VK_FALSE;
 }
 
 

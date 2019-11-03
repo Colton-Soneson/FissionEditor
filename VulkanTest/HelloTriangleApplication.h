@@ -208,6 +208,9 @@ private:
 	std::vector<VkImage> mSwapChainImages;
 	std::vector<VkImageView> mSwapChainImageViews;
 
+	//final pipeline
+	VkPipelineLayout mPipelineLayout;
+
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
 
