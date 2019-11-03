@@ -162,6 +162,8 @@ private:
 	//a wrapper for SPIR-V code to get into the pipeline
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 
+	//framebuffer attachments used while rendering
+	void createRenderPass();
 
 	//----------------------//
 	//		static stuff	//
@@ -209,6 +211,7 @@ private:
 	std::vector<VkImageView> mSwapChainImageViews;
 
 	//final pipeline
+	VkRenderPass mRenderPass;
 	VkPipelineLayout mPipelineLayout;
 
 	//Debugging

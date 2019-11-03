@@ -126,8 +126,11 @@ VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::
 
 void HelloTriangleApplication::cleanup()
 {
-	//pipeline layout destruction
+	//pipeline destruction
 	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+
+	//renderpass destruction
+	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 
 	//we need to destroy images via loop through
 	for (auto imageView : mSwapChainImageViews)
@@ -229,6 +232,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 
 	//combining the viewport and scissor
 	VkPipelineViewportStateCreateInfo viewportState = {};
+	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;	//possiblility depending on card to have more than one viewport
 	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
@@ -241,6 +245,8 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;		//true, geometry never passes through rasterizer phase (nothing gets to framebuffer)
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;		//(FILL, LINE, or POINT) for entire poly filled, draw wireframe, or draw just points
 	rasterizer.lineWidth = 1.0f;						//thickness defined by number of fragments
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f;			//opt
 	rasterizer.depthBiasClamp = 0.0f;					//opt
@@ -286,13 +292,13 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	//finalColor.a = newAlpha.a;
 
 	//the above is done like here
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	//colorBlendAttachment.blendEnable = VK_TRUE;
+	//colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	//colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	//colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	//colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	//colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	//colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	//color blending for all of the framebuffers
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -326,6 +332,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	//MAKE SURE THIS IS LAST
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(mDevice, vertShaderModule, nullptr);
+
 }
 
 
@@ -534,6 +541,46 @@ void HelloTriangleApplication::createLogicalDevice()
 	vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);					//What? mGraphicsQueue is NULL so how can this function be called***************
 
 	vkGetDeviceQueue(mDevice, indices.presentFamily.value(), 0, &mPresentQueue);
+}
+
+
+void HelloTriangleApplication::createRenderPass()
+{
+	//single color buffer attachment
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = mSwapChainImageFormat;		//same format as from swapchain
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;	//without multisampling its 1 sample
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	//before rendering
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	//after rendering
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;		//means we dont care about previous layout
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;	//we want it to be ready for presentation after rendering
+
+	//subpass p1: referrencing attachments in framebuffer and optimizing them
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;		//which attachment to reference in atachment descriptiion array
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	//which layout we would like to have during subpass
+																				//this means we get color performance
+	//subpass p2
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	//GPU subpasses instead of CPU
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+			//pInputAttachments, pResolveAttachments, pDepthStencilAttachment, and pPreserveAttachments all also possible
+
+	//renderpass
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;	//would be a list if we had more I imagine
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+
+	if (vkCreateRenderPass(mDevice, &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create render pass");
+	}
 }
 
 
@@ -763,6 +810,7 @@ void HelloTriangleApplication::initVulkan()
 	createLogicalDevice();
 	createSwapChain();
 	createImageViews();
+	createRenderPass();
 	createGraphicsPipeline();
 }
 
