@@ -126,6 +126,9 @@ VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::
 
 void HelloTriangleApplication::cleanup()
 {
+	//destroy the graphics pipeline
+	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
+	
 	//pipeline destruction
 	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
 
@@ -328,6 +331,41 @@ void HelloTriangleApplication::createGraphicsPipeline()
 		throw std::runtime_error("failed to create pipeline layout");
 	}
 
+	//now we have all the components to define a graphics pipeline we can finally start creating it
+	VkGraphicsPipelineCreateInfo pipelineInfo = {};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;			//vertShaderStageInfo and fragShaderStageInfo
+	pipelineInfo.pStages = shaderStages;
+
+	//go further into connecting shaderstages with pipeline
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = nullptr;
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = nullptr;
+
+	//fixed function stage input to pipeline
+	pipelineInfo.layout = mPipelineLayout;
+
+	//renderPass and subpasses into pipeline
+		//this may be useful for Engines, its a reference to render pass and index of subpass, not
+		//	used for this tutorial though
+	pipelineInfo.renderPass = mRenderPass;
+	pipelineInfo.subpass = 0;
+
+	//pipeline derrivatives: able to derive new pipeline from existing one
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;		//specified handle
+	//pipelineInfo.basePipelineIndex = -1;					//reference to another pipeline
+
+
+	//final graphics pipeline
+	if (vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create graphics pipeline");
+	}
 
 	//MAKE SURE THIS IS LAST
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);

@@ -213,6 +213,7 @@ private:
 	//final pipeline
 	VkRenderPass mRenderPass;
 	VkPipelineLayout mPipelineLayout;
+	VkPipeline mGraphicsPipeline;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
