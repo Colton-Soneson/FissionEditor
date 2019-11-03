@@ -126,6 +126,12 @@ VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::
 
 void HelloTriangleApplication::cleanup()
 {
+	//framebuffer list destruction
+	for (auto framebuffer : mSwapChainFrameBuffers)
+	{
+		vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
+	}
+
 	//destroy the graphics pipeline
 	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
 	
@@ -164,6 +170,37 @@ void HelloTriangleApplication::cleanup()
 
 	//cleanup call for glfw
 	glfwTerminate();
+}
+
+
+void HelloTriangleApplication::createFramebuffers()
+{
+	//we need the number of framebuffers to equal the number of swapchain image views they
+	//	will be referencing
+	mSwapChainFrameBuffers.resize(mSwapChainImageViews.size());
+
+	//iterate and create from copy
+	for (size_t i = 0; i < mSwapChainImageViews.size(); ++i)
+	{
+		VkImageView attachments[] = { mSwapChainImageViews[i] };
+
+		//that sort of "copy" over
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = mRenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = mSwapChainExtent.width;
+		framebufferInfo.height = mSwapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		//create the framebuffer and store it at position in vector
+		if (vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mSwapChainFrameBuffers[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create framebuffer");
+		}
+	}
+
 }
 
 
@@ -850,6 +887,7 @@ void HelloTriangleApplication::initVulkan()
 	createImageViews();
 	createRenderPass();
 	createGraphicsPipeline();
+	createFramebuffers();
 }
 
 

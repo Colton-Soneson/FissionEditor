@@ -165,6 +165,10 @@ private:
 	//framebuffer attachments used while rendering
 	void createRenderPass();
 
+	//currently set up for renderpas to expect a single framebuffer with same format as swapchain images
+	void createFramebuffers();
+
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -214,6 +218,9 @@ private:
 	VkRenderPass mRenderPass;
 	VkPipelineLayout mPipelineLayout;
 	VkPipeline mGraphicsPipeline;
+
+	//framebuffers
+	std::vector<VkFramebuffer> mSwapChainFrameBuffers;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
