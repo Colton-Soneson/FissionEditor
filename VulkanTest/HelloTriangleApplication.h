@@ -48,11 +48,13 @@ const std::vector<const char*> deviceExtensions = {
 };
 
 
+
 #ifdef NDEBUG	//C++ way of saying not in debug mode
 const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
+
 
 
 struct QueueFamilyIndices
@@ -79,6 +81,9 @@ struct SwapChainSupportDetails
 	std::vector<VkSurfaceFormatKHR> formats;
 	std::vector<VkPresentModeKHR> presentModes;
 };
+
+
+
 
 
 class HelloTriangleApplication {
@@ -168,6 +173,17 @@ private:
 	//currently set up for renderpas to expect a single framebuffer with same format as swapchain images
 	void createFramebuffers();
 
+	//command pools for mem management of command buffers
+	void createCommandPool();
+
+	//records and allocates commands for each swap chain image
+	void createCommandBuffers();
+
+	//finally draw the frame
+	void drawFrame();
+
+	//sync checking
+	void createSemaphores();
 
 	//----------------------//
 	//		static stuff	//
@@ -221,6 +237,14 @@ private:
 
 	//framebuffers
 	std::vector<VkFramebuffer> mSwapChainFrameBuffers;
+
+	//command buffers
+	VkCommandPool mCommandPool;
+	std::vector<VkCommandBuffer> mCommandBuffers;
+
+	//Semaphores for sync
+	VkSemaphore mImageAvailableSemaphore;
+	VkSemaphore mRenderFinishedSemaphore;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
