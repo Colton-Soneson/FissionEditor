@@ -12,4 +12,7 @@ http://www.cplusplus.com/reference/algorithm/max/
 https://en.cppreference.com/w/cpp/container/set
 https://stackoverflow.com/questions/46188302/c-error-c3646-unknown-override-specifier
 https://en.wikipedia.org/wiki/Stereoscopy
+https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/layer_configuration.html
+https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/getting_started.html
+
 
