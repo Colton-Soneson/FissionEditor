@@ -33,6 +33,7 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
+
 //validation layers set up
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
@@ -182,8 +183,8 @@ private:
 	//finally draw the frame
 	void drawFrame();
 
-	//sync checking
-	void createSemaphores();
+	//sync checking (both semaphores (for GPU-GPU) and fences (for CPU_GPU))
+	void createSyncObjects();
 
 	//----------------------//
 	//		static stuff	//
@@ -199,6 +200,9 @@ private:
 	//*********************//
 	//     Member Data     //
 	//*********************//
+
+	//consts
+	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	//GLFW
 	GLFWwindow* mpWindow;
@@ -245,6 +249,13 @@ private:
 	//Semaphores for sync
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
+
+	//Frame Delay and Waiting (with semaphores)
+	std::vector<VkSemaphore> mImageAvailableSemaphores;
+	std::vector<VkSemaphore> mRenderFinishedSemaphores;
+	std::vector<VkFence> mInFlightFences;	//to handle CPU-GPU sync
+	std::vector<VkFence> mImagesInFlight;	//to prevent rendering images already in flight
+	size_t mCurrentFrame = 0;	//to keep track of when to use right semaphore
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
