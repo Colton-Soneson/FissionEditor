@@ -186,6 +186,12 @@ private:
 	//sync checking (both semaphores (for GPU-GPU) and fences (for CPU_GPU))
 	void createSyncObjects();
 
+	//recreating the swapchain if window resizes to not crash
+	void recreateSwapChain();
+
+	//for recreateSC and also cutting into regular cleanup
+	void cleanupSwapChain();
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -196,6 +202,9 @@ private:
 
 	//shader loading
 	static std::vector<char> readFile(const std::string& filename);
+
+	//resizing (has to be static because GLFW cant call member function with "this" pointer
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	//*********************//
 	//     Member Data     //
@@ -256,6 +265,7 @@ private:
 	std::vector<VkFence> mInFlightFences;	//to handle CPU-GPU sync
 	std::vector<VkFence> mImagesInFlight;	//to prevent rendering images already in flight
 	size_t mCurrentFrame = 0;	//to keep track of when to use right semaphore
+	bool mFrameBufferResized = false;	//flags when resize of window happens
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
