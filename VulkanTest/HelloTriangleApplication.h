@@ -246,6 +246,9 @@ private:
 	//general copy command used in place of vkMapMemory (we can use device local mem types)
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+	//index buffer (very similar to createVertexBuffer)
+	void createIndexBuffer();
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -271,10 +274,14 @@ private:
 
 	
 	const std::vector<Vertex> mVertices = {
-	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}	
 	};
+
+	//indices for index buffer (uint16_t < 65535 vertices < uint32_t) 
+	const std::vector<uint32_t> mIndices = { 0, 1, 2, 2, 3, 0 };
 
 	//GLFW
 	GLFWwindow* mpWindow;
@@ -334,6 +341,8 @@ private:
 	//vertex buffers
 	VkBuffer mVertexBuffer;
 	VkDeviceMemory mVertexBufferMemory;
+	VkBuffer mIndexBuffer;
+	VkDeviceMemory mIndexBufferMemory;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

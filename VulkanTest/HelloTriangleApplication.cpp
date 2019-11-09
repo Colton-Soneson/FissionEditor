@@ -132,6 +132,10 @@ void HelloTriangleApplication::cleanup()
 {
 	cleanupSwapChain();
 
+	//index buffer deletion (works same as vertex stuff really)
+	vkDestroyBuffer(mDevice, mIndexBuffer, nullptr);
+	vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
+
 	//we dont need the vertex buffer in memory anymore
 	vkDestroyBuffer(mDevice, mVertexBuffer, nullptr);
 
@@ -379,11 +383,14 @@ void HelloTriangleApplication::createCommandBuffers()
 		VkBuffer vertexBuffers[] = { mVertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(mCommandBuffers[i], mIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
+
 
 		//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
 		//Parameters:
 		//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
-		vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);
+		//vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);	//this is without IBs
+		vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(mIndices.size()), 1, 0, 0, 0);
 
 		//end the render pass first
 		vkCmdEndRenderPass(mCommandBuffers[i]);
@@ -693,6 +700,38 @@ void HelloTriangleApplication::createImageViews()
 			throw std::runtime_error("failed to create image views");
 		}
 	}
+}
+
+
+void HelloTriangleApplication::createIndexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(mIndices[0]) * mIndices.size();
+
+	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+
+
+	void* data;
+
+	//mapping the buffer memory into CPU accessible memory
+	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
+	memcpy(data, mIndices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+	vkUnmapMemory(mDevice, stagingBufferMemory);
+
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
+	/*
+		SRC_BIT: Buffer can be used as source in a mem transfer op
+		DST_BIT: Buffer can be used as destination in mem transfer op
+	*/
+
+	copyBuffer(stagingBuffer, mIndexBuffer, bufferSize);	//move vertex data to device local buffer
+	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);		//free out our staging buffer
+	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
 
 
@@ -1372,6 +1411,7 @@ void HelloTriangleApplication::initVulkan()
 	createFramebuffers();
 	createCommandPool();
 	createVertexBuffer();
+	createIndexBuffer();
 	createCommandBuffers();
 	createSyncObjects();
 }
