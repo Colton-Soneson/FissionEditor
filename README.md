@@ -16,3 +16,5 @@ https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/layer_configuration.html
 https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/getting_started.html
 
 
+GLSL basic shapes
+https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm

@@ -247,6 +247,83 @@ void HelloTriangleApplication::cleanupSwapChain()
 }
 
 
+void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+	//temp command buffer (can be optimized at some point with VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+	// for this temp crap)
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = mCommandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	//tells the driver we are using CB once and wait with returning 
+																	//	until we are done copying
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion = {};
+
+	//not possible to use VK_WHOLE_SIZE
+	copyRegion.srcOffset = 0;	
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion); //the transfer
+	vkEndCommandBuffer(commandBuffer);	//all we need to do is hold the copy, so i ends here
+
+	//execute buffer to complete transfer
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(mGraphicsQueue);	//we can do the fences thing here instead (come back to if you have time, can do multiple transfers)
+	vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);	//wipe the buffer after the copy over
+
+}
+
+
+void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+{
+	//this function can just be called inside buffer creations
+
+	//since this is a generalized helper function, based upon our parameters we set up this info
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	//create buffer based on the info
+	if (vkCreateBuffer(mDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create buffer");
+	}
+
+	VkMemoryRequirements memReqs;
+	vkGetBufferMemoryRequirements(mDevice, buffer, &memReqs);	//get staging requirements (memory shit)
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memReqs.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, properties);	
+
+	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate buffer memory");
+	}
+
+	vkBindBufferMemory(mDevice, buffer, bufferMemory, 0);	//now we do the binding after memory allocation
+}
+
+
 void HelloTriangleApplication::createCommandBuffers()
 {
 	//has to be the same number as num of swap chain images
@@ -997,6 +1074,17 @@ void HelloTriangleApplication::createSwapChain()
 
 void HelloTriangleApplication::createVertexBuffer() {
 
+	VkDeviceSize bufferSize = sizeof(mVertices[0]) * mVertices.size();
+
+	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+
+	/*
+	//without create buffer for staging
 
 	VkBufferCreateInfo bufferInfo = {};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;	
@@ -1023,14 +1111,25 @@ void HelloTriangleApplication::createVertexBuffer() {
 	}
 
 	vkBindBufferMemory(mDevice, mVertexBuffer, mVertexBufferMemory, 0);
+	*/
 
 	void* data;
 
 	//mapping the buffer memory into CPU accessible memory
-	vkMapMemory(mDevice, mVertexBufferMemory, 0, bufferInfo.size, 0, &data);	//doesnt immdeiately copy into buffer mem
+	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
+	memcpy(data, mVertices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+	vkUnmapMemory(mDevice, stagingBufferMemory);
 
-	memcpy(data, mVertices.data(), (size_t)bufferInfo.size);	//We can do this from the above HOST_COHERENT_BIT
-	vkUnmapMemory(mDevice, mVertexBufferMemory);
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,		
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
+	/*
+		SRC_BIT: Buffer can be used as source in a mem transfer op
+		DST_BIT: Buffer can be used as destination in mem transfer op
+	*/
+
+	copyBuffer(stagingBuffer, mVertexBuffer, bufferSize);	//move vertex data to device local buffer
+	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);		//free out our staging buffer
+	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
 
 
