@@ -3,6 +3,7 @@
 //manual glfw, will automatically load the vulkan.h alongside it
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 //error reporting
 #include <iostream>
@@ -24,7 +25,7 @@
 #include <cstdint>  //needed for UINT32_MAX
 #include <algorithm>	//max and min
 #include <fstream>		//shader loading
-
+#include <array>
 
 //***************//
 //    const      //
@@ -83,8 +84,48 @@ struct SwapChainSupportDetails
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+/*
+	Git is a stupid fucking piece of fucking shit
+	i took extensive fucking notes on this fucking section and they all fucking vanished because
+	git couldnt handle a fucking file over 100 mbs so i had to do a revert on the commit tree to update
+	lfs and then ALL THIS FUCKING SHIT GOT LOST. fuck git. i learned this.
+*/
+struct Vertex {
+	glm::vec2 pos;
+	glm::vec3 color;
 
+	static VkVertexInputBindingDescription getBindingDescription() {
+		VkVertexInputBindingDescription bindingDescription = {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
+		return bindingDescription;
+	}
+
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+		/*
+		float: VK_FORMAT_R32_SFLOAT
+		vec2: VK_FORMAT_R32G32_SFLOAT
+		vec3: VK_FORMAT_R32G32B32_SFLOAT
+		vec4: VK_FORMAT_R32G32B32A32_SFLOAT
+		*/
+
+		attributeDescriptions[1].binding = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+		return attributeDescriptions;
+	}
+};
 
 
 class HelloTriangleApplication {
@@ -192,6 +233,12 @@ private:
 	//for recreateSC and also cutting into regular cleanup
 	void cleanupSwapChain();
 
+	//vertex buffers
+	void createVertexBuffer();
+
+	//gets the type of memory used by GPU
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -206,12 +253,21 @@ private:
 	//resizing (has to be static because GLFW cant call member function with "this" pointer
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
+
+
 	//*********************//
 	//     Member Data     //
 	//*********************//
 
 	//consts
 	const int MAX_FRAMES_IN_FLIGHT = 2;
+
+	
+	const std::vector<Vertex> mVertices = {
+	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	};
 
 	//GLFW
 	GLFWwindow* mpWindow;
@@ -266,6 +322,11 @@ private:
 	std::vector<VkFence> mImagesInFlight;	//to prevent rendering images already in flight
 	size_t mCurrentFrame = 0;	//to keep track of when to use right semaphore
 	bool mFrameBufferResized = false;	//flags when resize of window happens
+
+
+	//vertex buffers
+	VkBuffer mVertexBuffer;
+	VkDeviceMemory mVertexBufferMemory;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

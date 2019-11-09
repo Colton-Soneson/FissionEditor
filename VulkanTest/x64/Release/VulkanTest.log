@@ -1,0 +1,7 @@
+﻿  HelloTriangleApplication.cpp
+  main.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1108 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  VulkanTest.vcxproj -> C:\Users\Account\Desktop\GIT Repos (CSI-EGP)\Personal\Vulkan Testing\VulkanEditor\VulkanTest\x64\Release\VulkanTest.exe

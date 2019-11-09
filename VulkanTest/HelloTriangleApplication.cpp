@@ -132,6 +132,12 @@ void HelloTriangleApplication::cleanup()
 {
 	cleanupSwapChain();
 
+	//we dont need the vertex buffer in memory anymore
+	vkDestroyBuffer(mDevice, mVertexBuffer, nullptr);
+
+	//free out VBM
+	vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
+
 	//semaphore destruction (multiple per pipeline)
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
@@ -292,10 +298,15 @@ void HelloTriangleApplication::createCommandBuffers()
 		//bind to graphics pipeline
 		vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 
+		//custom input from vertex buffers into vertex count
+		VkBuffer vertexBuffers[] = { mVertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
+
 		//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
 		//Parameters:
 		//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
-		vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
+		vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);
 
 		//end the render pass first
 		vkCmdEndRenderPass(mCommandBuffers[i]);
@@ -393,11 +404,14 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
 	//fill this shit later
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	//How we draw vertices from data
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -981,6 +995,45 @@ void HelloTriangleApplication::createSwapChain()
 }
 
 
+void HelloTriangleApplication::createVertexBuffer() {
+
+
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;	
+	bufferInfo.size = sizeof(mVertices[0]) * mVertices.size();	//easy mem byte size 
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;	//purpose for use
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;		//means we cant get this from other queuefamilies
+
+
+	if (vkCreateBuffer(mDevice, &bufferInfo, nullptr, &mVertexBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create vertex buffer");
+	}
+
+	//we have to know what mem type for GPU so this is the setup for that all
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(mDevice, mVertexBuffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &mVertexBufferMemory) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate vertex buffer memory");
+	}
+
+	vkBindBufferMemory(mDevice, mVertexBuffer, mVertexBufferMemory, 0);
+
+	void* data;
+
+	//mapping the buffer memory into CPU accessible memory
+	vkMapMemory(mDevice, mVertexBufferMemory, 0, bufferInfo.size, 0, &data);	//doesnt immdeiately copy into buffer mem
+
+	memcpy(data, mVertices.data(), (size_t)bufferInfo.size);	//We can do this from the above HOST_COHERENT_BIT
+	vkUnmapMemory(mDevice, mVertexBufferMemory);
+}
+
+
 VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -1113,6 +1166,21 @@ void HelloTriangleApplication::drawFrame()
 }
 
 
+uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i)) &&		//means that the Bit we have for thihs type is 1 (good to go)
+			(memProperties.memoryTypes[i].propertyFlags & properties) == properties)	//back when we did the bitwise for HOST_VISIBLE and HOT_COHERENT this is what it was for
+		{
+			return i;
+		}
+	}
+	throw std::runtime_error("failed to find suitable memory type");
+}
+
+
 QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices;
@@ -1204,6 +1272,7 @@ void HelloTriangleApplication::initVulkan()
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
+	createVertexBuffer();
 	createCommandBuffers();
 	createSyncObjects();
 }
