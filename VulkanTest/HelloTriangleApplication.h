@@ -3,7 +3,11 @@
 //manual glfw, will automatically load the vulkan.h alongside it
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+//GLM linear alg stuff
+#define GLM_FORCE_RADIANS	//makes it so shit like rotate uses radians instead of eulerAngles
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
 
 //error reporting
 #include <iostream>
@@ -26,6 +30,7 @@
 #include <algorithm>	//max and min
 #include <fstream>		//shader loading
 #include <array>
+#include <chrono>		//use for time, this can determine math is the same regaurdless of framerate
 
 //***************//
 //    const      //
@@ -125,6 +130,14 @@ struct Vertex {
 
 		return attributeDescriptions;
 	}
+};
+
+struct UniformBufferObject
+{
+	//oh here we go again...
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
 };
 
 
@@ -249,6 +262,15 @@ private:
 	//index buffer (very similar to createVertexBuffer)
 	void createIndexBuffer();
 
+	//Descriptor layout for during pipeline creation
+	void createDescriptorSetLayout();
+
+	//create uniform buffers for MVP or skeletal animation stuff
+	void createUniformBuffers();
+
+	//create uniform buffer 
+	void updateUniformBuffer(uint32_t currentImage);
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -315,6 +337,7 @@ private:
 
 	//final pipeline
 	VkRenderPass mRenderPass;
+	VkDescriptorSetLayout mDescriptorSetLayout;
 	VkPipelineLayout mPipelineLayout;
 	VkPipeline mGraphicsPipeline;
 
@@ -343,6 +366,10 @@ private:
 	VkDeviceMemory mVertexBufferMemory;
 	VkBuffer mIndexBuffer;
 	VkDeviceMemory mIndexBufferMemory;
+
+	//uniform buffers (covers frames in flight)
+	std::vector<VkBuffer> mUniformBuffers;
+	std::vector<VkDeviceMemory> mUniformBuffersMemory;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

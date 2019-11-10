@@ -132,6 +132,8 @@ void HelloTriangleApplication::cleanup()
 {
 	cleanupSwapChain();
 
+	vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
+
 	//index buffer deletion (works same as vertex stuff really)
 	vkDestroyBuffer(mDevice, mIndexBuffer, nullptr);
 	vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
@@ -248,6 +250,12 @@ void HelloTriangleApplication::cleanupSwapChain()
 	}
 
 	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
+
+	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+	{
+		vkDestroyBuffer(mDevice, mUniformBuffers[i], nullptr);
+		vkFreeMemory(mDevice, mUniformBuffersMemory[i], nullptr);
+	}
 }
 
 
@@ -420,6 +428,34 @@ void HelloTriangleApplication::createCommandPool()
 		throw std::runtime_error("failed to create command pool");
 	}
 
+}
+
+
+void HelloTriangleApplication::createDescriptorSetLayout()
+{
+	//provide details about every descriptor binding used in shaders
+
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+	uboLayoutBinding.binding = 0;	
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;	//you can have an array		!!!!!CAN BE USED TO SPECIFY TRANSFORMATIONS FOR EACH OF THE BBONES IN A SKELETON FOR SKELETAL ANIMATION
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;	//can combine with VkShaderStageFlagBits
+	uboLayoutBinding.pImmutableSamplers = nullptr;	//for image sampling realted to descriptors
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mDescriptorSetLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create desccriptor set layout");
+	}
+
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;	
 }
 
 
@@ -1111,6 +1147,23 @@ void HelloTriangleApplication::createSwapChain()
 }
 
 
+void HelloTriangleApplication::createUniformBuffers()
+{
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	mUniformBuffers.resize(mSwapChainImages.size());
+	mUniformBuffersMemory.resize(mSwapChainImages.size());
+
+	//uniform buffers with a new transformation every frame
+	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+	{
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			mUniformBuffers[i], mUniformBuffersMemory[i]);
+	}
+}
+
+
 void HelloTriangleApplication::createVertexBuffer() {
 
 	VkDeviceSize bufferSize = sizeof(mVertices[0]) * mVertices.size();
@@ -1234,6 +1287,10 @@ void HelloTriangleApplication::drawFrame()
 	{
 		throw std::runtime_error("failed to aquire swap chain image");
 	}
+
+	//update our UBOs
+	updateUniformBuffer(imageIndex);
+
 
 	//check if previous frame is using this image
 	if (mImagesInFlight[imageIndex] != VK_NULL_HANDLE)
@@ -1407,11 +1464,13 @@ void HelloTriangleApplication::initVulkan()
 	createSwapChain();
 	createImageViews();
 	createRenderPass();
+	createDescriptorSetLayout();
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
 	createVertexBuffer();
 	createIndexBuffer();
+	createUniformBuffers();
 	createCommandBuffers();
 	createSyncObjects();
 }
@@ -1700,6 +1759,7 @@ void HelloTriangleApplication::recreateSwapChain()
 	createRenderPass();
 	createGraphicsPipeline();
 	createFramebuffers();
+	createUniformBuffers();
 	createCommandBuffers();
 }
 
@@ -1721,4 +1781,25 @@ void HelloTriangleApplication::setupDebugMessenger()
 	}
 
 
+}
+
+
+void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();	//our continuous time from first use
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
+
+	UniformBufferObject ubo = {};
+
+	//MODEL VIEW PROJ MATRIX
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//rotate 90 degrees per second
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
+	ubo.proj = glm::perspective(glm::radians(45.0f), mSwapChainExtent.width / (float)mSwapChainExtent.height, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
+	ubo.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
+
+	void* data;
+	vkMapMemory(mDevice, mUniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(mDevice, mUniformBuffersMemory[currentImage]);
 }
