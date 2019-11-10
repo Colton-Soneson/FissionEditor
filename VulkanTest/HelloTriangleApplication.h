@@ -135,9 +135,9 @@ struct Vertex {
 struct UniformBufferObject
 {
 	//oh here we go again...
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
 };
 
 
@@ -271,6 +271,12 @@ private:
 	//create uniform buffer 
 	void updateUniformBuffer(uint32_t currentImage);
 
+	//we need to allocate from a pool like CBs
+	void createDescriptorPool();
+
+	//allocate descriptor sets
+	void createDescriptorSets();
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -370,6 +376,8 @@ private:
 	//uniform buffers (covers frames in flight)
 	std::vector<VkBuffer> mUniformBuffers;
 	std::vector<VkDeviceMemory> mUniformBuffersMemory;
+	VkDescriptorPool mDescriptorPool;
+	std::vector<VkDescriptorSet> mDescriptorSets;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

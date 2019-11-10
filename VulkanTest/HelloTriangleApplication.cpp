@@ -256,6 +256,8 @@ void HelloTriangleApplication::cleanupSwapChain()
 		vkDestroyBuffer(mDevice, mUniformBuffers[i], nullptr);
 		vkFreeMemory(mDevice, mUniformBuffersMemory[i], nullptr);
 	}
+
+	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 }
 
 
@@ -393,6 +395,11 @@ void HelloTriangleApplication::createCommandBuffers()
 		vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(mCommandBuffers[i], mIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
 
+		//bind right descriptor for each swap chain image
+		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[i], 0, nullptr);
+					//specify bind descriptor to gpu or cpu, layout descriptors are based on, 
+					//index of the first descriptor set, number of sets to bind, array of sets to bind, (last two) specify array of offsets
+				
 
 		//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
 		//Parameters:
@@ -431,16 +438,36 @@ void HelloTriangleApplication::createCommandPool()
 }
 
 
+void HelloTriangleApplication::createDescriptorPool()
+{
+	VkDescriptorPoolSize poolSize = {};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+	
+	//allocate one descriptor every frame
+	VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size());
+	
+	if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create descriptor pool");
+	}
+}
+
+
 void HelloTriangleApplication::createDescriptorSetLayout()
 {
 	//provide details about every descriptor binding used in shaders
 
 	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 	uboLayoutBinding.binding = 0;	
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.descriptorCount = 1;	//you can have an array		!!!!!CAN BE USED TO SPECIFY TRANSFORMATIONS FOR EACH OF THE BBONES IN A SKELETON FOR SKELETAL ANIMATION
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;	//can combine with VkShaderStageFlagBits
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.pImmutableSamplers = nullptr;	//for image sampling realted to descriptors
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;	//can combine with VkShaderStageFlagBits
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -452,10 +479,44 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 		throw std::runtime_error("failed to create desccriptor set layout");
 	}
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;	
+}
+
+
+void HelloTriangleApplication::createDescriptorSets()
+{
+	std::vector<VkDescriptorSetLayout> layouts(mSwapChainImages.size(), mDescriptorSetLayout);
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = mDescriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(mSwapChainImages.size());
+	allocInfo.pSetLayouts = layouts.data();
+
+	mDescriptorSets.resize(mSwapChainImages.size());
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, mDescriptorSets.data()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate descriptor sets");
+	}
+
+	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+	{
+		VkDescriptorBufferInfo bufferInfo = {};
+		bufferInfo.buffer = mUniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
+
+		VkWriteDescriptorSet descriptorWrite = {};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDescriptorSets[i];
+		descriptorWrite.dstBinding = 0;			//UB binding was index 0
+		descriptorWrite.dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;	//how many array elements you want to update
+		descriptorWrite.pImageInfo = nullptr;		//refer to image data
+		descriptorWrite.pTexelBufferView = nullptr;	//refer to buffer views
+		descriptorWrite.pBufferInfo = &bufferInfo;	//for referal to buffer data
+
+		vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
+	}
 }
 
 
@@ -574,8 +635,8 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;		//true, geometry never passes through rasterizer phase (nothing gets to framebuffer)
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;		//(FILL, LINE, or POINT) for entire poly filled, draw wireframe, or draw just points
 	rasterizer.lineWidth = 1.0f;						//thickness defined by number of fragments
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;				//MVP stuff
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;		//MVP stuff (since we did Y-flip, then drawy in counter-clockwise order)
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f;			//opt
 	rasterizer.depthBiasClamp = 0.0f;					//opt
@@ -641,16 +702,15 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-
 	//uniform values for pipeline
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0;
-	pipelineLayoutInfo.pSetLayouts = nullptr;
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;	
 
 	//push constants can pass dynamic values to shaders
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
-	pipelineLayoutInfo.pPushConstantRanges = nullptr;
+	pipelineLayoutInfo.pushConstantRangeCount = 0;			//opt	CHECK THIS 
+	pipelineLayoutInfo.pPushConstantRanges = nullptr;		//opt	CHECK THIS
 
 	if (vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
 	{
@@ -1471,6 +1531,8 @@ void HelloTriangleApplication::initVulkan()
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
+	createDescriptorPool();
+	createDescriptorSets();
 	createCommandBuffers();
 	createSyncObjects();
 }
@@ -1760,6 +1822,8 @@ void HelloTriangleApplication::recreateSwapChain()
 	createGraphicsPipeline();
 	createFramebuffers();
 	createUniformBuffers();
+	createDescriptorPool();
+	createDescriptorSets();
 	createCommandBuffers();
 }
 
