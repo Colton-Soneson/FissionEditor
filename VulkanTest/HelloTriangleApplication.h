@@ -100,6 +100,7 @@ struct SwapChainSupportDetails
 struct Vertex {
 	glm::vec2 pos;
 	glm::vec3 color;
+	glm::vec2 textureCoord;
 
 	static VkVertexInputBindingDescription getBindingDescription() {
 		VkVertexInputBindingDescription bindingDescription = {};
@@ -110,8 +111,8 @@ struct Vertex {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
 
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
@@ -129,6 +130,11 @@ struct Vertex {
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+		attributeDescriptions[2].binding = 0;
+		attributeDescriptions[2].location = 2;
+		attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		attributeDescriptions[2].offset = offsetof(Vertex, textureCoord);
 
 		return attributeDescriptions;
 	}
@@ -312,6 +318,16 @@ private:
 	//called before finishing createTextureImage
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
+	//access through image views rather than directly
+	void createTextureImageView();
+
+	//generalized createImageView function (imageViews/ textureImageViews)
+	VkImageView createImageView(VkImage image, VkFormat format);
+
+	//sampler stuff
+	void createTextureSampler();
+
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -336,10 +352,10 @@ private:
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 	
 	const std::vector<Vertex> mVertices = {
-	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 	};
 
 	//indices for index buffer (uint16_t < 65535 vertices < uint32_t) 
@@ -416,6 +432,8 @@ private:
 	//texture and images
 	VkImage mTextureImage;
 	VkDeviceMemory mTextureImageMemory;
+	VkImageView mTextureImageView;
+	VkSampler mTextureSampler;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

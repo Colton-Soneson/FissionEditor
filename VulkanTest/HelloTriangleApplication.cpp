@@ -161,6 +161,12 @@ void HelloTriangleApplication::cleanup()
 {
 	cleanupSwapChain();
 
+	//sampler destruction
+	vkDestroySampler(mDevice, mTextureSampler, nullptr);
+
+	//destroy texture image views out
+	vkDestroyImageView(mDevice, mTextureImageView, nullptr);
+
 	//this is for textures
 	vkDestroyImage(mDevice, mTextureImage, nullptr);
 	vkFreeMemory(mDevice, mTextureImageMemory, nullptr);
@@ -837,6 +843,30 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFo
 }
 
 
+VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat format)
+{
+	//similar to create image views
+	VkImageViewCreateInfo viewInfo = {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView imageView;
+	if (vkCreateImageView(mDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create texture image view");
+	}
+
+	return imageView;
+}
+
+
 void HelloTriangleApplication::createImageViews()
 {
 	//be able to fit all the image views to be creating (same size as available images)
@@ -844,6 +874,9 @@ void HelloTriangleApplication::createImageViews()
 
 	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
 	{
+		mSwapChainImageViews[i] = createImageView(mSwapChainImages[i], mSwapChainImageFormat);
+
+		/*
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = mSwapChainImages[i];
@@ -872,6 +905,7 @@ void HelloTriangleApplication::createImageViews()
 		{
 			throw std::runtime_error("failed to create image views");
 		}
+		*/
 	}
 }
 
@@ -1039,6 +1073,7 @@ void HelloTriangleApplication::createLogicalDevice()
 	*/
 
 	mDeviceFeatures = {};
+	mDeviceFeatures.samplerAnisotropy = VK_TRUE;	//for AA as optional device feature
 	
 	//from this point on its very similar to VkInstanceCreateInfo but with device shit
 	mDeviceCreateInfo = {};
@@ -1330,6 +1365,53 @@ void HelloTriangleApplication::createTextureImage()
 	//clear up memory
 	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
 	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
+}
+
+
+void HelloTriangleApplication::createTextureImageView()
+{
+	mTextureImageView = createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+
+void HelloTriangleApplication::createTextureSampler()
+{
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+	//specifies how to interpolate texels that are magnified or minified
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+	//texture space coords
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+	//anistrophic filtering
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 16;				//lower value is better performace
+
+	//which color is returned when sampling beyond the image WITH CLAMP TO BORDER ADDRESSING MODE
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;		//true means you use coords of 0 to textureWidth/Height
+														//false means its 0 to 1
+
+	samplerInfo.compareEnable = VK_FALSE;			//true means texels will first be compared to value 
+													//	then the result will be used in filter operation
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+	//mipmapping crapping
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+
+	if (vkCreateSampler(mDevice, &samplerInfo, nullptr, &mTextureSampler) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create texture sampler");
+	}
 }
 
 
@@ -1670,6 +1752,8 @@ void HelloTriangleApplication::initVulkan()
 	createFramebuffers();
 	createCommandPool();
 	createTextureImage();
+	createTextureImageView();
+	createTextureSampler();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -1731,8 +1815,10 @@ bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-	return indices.isComplete() && extensionsSupported && swapChainAdequate;
+	return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 
@@ -1907,8 +1993,13 @@ int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice device)
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 
+
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
 	//if you dont have a geometry shader for this app everything will break
-	if (!deviceFeatures.geometryShader || indices.isComplete() == false || extensionsSupported == false || swapChainAdequate == false)		//LOOK: here is where i added the queue check compliance
+	if (!deviceFeatures.geometryShader || indices.isComplete() == false || extensionsSupported == false 
+			|| swapChainAdequate == false || supportedFeatures.samplerAnisotropy == false)		//LOOK: here is where i added the queue check compliance
 	{
 		return 0;
 	}
