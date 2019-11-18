@@ -16,9 +16,23 @@ https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/layer_configuration.html
 https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/getting_started.html
 https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap14.html#interfaces-resources-layout
 https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkQueueFlagBits.html
+https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronization-access-types-supported
+https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPipelineStageFlagBits.html
+
 
 GLSL Basic Stuff
 https://learnopengl.com/Getting-started/Textures
+https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/varying.php
+https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s06.html
+https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s05.html
+https://www.lighthouse3d.com/tutorials/glsl-tutorial/texture-coordinates/
+https://relativity.net.au/gaming/glsl/Functions.html
+https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FragCoord.xhtml
 
-GLSL basic shapes
+GLSL basic shapes (with RayMarching)
 https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+
+Vulkan to GLSL help
+https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s05.html
+https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s04.html
+https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s06.html

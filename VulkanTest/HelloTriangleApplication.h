@@ -6,8 +6,10 @@
 
 //GLM linear alg stuff
 #define GLM_FORCE_RADIANS	//makes it so shit like rotate uses radians instead of eulerAngles
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES		//This is for solving contiguous memory for you (may have problems with nested stuff)
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
+
 
 //error reporting
 #include <iostream>
@@ -135,9 +137,23 @@ struct Vertex {
 struct UniformBufferObject
 {
 	//oh here we go again...
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 proj;
+	//they say use align as with this stuff because nested for loops can ruin the contiguous mem
+	
+	//alignas(16) glm::mat4 model;
+	//alignas(16) glm::mat4 view;
+	//alignas(16) glm::mat4 proj;
+	
+	//if you GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+
+	//my stuff
+	glm::float32 aspectRatio;
+	glm::float32 screenHeight;
+	glm::float32 screenWidth;
+	glm::float32 time;
+	glm::vec2 uv;
 };
 
 
@@ -277,6 +293,25 @@ private:
 	//allocate descriptor sets
 	void createDescriptorSets();
 
+	//image loading into buffers
+	void createTextureImage();
+
+	//loading buffer into image objects
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+							VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+	//record and execute command buffer again
+	VkCommandBuffer beginSingleTimeCommands();
+
+	//end cb
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+	//layout transitions to finish the vkCmdCopyBufferToImage command
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	
+	//called before finishing createTextureImage
+	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -299,13 +334,12 @@ private:
 
 	//consts
 	const int MAX_FRAMES_IN_FLIGHT = 2;
-
 	
 	const std::vector<Vertex> mVertices = {
 	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
 	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
 	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}	
+	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 	};
 
 	//indices for index buffer (uint16_t < 65535 vertices < uint32_t) 
@@ -378,6 +412,10 @@ private:
 	std::vector<VkDeviceMemory> mUniformBuffersMemory;
 	VkDescriptorPool mDescriptorPool;
 	std::vector<VkDescriptorSet> mDescriptorSets;
+
+	//texture and images
+	VkImage mTextureImage;
+	VkDeviceMemory mTextureImageMemory;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
