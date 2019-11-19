@@ -1,4 +1,4 @@
-#version 440
+#version 450
 
 #define MAX_ITER	100
 #define MAX_DIST	10.0

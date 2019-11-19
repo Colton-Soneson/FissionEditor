@@ -301,21 +301,6 @@ void HelloTriangleApplication::cleanupSwapChain()
 }
 
 
-void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-{
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-	VkBufferCopy copyRegion = {};	//not possible to use VK_WHOLE_SIZE
-	copyRegion.srcOffset = 0;	
-	copyRegion.dstOffset = 0;
-	copyRegion.size = size;
-
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion); //the transfer
-
-	endSingleTimeCommands(commandBuffer);
-}
-
-
 void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
 	//this function can just be called inside buffer creations
@@ -324,7 +309,7 @@ void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlag
 	VkBufferCreateInfo bufferInfo = {};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
-	bufferInfo.usage;
+	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	//create buffer based on the info
@@ -350,6 +335,21 @@ void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlag
 }
 
 
+void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	VkBufferCopy copyRegion = {};	//not possible to use VK_WHOLE_SIZE
+	//copyRegion.srcOffset = 0;	
+	//copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion); //the transfer
+
+	endSingleTimeCommands(commandBuffer);
+}
+
+
 void HelloTriangleApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -365,7 +365,7 @@ void HelloTriangleApplication::copyBufferToImage(VkBuffer buffer, VkImage image,
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	region.imageSubresource.mipLevel = 0;
 	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 0;
+	region.imageSubresource.layerCount = 1;
 
 	region.imageOffset = { 0, 0, 0 };
 	region.imageExtent = { width, height, 1 };	//last one is depth
@@ -480,15 +480,17 @@ void HelloTriangleApplication::createCommandPool()
 
 void HelloTriangleApplication::createDescriptorPool()
 {
-	VkDescriptorPoolSize poolSize = {};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
-	
+	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+
 	//allocate one descriptor every frame
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size());
 	
 	if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
@@ -509,11 +511,20 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 	uboLayoutBinding.pImmutableSamplers = nullptr;	//for image sampling realted to descriptors
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;	//can combine with VkShaderStageFlagBits
 
+	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
-
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
+	
 	if (vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mDescriptorSetLayout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create desccriptor set layout");
@@ -544,18 +555,33 @@ void HelloTriangleApplication::createDescriptorSets()
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = mDescriptorSets[i];
-		descriptorWrite.dstBinding = 0;			//UB binding was index 0
-		descriptorWrite.dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;	//how many array elements you want to update
-		descriptorWrite.pImageInfo = nullptr;		//refer to image data
-		descriptorWrite.pTexelBufferView = nullptr;	//refer to buffer views
-		descriptorWrite.pBufferInfo = &bufferInfo;	//for referal to buffer data
+		VkDescriptorImageInfo imageInfo = {};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = mTextureImageView;
+		imageInfo.sampler = mTextureSampler;
 
-		vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = mDescriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;			//UB binding was index 0
+		descriptorWrites[0].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;	//how many array elements you want to update
+		descriptorWrites[0].pImageInfo = nullptr;		//refer to image data
+		descriptorWrites[0].pTexelBufferView = nullptr;	//refer to buffer views
+		descriptorWrites[0].pBufferInfo = &bufferInfo;	//for referal to buffer data
+
+		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[1].dstSet = mDescriptorSets[i];
+		descriptorWrites[1].dstBinding = 1;			//UB binding was index 0
+		descriptorWrites[1].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorCount = 1;	//how many array elements you want to update
+		descriptorWrites[1].pImageInfo = &imageInfo;		//refer to image data
+
+
+		vkUpdateDescriptorSets(mDevice, static_cast<uint32_t>(descriptorWrites.size()),
+									descriptorWrites.data(), 0, nullptr);
 	}
 }
 
@@ -816,9 +842,9 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFo
 	imageInfo.tiling = tiling;					//LINEAR or OPTIMAL
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageInfo.usage = usage;					//we use it as a destination to transfer (DST) from copy 
-	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	//just by queue family
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;	//multisampling stuff
-	imageInfo.flags = 0;						//optional: sparse images, where only certain regions are actually backed in memory
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	//just by queue family
+	//imageInfo.flags = 0;						//optional: sparse images, where only certain regions are actually backed in memory
 
 	if (vkCreateImage(mDevice, &imageInfo, nullptr, &image) != VK_SUCCESS)
 	{
@@ -832,7 +858,7 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFo
 	VkMemoryAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memReqs.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocInfo.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, properties);
 	
 	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
 	{

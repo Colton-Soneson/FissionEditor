@@ -1,5 +1,4 @@
-#version 440
-#extension GL_ARB_seperate_shader_objects : enable
+#version 450
 
 layout(binding = 1) uniform sampler2D texSampler;
 
