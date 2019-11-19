@@ -7,6 +7,7 @@
 //GLM linear alg stuff
 #define GLM_FORCE_RADIANS	//makes it so shit like rotate uses radians instead of eulerAngles
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES		//This is for solving contiguous memory for you (may have problems with nested stuff)
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE		//depth testing, configure matrix to range of 0 to 1 instead of -1 to 1
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
 
@@ -98,7 +99,7 @@ struct SwapChainSupportDetails
 	lfs and then ALL THIS FUCKING SHIT GOT LOST. fuck git. i learned this.
 */
 struct Vertex {
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 textureCoord;
 
@@ -116,7 +117,7 @@ struct Vertex {
 
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		/*
@@ -342,7 +343,11 @@ private:
 	//resizing (has to be static because GLFW cant call member function with "this" pointer
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
+	//basically we set stuff up with image, memory, and image view
+	void createDepthResource();
 
+	//find support for format of depth testing
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 	//*********************//
 	//     Member Data     //
@@ -352,14 +357,22 @@ private:
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 	
 	const std::vector<Vertex> mVertices = {
-	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+
+	{ {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 	};
 
 	//indices for index buffer (uint16_t < 65535 vertices < uint32_t) 
-	const std::vector<uint32_t> mIndices = { 0, 1, 2, 2, 3, 0 };
+	const std::vector<uint32_t> mIndices = { 
+		0, 1, 2, 2, 3, 0,
+		4, 5, 6, 6, 7, 4
+	};
 
 	//GLFW
 	GLFWwindow* mpWindow;
@@ -434,6 +447,11 @@ private:
 	VkDeviceMemory mTextureImageMemory;
 	VkImageView mTextureImageView;
 	VkSampler mTextureSampler;
+
+	//depth testing
+	VkImage mDepthImage;
+	VkDeviceMemory mDepthImageMemory;
+	VkImageView mDepthImageView;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;

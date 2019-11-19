@@ -478,6 +478,12 @@ void HelloTriangleApplication::createCommandPool()
 }
 
 
+void HelloTriangleApplication::createDepthResource()
+{
+
+}
+
+
 void HelloTriangleApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
@@ -1731,6 +1737,17 @@ QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice 
 }
 
 
+VkFormat HelloTriangleApplication::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+	//support depends on tiling mode and usage
+	for (VkFormat format : candidates)
+	{
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(mPhysicalDevice, format, &props);	//LEFT OFF HERE 11/19/19
+	}
+}
+
+
 void HelloTriangleApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
 	//the pointer provided is provided above this functions call in initWindow, 
@@ -1777,6 +1794,7 @@ void HelloTriangleApplication::initVulkan()
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
+	createDepthResource();
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();

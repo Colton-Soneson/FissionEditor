@@ -20,6 +20,9 @@ https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronizati
 https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPipelineStageFlagBits.html
 
 
+3D models
+https://sketchfab.com/3d-models?date=week&features=downloadable&sort_by=-likeCount
+
 GLSL Basic Stuff
 https://learnopengl.com/Getting-started/Textures
 https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/varying.php
