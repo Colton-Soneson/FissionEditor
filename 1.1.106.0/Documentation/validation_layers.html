@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="images/vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+
+
+<p><a href="https://www.khronos.org/vulkan/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/16b56b2bf6d81f97a94bed0f0a4f89b24a2b8117/68747470733a2f2f76756c6b616e2e6c756e6172672e636f6d2f696d672f56756c6b616e5f31303070785f44656331362e706e67" alt="Khronos Vulkan" title="https://www.khronos.org/vulkan/" data-canonical-src="https://vulkan.lunarg.com/img/Vulkan_100px_Dec16.png" style="max-width:100%;"></a></p>
+<h1>
+<a id="user-content-vulkan-validation-layers" class="anchor" href="#user-content-vulkan-validation-layers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan Validation Layers</h1>
+<p><a href="https://creativecommons.org/licenses/by-nd/4.0/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/769ad34d33c3c36b21baa4c4838b311433fcdcd3/68747470733a2f2f692e6372656174697665636f6d6d6f6e732e6f72672f6c2f62792d6e642f342e302f38387833312e706e67" alt="Creative Commons" title="Creative Commons License" data-canonical-src="https://i.creativecommons.org/l/by-nd/4.0/88x31.png" style="max-width:100%;"></a></p>
+<h2>
+<a id="user-content-validation-layers-included-in-the-sdk" class="anchor" href="#user-content-validation-layers-included-in-the-sdk" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Validation Layers Included in the SDK</h2>
+<p>The Vulkan SDK includes the following validation layers:</p>
+<table>
+<thead>
+<tr>
+<th>Layer Name</th>
+<th>Layer Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./khronos_validation_layer.html"><code>VK_LAYER_KHRONOS_validation</code></a></td>
+<td>validation</td>
+<td>the main, comprehensive Khronos validation layer -- this layer encompasses the entire functionality of the layers listed below, and supercedes them. As the other layers are deprecated this layer should be used for all validation going forward.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="./core_validation_layer.html"><code>VK_LAYER_LUNARG_core_validation</code></a></td>
+<td>validation</td>
+<td>validate the descriptor set, pipeline state, and dynamic state; validate the interfaces between SPIR-V modules and the graphics pipeline; track and validate GPU memory and its binding to objects and command buffers; validate texture formats and render target formats.  Includes <a href="./gpu_validation.html">GPU-Assisted Validation</a> for performing "bind-less" validation checks. <em>This layer has been deprecated.</em>
+</td>
+</tr>
+<tr>
+<td><a href="./object_tracker_layer.html"><code>VK_LAYER_LUNARG_object_tracker</code></a></td>
+<td>validation</td>
+<td>track all Vulkan objects and flag invalid objects and object memory leaks. <em>This layer has been deprecated.</em>
+</td>
+</tr>
+<tr>
+<td><a href="./parameter_validation_layer.html"><code>VK_LAYER_LUNARG_parameter_validation</code></a></td>
+<td>validation</td>
+<td>validate API parameter values. <em>This layer has been deprecated.</em>
+</td>
+</tr>
+<tr>
+<td><a href="./threading_layer.html"><code>VK_LAYER_GOOGLE_threading</code></a></td>
+<td>validation</td>
+<td>check validity of multi-threaded API usage. <em>This layer has been deprecated.</em>
+</td>
+</tr>
+<tr>
+<td><a href="./unique_objects_layer.html"><code>VK_LAYER_GOOGLE_unique_objects</code></a></td>
+<td>utility</td>
+<td>wrap all Vulkan objects in a unique pointer at create time and unwrap them at use time. <em>This layer has been deprecated.</em>
+</td>
+</tr>
+</tbody>
+</table>
+<h2>
+<a id="user-content-vk_layer_lunarg_standard_validation-meta-layer-deprecated" class="anchor" href="#user-content-vk_layer_lunarg_standard_validation-meta-layer-deprecated" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>VK_LAYER_LUNARG_standard_validation meta-layer [Deprecated]</h2>
+<p>To avoid the need to individually specify multiple layers, a built-in meta-layer definition was provided to simplify validation for applications.  Specifying this layer definition loaded the standard set of validation layers. As these layers have been deprecated, so has the meta-layer itself and in the interim it will load only the stand-alone Khronos validation layer.</p>
+<pre><code>     VK_LAYER_LUNARG_standard_validation
+</code></pre>
+<p>Use of the meta-layer is no longer recommended -- please replace references to VK_LAYER_LUNARG_standard_validation with VK_LAYER_KHRONOS_validation</p>
+<p><strong>See the</strong> <a href="./layer_configuration.html">Layers Overview and Configuration</a> <strong>document for more information on how to configure Vulkan validation layers and message logging.</strong></p>
+</article>
+</body>
+</html>

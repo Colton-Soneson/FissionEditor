@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="images/vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+
+
+<p><a href="https://www.khronos.org/vulkan/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/16b56b2bf6d81f97a94bed0f0a4f89b24a2b8117/68747470733a2f2f76756c6b616e2e6c756e6172672e636f6d2f696d672f56756c6b616e5f31303070785f44656331362e706e67" alt="Khronos Vulkan" title="https://www.khronos.org/vulkan/" data-canonical-src="https://vulkan.lunarg.com/img/Vulkan_100px_Dec16.png" style="max-width:100%;"></a></p>
+<h1>
+<a id="user-content-vk_layer_lunarg_object_tracker" class="anchor" href="#user-content-vk_layer_lunarg_object_tracker" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>VK_LAYER_LUNARG_object_tracker</h1>
+<p><a href="https://creativecommons.org/licenses/by-nd/4.0/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/769ad34d33c3c36b21baa4c4838b311433fcdcd3/68747470733a2f2f692e6372656174697665636f6d6d6f6e732e6f72672f6c2f62792d6e642f342e302f38387833312e706e67" alt="Creative Commons" title="Creative Commons License" data-canonical-src="https://i.creativecommons.org/l/by-nd/4.0/88x31.png" style="max-width:100%;"></a></p>
+<p>The <code>VK_LAYER_LUNARG_object_tracker</code> layer tracks all Vulkan objects. Object lifetimes are validated along with issues related to unknown objects and object destruction and cleanup.</p>
+<p>All Vulkan dispatchable and non-dispatchable objects are tracked by the <code>VK_LAYER_LUNARG_object_tracker</code> layer.</p>
+<p>This layer validates that:</p>
+<ul>
+<li>only known objects are referenced and destroyed</li>
+<li>lookups are performed only on objects being tracked</li>
+<li>objects are correctly freed/destroyed.</li>
+</ul>
+<p>The <code>VK_LAYER_LUNARG_object_tracker</code> layer will print errors if validation checks are not correctly met and warnings if improper reference of objects is detected.</p>
+</article>
+</body>
+</html>

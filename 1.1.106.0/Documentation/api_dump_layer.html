@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="images/vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+
+<p><a href="https://www.LunarG.com/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/8284916f56546b1d1a9e4af0c8e308ef3b233e6d/68747470733a2f2f76756c6b616e2e6c756e6172672e636f6d2f696d672f4c756e6172474c6f676f2e706e67" alt="LunarG" title="www.LunarG.com" data-canonical-src="https://vulkan.lunarg.com/img/LunarGLogo.png" style="max-width:100%;"></a></p>
+<p>Copyright © 2015-2019 LunarG, Inc.</p>
+<p><a href="https://creativecommons.org/licenses/by-nd/4.0/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/769ad34d33c3c36b21baa4c4838b311433fcdcd3/68747470733a2f2f692e6372656174697665636f6d6d6f6e732e6f72672f6c2f62792d6e642f342e302f38387833312e706e67" alt="Creative Commons" title="Creative Commons License" data-canonical-src="https://i.creativecommons.org/l/by-nd/4.0/88x31.png" style="max-width:100%;"></a></p>
+<h1>
+<a id="user-content-vk_layer_lunarg_api_dump" class="anchor" href="#user-content-vk_layer_lunarg_api_dump" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>VK_LAYER_LUNARG_api_dump</h1>
+<p>The <code>VK_LAYER_LUNARG_api_dump</code> utility layer prints API calls, parameters,
+and values to the identified output stream.
+It has several settings that can be adjusted by either environment variables
+or by using the <code>vk_layer_settings.txt</code> file.</p>
+<p><br></p>
+<h2>
+<a id="user-content-enabling-the-layer" class="anchor" href="#user-content-enabling-the-layer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Enabling the Layer</h2>
+<h3>
+<a id="user-content-desktop-linuxwindowsmacos" class="anchor" href="#user-content-desktop-linuxwindowsmacos" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Desktop (Linux/Windows/MacOS)</h3>
+<p>You must add the location of the generated <code>VK_LAYER_LUNARG_api.json</code> file and corresponding
+<code>VkLayer_api_dump</code> library to your <code>VK_LAYER_PATH</code> in order for the Vulkan loader to be able
+to find the layer.</p>
+<p>Then, you must also enable the layer in one of two ways:</p>
+<ul>
+<li>Directly in your application using the layer's name during vkCreateInstance</li>
+<li>Indirectly by using the <code>VK_INSTANCE_LAYERS</code> environment variable.</li>
+</ul>
+<h4>
+<a id="user-content-setting-the-vk_layer_path" class="anchor" href="#user-content-setting-the-vk_layer_path" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting the <code>VK_LAYER_PATH</code>
+</h4>
+<p><strong>Windows</strong></p>
+<p>If your source was located in: <code>C:\my_folder\vulkantools</code> and your build folder was build64, then you would add it to the layer path in the following way:</p>
+<pre><code>set VK_LAYER_PATH=C:\my_folder\vulkantools\build64\layersvt\Debug;%VK_LAYER_PATH%
+</code></pre>
+<p><strong>Linux/MacOS</strong></p>
+<p>If your source was located in: <code>/my_folder/vulkantools</code> and your build folder was build, then you would add it to the layer path in the following way:</p>
+<pre><code>export VK_LAYER_PATH=/my_folder/vulkantools/build/layersvt:$VK_LAYER_PATH
+</code></pre>
+<p>Forcing the layer with <code>VK_INSTANCE_LAYERS</code></p>
+<p>To force the layer to be enabled for Vulkan applications, you can set the <code>VK_INSTANCE_LAYERS</code> environment variable in the following way:</p>
+<p><strong>Windows</strong></p>
+<pre><code>set VK_INSTANCE_LAYERS=VK_LAYER_LUNARG_api_dump
+</code></pre>
+<p><strong>Linux/MacOS</strong></p>
+<pre><code>export VK_INSTANCE_LAYERS=VK_LAYER_LUNARG_api_dump
+</code></pre>
+<p><br></p>
+<h3>
+<a id="user-content-android" class="anchor" href="#user-content-android" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Android</h3>
+<h4>
+<a id="user-content-permissions" class="anchor" href="#user-content-permissions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Permissions</h4>
+<p>You may need to grant permissions to your application to write to system storage, even if it normally does not.
+This depends on whether or not you modify API Dump to output to a file or just leave it to output to text.</p>
+<p>If you're building with Android Studio, you do this by:</p>
+<ul>
+<li>Click on "Run" in the menu</li>
+<li>Choose "Edit Configurations..."</li>
+<li>In the dialog box, look for the "Install Flags:" text box</li>
+<li>Enter -g</li>
+<li>Click "Apply"</li>
+</ul>
+<p>If this does not work, you may still require enabling permissions for your application from the settings menu.</p>
+<p>Failure to do so will result in your application crashing during vkCreateInstance since the layer will attempt,
+but fail, to create the capture file.</p>
+<h4>
+<a id="user-content-globally-enabling-the-layer" class="anchor" href="#user-content-globally-enabling-the-layer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Globally Enabling the Layer</h4>
+<p>Use ADB to enable the layer for your project by:</p>
+<pre><code>adb shell "setprop debug.vulkan.layers 'VK_LAYER_LUNARG_api_dump'"
+</code></pre>
+<p>When done, disable the layer using:</p>
+<pre><code>adb shell "setprop debug.vulkan.layers ''"
+</code></pre>
+<p><br></p>
+<h2>
+<a id="user-content-api-dump-options" class="anchor" href="#user-content-api-dump-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API Dump Options</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Environment Variable</th>
+<th>Settings File Value</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enable File Output</td>
+<td>None: Implicitly defined when filename defined</td>
+<td><code>lunarg_api_dump.file</code></td>
+<td>Not Set</td>
+<td>Force output of API Dump layer to be written to a file instead of <code>stdout</code>.</td>
+</tr>
+<tr>
+<td>Output File Name</td>
+<td><code>VK_APIDUMP_LOG_FILENAME</code></td>
+<td><code>lunarg_api_dump.log_filename</code></td>
+<td>stdout</td>
+<td>The name (and path) of the output file to save the generated content to.</td>
+</tr>
+<tr>
+<td>Detailed Output</td>
+<td><code>VK_APIDUMP_DETAILED</code></td>
+<td><code>lunarg_api_dump.detailed</code></td>
+<td>true</td>
+<td>Generate more detailed output of the commands including parameters and values.  If <code>false</code> only output function signature.</td>
+</tr>
+<tr>
+<td>No Addresses/Handles</td>
+<td><code>VK_APIDUMP_NO_ADDR</code></td>
+<td><code>lunarg_api_dump.no_addr</code></td>
+<td>false</td>
+<td>Generate output without addresses or handles (which can vary run to run. Instead use the placeholder value "address".</td>
+</tr>
+<tr>
+<td>Flush After Every Command</td>
+<td><code>VK_APIDUMP_FLUSH</code></td>
+<td><code>lunarg_api_dump.flush</code></td>
+<td>true</td>
+<td>Flush after every API command's output</td>
+</tr>
+<tr>
+<td>Flush After Every Command</td>
+<td><code>VK_APIDUMP_OUTPUT_FORMAT</code></td>
+<td><code>lunarg_api_dump.output_format</code></td>
+<td><code>text</code></td>
+<td>Output the API Dump information as either a plain text file (<code>text</code>) or as an HTML-formated file (<code>html</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3>
+<a id="user-content-settings-priority" class="anchor" href="#user-content-settings-priority" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Settings Priority</h3>
+<p>If you have a setting defined in both the Settings File as well as an Environment
+Variable, the Environment Variable value will <strong>always</strong> override the Settings File
+value.
+This is intended to let you dynamically change settings without having to adjust
+the Settings File.</p>
+<p><br></p>
+<h3>
+<a id="user-content-applying-environment-settings-on-android" class="anchor" href="#user-content-applying-environment-settings-on-android" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Applying Environment Settings on Android</h3>
+<p>On Android, you must use properties to set the environment variables.
+The format of the properties to set takes the following form:</p>
+<pre><code>debug. + (lower-case environment variable with 'vk_' stripped)
+</code></pre>
+<p>The easiest way to set a property is from the ADB shell:</p>
+<pre><code>adb shell "setprop &lt;property_name&gt; '&lt;property_value&gt;'"
+</code></pre>
+<p><strong>For example:</strong></p>
+<p>To set the API Dump output log filename, which on desktop uses <code>VK_APIDUMP_LOG_FILENAME</code>
+set the following property:</p>
+<pre><code>debug.apidump_log_filename
+</code></pre>
+<p>Which you can set in the following way:</p>
+<pre><code>adb shell "setprop debug.apidump_log_filename '/sdcard/Android/vk_apidump.txt'"
+</code></pre>
+<p><br></p>
+<h3>
+<a id="user-content-settings-file-specific-settings" class="anchor" href="#user-content-settings-file-specific-settings" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Settings File Specific Settings</h3>
+<p>At this time, certain settings are only available to be set in the <code>vk_layer_settings.txt</code> file.  These are:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Settings File Value</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Indent Size</td>
+<td><code>lunarg_api_dump.indent_size</code></td>
+<td>4</td>
+<td>Set the indent size for writing out parameters and values for each command.  Only valid for <code>text</code> format and <code>stdout</code> writing.</td>
+</tr>
+<tr>
+<td>Name Size</td>
+<td><code>lunarg_api_dump.name_size</code></td>
+<td>32</td>
+<td>Set the max length to assume for written names.  This is intended to allow cleaner indenting by reserving space for names shorter than this length.  A value of 0 means no additional spacing applied.  Only valid when "Use Spaces" is enabled.</td>
+</tr>
+<tr>
+<td>Show Shader</td>
+<td><code>lunarg_api_dump.show_shader</code></td>
+<td>false</td>
+<td>Output the contents of any shader file loaded.</td>
+</tr>
+<tr>
+<td>Show Types</td>
+<td><code>lunarg_api_dump.show_types</code></td>
+<td>true</td>
+<td>Output the types for each setting.</td>
+</tr>
+<tr>
+<td>Type Size</td>
+<td><code>lunarg_api_dump.type_size</code></td>
+<td>0</td>
+<td>Set the max length to assume for written types.  This is intended to allow cleaner indenting by reserving space for types shorter than this length.  A value of 0 means no additional spacing applied.  Only valid when "Use Spaces" is enabled.</td>
+</tr>
+<tr>
+<td>Use Spaces</td>
+<td><code>lunarg_api_dump.use_spaces</code></td>
+<td>true</td>
+<td>Attempt to use additional white space to produce a cleaner/easier-to-read output.</td>
+</tr>
+</tbody>
+</table>
+</article>
+</body>
+</html>

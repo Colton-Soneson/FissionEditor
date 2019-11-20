@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="images/vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+
+<p><a href="https://www.LunarG.com/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/8284916f56546b1d1a9e4af0c8e308ef3b233e6d/68747470733a2f2f76756c6b616e2e6c756e6172672e636f6d2f696d672f4c756e6172474c6f676f2e706e67" alt="LunarG" title="www.LunarG.com" data-canonical-src="https://vulkan.lunarg.com/img/LunarGLogo.png" style="max-width:100%;"></a></p>
+<p><a href="https://creativecommons.org/licenses/by-nd/4.0/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/769ad34d33c3c36b21baa4c4838b311433fcdcd3/68747470733a2f2f692e6372656174697665636f6d6d6f6e732e6f72672f6c2f62792d6e642f342e302f38387833312e706e67" alt="Creative Commons" title="Creative Commons License" data-canonical-src="https://i.creativecommons.org/l/by-nd/4.0/88x31.png" style="max-width:100%;"></a></p>
+<p>Copyright © 2015-2019 LunarG, Inc.</p>
+<h1>
+<a id="user-content-vk_layer_lunarg_screenshot" class="anchor" href="#user-content-vk_layer_lunarg_screenshot" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>VK_LAYER_LUNARG_screenshot</h1>
+<p>The <code>VK_LAYER_LUNARG_screenshot</code> layer records frames to image files. The environment variable <code>VK_SCREENSHOT_FRAMES</code> can be set to a comma-separated list of frame numbers. When the frames corresponding to these numbers are presented, the screenshot layer will record the image buffer to PPM files in the working directory. For example, if <code>VK_SCREENSHOT_FRAMES</code> is set to "4,8,15,16,23,42", the files created will be: 4.ppm, 8.ppm, 15.ppm, etc.</p>
+<h3>
+<a id="user-content-android" class="anchor" href="#user-content-android" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Android</h3>
+<p>To enable, set a property that contains target frame:</p>
+<pre><code>adb shell setprop debug.vulkan.screenshot &lt;framenumber&gt;
+</code></pre>
+<p>For production builds, be sure your application has access to read and write to external storage by adding the following to AndroidManifest.xml:</p>
+<div class="highlight highlight-text-xml"><pre><span class="pl-c"><span class="pl-c">&lt;!--</span> This allows writing log files to sdcard <span class="pl-c">--&gt;</span></span>
+&lt;<span class="pl-ent">uses-permission</span> <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>android.permission.READ_EXTERNAL_STORAGE<span class="pl-pds">"</span></span>/&gt;
+&lt;<span class="pl-ent">uses-permission</span> <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>android.permission.WRITE_EXTERNAL_STORAGE<span class="pl-pds">"</span></span>/&gt;</pre></div>
+<p>You may also need to grant it access with package manager.  For example, using the
+Vulkan Cube demo from <a href="https://github.com/KhronosGroup/Vulkan-Tools" TARGET="_blank">Khronos/Vulkan-Tools</a>:</p>
+<pre><code>adb shell pm grant com.example.VkCube android.permission.READ_EXTERNAL_STORAGE
+adb shell pm grant com.example.VkCube android.permission.WRITE_EXTERNAL_STORAGE
+</code></pre>
+<p>Result screenshot will be in:</p>
+<pre><code>/sdcard/Android/&lt;framenumber&gt;.ppm
+</code></pre>
+</article>
+</body>
+</html>
