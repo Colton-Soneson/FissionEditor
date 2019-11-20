@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="images/vulkan_lunarg_icon.png">
+<link rel="stylesheet" href="github-markdown.css">
+<style>
+    body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+</style>
+</head>
+<body>
+<article class="markdown-body">
+
+
+<p><a href="https://www.khronos.org/vulkan/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/16b56b2bf6d81f97a94bed0f0a4f89b24a2b8117/68747470733a2f2f76756c6b616e2e6c756e6172672e636f6d2f696d672f56756c6b616e5f31303070785f44656331362e706e67" alt="Khronos Vulkan" title="https://www.khronos.org/vulkan/" data-canonical-src="https://vulkan.lunarg.com/img/Vulkan_100px_Dec16.png" style="max-width:100%;"></a></p>
+<h1>
+<a id="user-content-vulkan-sdk-for-windows-release-notes" class="anchor" href="#user-content-vulkan-sdk-for-windows-release-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan SDK for Windows Release Notes</h1>
+<h2>
+<a id="user-content-vulkan-sdk-111060-release-notes" class="anchor" href="#user-content-vulkan-sdk-111060-release-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vulkan SDK 1.1.106.0 Release Notes</h2>
+<h5>
+<a id="user-content-version-111060-for-windows" class="anchor" href="#user-content-version-111060-for-windows" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Version 1.1.106.0 for Windows</h5>
+<h6>
+<a id="user-content-april-16-2019" class="anchor" href="#user-content-april-16-2019" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>April 16, 2019</h6>
+<p><a href="https://creativecommons.org/licenses/by-nd/4.0/" TARGET="_blank" rel="nofollow"><img src="https://camo.githubusercontent.com/769ad34d33c3c36b21baa4c4838b311433fcdcd3/68747470733a2f2f692e6372656174697665636f6d6d6f6e732e6f72672f6c2f62792d6e642f342e302f38387833312e706e67" alt="Creative Commons" title="Creative Commons License" data-canonical-src="https://i.creativecommons.org/l/by-nd/4.0/88x31.png" style="max-width:100%;"></a></p>
+<p>This SDK supports Vulkan API revision 1.1.106. The prior SDK supported Vulkan API revision 1.1.101.</p>
+<p>Much of the documentation for this SDK is contained in the Getting Started Guide, found in the <code>Documentation</code> directory in this SDK and on the <a href="https://vulkan.lunarg.com" TARGET="_blank" rel="nofollow">Vulkan SDK Download Site</a>.</p>
+<p><strong>Drivers:</strong> It is recommended you update Vulkan-capable hardware drivers to the latest recommended version from the hardware vendor. A list of <a href="#user-content-known-issues">Known Issues</a> appears at the end of this document with more information.</p>
+<h3>
+<a id="user-content-overview-of-new-features-in-sdk-111060" class="anchor" href="#user-content-overview-of-new-features-in-sdk-111060" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview of new features in SDK 1.1.106.0</h3>
+<ul>
+<li>A single, more efficient Khronos Validation layer is replacing five legacy validation layers and the standard_validation meta-layer</li>
+<li>Better handling of implicit layers by <code>vkconfig</code>
+</li>
+<li>Since the release of SDK 1.1.101.0, the following extensions have been added to the Vulkan spec and may be supported by a Vulkan device. To query extensions available to a given physical device, call <code>vkEnumerateDeviceExtensionProperties()</code> or contact the hardware vendor.</li>
+</ul>
+<pre><code>VK_AMD_display_native_hdr
+VK_EXT_full_screen_exclusive
+VK_EXT_host_query_reset
+VK_EXT_metal_surface
+VK_EXT_pipeline_creation_feedback
+VK_EXT_ycbcr_image_arrays
+VK_KHR_surface_protected_capabilities
+VK_NVX_image_view_handle
+</code></pre>
+<ul>
+<li>Bug fixes (see the <a href="#user-content-sdk-components">SDK Components</a> section below)</li>
+<li>Improved validation coverage</li>
+</ul>
+<h3>
+<a id="user-content-khronos-validation-layer--vk_layer_khronos_validation" class="anchor" href="#user-content-khronos-validation-layer--vk_layer_khronos_validation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Khronos Validation Layer:  <code>VK_LAYER_KHRONOS_validation</code>
+</h3>
+<p>This single, configurable layer continues the transition to a unified Khronos Vulkan ecosystem, and will replace the legacy validation layers listed below.
+The improved layer will also reduce platform disparities between desktop and mobile implementations, as well as increasing performance, flexibility, usability
+and maintainability over the long-term.</p>
+<p>Deprecated Validation Layers:</p>
+<ul>
+<li><code>VK_LAYER_GOOGLE_threading</code></li>
+<li><code>VK_LAYER_LUNARG_parameter_validation</code></li>
+<li><code>VK_LAYER_LUNARG_object_tracker</code></li>
+<li><code>VK_LAYER_LUNARG_core_validation</code></li>
+<li><code>VK_LAYER_GOOGLE_unique_objects</code></li>
+<li>
+<code>VK_LAYER_LUNARG_standard_validation</code> (meta-layer)</li>
+</ul>
+<p>These layers will continue to coexist alongside the new Khronos validation layer until they reach their end-of-life in the near future.
+Until that time, all applications should continue to work as before though it is recommended that the transition to the new
+<code>VK_LAYER_KHRONOS_validation</code> layer take place as soon as possible.</p>
+<p>The 'standard validation' meta-layer will now load the new Khronos layer, though it will also reach end-of-life and be removed at a future date.</p>
+<h3>
+<a id="user-content-outside-contributors" class="anchor" href="#user-content-outside-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Outside Contributors</h3>
+<p>LunarG would like to thank the following Vulkan Ecosystem Developers for their contributions to this SDK:</p>
+<ul>
+<li>Andreyogld3d</li>
+<li>asuonpaa</li>
+<li>François Bertel</li>
+<li>Jeff Bolz</li>
+<li>Piers Daniell</li>
+<li>Ricardo Garcia</li>
+<li>Samuel Iglesias Gonsálvez</li>
+<li>JasperNV</li>
+<li>Petr Kraus</li>
+<li>Caio Marcelo de Oliveira Filho</li>
+<li>Asumu Takikawa</li>
+<li>xooi</li>
+<li>Ming Zheng</li>
+</ul>
+<h3>
+<a id="user-content-sdk-components" class="anchor" href="#user-content-sdk-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SDK Components</h3>
+<p>This version of the SDK is based on the following specifications, source code repositories, commits, and issue resolutions:</p>
+<ul>
+<li>
+<a href="https://www.khronos.org/registry/vulkan" TARGET="_blank" rel="nofollow">Vulkan Specification</a> including extensions</li>
+<li>
+<a href="https://www.khronos.org/registry/spir-v/" TARGET="_blank" rel="nofollow">SPIR-V Specification</a> version 1.3</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/glslang/tree/e06c7e9a515b716c731bda13f507546f107775d1" TARGET="_blank">KhronosGroup/glslang</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/SPIRV-Cross/tree/ac5a9570a744eb72725c23c34f36fbc564c0bb51" TARGET="_blank">KhronosGroup/SPIRV-Cross</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-Headers/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-Headers</a>, Version Tag: sdk-1.1.106.0</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-Loader/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-Loader</a>, Version Tag: sdk-1.1.106.0</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-Tools/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-Tools</a>, Version Tag: sdk-1.1.106.0</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-ValidationLayers/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-ValidationLayers</a>, Version Tag: sdk-1.1.106.0</li>
+<li>GitHub Repo: <a href="https://github.com/LunarG/VulkanSamples/tree/sdk-1.1.106" TARGET="_blank">LunarG/VulkanSamples</a>, Version Tag: sdk-1.1.106.0</li>
+<li>GitHub Repo: <a href="https://github.com/LunarG/VulkanTools/tree/sdk-1.1.106" TARGET="_blank">LunarG/VulkanTools</a>, Version Tag: sdk-1.1.106.0</li>
+</ul>
+<h4>
+<a id="user-content-sdk-component-change-and-issue-information" class="anchor" href="#user-content-sdk-component-change-and-issue-information" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SDK Component Change and Issue Information</h4>
+<ul>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-Loader/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-Loader</a>: <a href="https://github.com/KhronosGroup/Vulkan-Loader/issues?utf8=%E2%9C%93&amp;q=is%3Aissue+is%3Aclosed+milestone%3Asdk-1.1.106.0" TARGET="_blank">Fixed Github Issues</a>, <a href="https://github.com/KhronosGroup/Vulkan-Loader/issues" TARGET="_blank">Known Issues</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-Tools/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-Tools</a>: <a href="https://github.com/KhronosGroup/Vulkan-Tools/issues?q=is%3Aissue+is%3Aclosed+closed%3A%3E2018-04-18+milestone%3Asdk-1.1.106.0" TARGET="_blank">Fixed Github Issues</a>, <a href="https://github.com/KhronosGroup/Vulkan-Tools/issues" TARGET="_blank">Known Issues</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/KhronosGroup/Vulkan-ValidationLayers/tree/sdk-1.1.106" TARGET="_blank">KhronosGroup/Vulkan-ValidationLayers</a>: <a href="https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues?q=is%3Aissue+is%3Aclosed+milestone%3Asdk-1.1.106.0" TARGET="_blank">Fixed Github Issues</a>, <a href="https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues" TARGET="_blank">Known Issues</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/LunarG/VulkanSamples/tree/sdk-1.1.106" TARGET="_blank">LunarG/VulkanSamples</a>: <a href="https://github.com/LunarG/VulkanSamples/issues?utf8=%E2%9C%93&amp;q=is%3Aissue+is%3Aclosed+milestone%3Asdk-1.1.106.0" TARGET="_blank">Fixed Github Issues</a>, <a href="https://github.com/LunarG/VulkanSamples/issues" TARGET="_blank">Known Issues</a>
+</li>
+<li>GitHub Repo: <a href="https://github.com/LunarG/VulkanTools/tree/sdk-1.1.106" TARGET="_blank">LunarG/VulkanTools</a>: <a href="https://github.com/LunarG/VulkanTools/issues?utf8=%E2%9C%93&amp;q=is%3Aissue+is%3Aclosed+milestone%3Asdk-1.1.106.0" TARGET="_blank">Fixed Github Issues</a>, <a href="https://github.com/LunarG/VulkanTools/issues" TARGET="_blank">Known Issues</a>
+</li>
+</ul>
+<h3>
+<a id="user-content-developer-notes" class="anchor" href="#user-content-developer-notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Developer Notes</h3>
+<p><em>None</em></p>
+<h3>
+<a id="user-content-known-issues" class="anchor" href="#user-content-known-issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Known Issues</h3>
+<ul>
+<li>There is a bug in older versions of the Intel graphics driver that can cause <code>vkconfig</code> to render incorrectly. If this occurs, update hardware drivers to the latest recommended version from the hardware vendor.</li>
+<li>The Vulkan Info application might not appear in the Start Menu if another version of the SDK is currently installed on the system. This can be corrected by uninstalling all other versions of the SDK.</li>
+</ul>
+</article>
+</body>
+</html>
