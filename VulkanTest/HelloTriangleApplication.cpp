@@ -7,6 +7,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+//not sure if tinyobjloader is the same way that stb is but do this all the same
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 
 VkCommandBuffer HelloTriangleApplication::beginSingleTimeCommands()
 {
@@ -272,6 +276,11 @@ void HelloTriangleApplication::cleanup()
 
 void HelloTriangleApplication::cleanupSwapChain()
 {
+	//depth buffer and image destruction
+	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
+	vkDestroyImage(mDevice, mDepthImage, nullptr);
+	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
+
 	for (size_t i = 0; i < mSwapChainFrameBuffers.size(); ++i)
 	{
 		vkDestroyFramebuffer(mDevice, mSwapChainFrameBuffers[i], nullptr);
@@ -417,11 +426,14 @@ void HelloTriangleApplication::createCommandBuffers()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = mSwapChainExtent;
 
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		//the VK_ATTACHMENT_LOAD_OP_CLEAR requires use of clearVals
+		std::array<VkClearValue, 2> clearValues = {};
+		clearValues[0] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };	//1.0 is far view plane 0.0 is at near view plane
 
 		//these two define use for VK_ATTACHMENT_LOAD_OP_CLEAR (load op for color attachment)
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
 
 		//take into account renderpass and stuff it in a CB (choice of secondary or primary)
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -480,7 +492,18 @@ void HelloTriangleApplication::createCommandPool()
 
 void HelloTriangleApplication::createDepthResource()
 {
+	VkFormat depthFormat = findDepthFormat();
 
+	//use standard helper functions for create image and image view but use the new formatting for
+	//	 depth into account
+	createImage(mSwapChainExtent.width, mSwapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mDepthImage, mDepthImageMemory);
+
+	mDepthImageView = createImageView(mDepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	//explicit transition of depth image (but this is just handled in render pass 
+	//	dont have to do this process)
+	//transitionImageLayout(mDepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
 
@@ -601,14 +624,15 @@ void HelloTriangleApplication::createFramebuffers()
 	//iterate and create from copy
 	for (size_t i = 0; i < mSwapChainImageViews.size(); ++i)
 	{
-		VkImageView attachments[] = { mSwapChainImageViews[i] };
+					//depth image can be the same for all IVs because only a single subpass runs at a time
+		std::array<VkImageView, 2> attachments = { mSwapChainImageViews[i], mDepthImageView };
 
 		//that sort of "copy" over
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = mRenderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = mSwapChainExtent.width;
 		framebufferInfo.height = mSwapChainExtent.height;
 		framebufferInfo.layers = 1;
@@ -725,7 +749,18 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	multisampling.alphaToCoverageEnable = VK_FALSE; //opt
 	multisampling.alphaToOneEnable = VK_FALSE;		//opt
 
-	//DEPTH STENCIL TESTING ALSO DONE IN HERE
+	//use the depth testing attachment
+	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;		//should depth of new frags be compared to depth buffer
+	depthStencil.depthWriteEnable = VK_TRUE;	//new depth of frags should be allowed to go through (good for transparency)
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;	//comparison performed to keep or discard frags (LESS is lowerDepth = closer)
+	depthStencil.depthBoundsTestEnable = VK_FALSE;		//this is for restricting fragments within specific depth range (backface culling???)
+	depthStencil.minDepthBounds = 0.0f;			
+	depthStencil.maxDepthBounds = 1.0f;
+	depthStencil.stencilTestEnable = VK_FALSE;	//allows for operations for the buffer
+	depthStencil.front = {};
+	depthStencil.back = {}; 
 
 	//color blending
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
@@ -801,7 +836,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr;
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = nullptr;
 
@@ -875,7 +910,7 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFo
 }
 
 
-VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat format)
+VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
 {
 	//similar to create image views
 	VkImageViewCreateInfo viewInfo = {};
@@ -883,7 +918,7 @@ VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat fo
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -906,7 +941,7 @@ void HelloTriangleApplication::createImageViews()
 
 	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
 	{
-		mSwapChainImageViews[i] = createImageView(mSwapChainImages[i], mSwapChainImageFormat);
+		mSwapChainImageViews[i] = createImageView(mSwapChainImages[i], mSwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 
 		/*
 		VkImageViewCreateInfo imageViewCreateInfo = {};
@@ -1157,36 +1192,42 @@ void HelloTriangleApplication::createRenderPass()
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;		//means we dont care about previous layout
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;	//we want it to be ready for presentation after rendering
 
+	//for depth testing the image
+	VkAttachmentDescription depthAttachment = {};
+	depthAttachment.format = findDepthFormat();		//same as the depth image
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;	//it doesnt matter what previous data was
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 	//subpass p1: referrencing attachments in framebuffer and optimizing them
+	
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;		//which attachment to reference in atachment descriptiion array
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	//which layout we would like to have during subpass
 																				//this means we get color performance
+	
+	VkAttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+
 	//subpass p2
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	//GPU subpasses instead of CPU
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;	//single depth (+stencil) attachment (we just depth test on one buffer not multiple)
 			//pInputAttachments, pResolveAttachments, pDepthStencilAttachment, and pPreserveAttachments all also possible
 
-	//renderpass
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;	//would be a list if we had more I imagine
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-
-	if (vkCreateRenderPass(mDevice, &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create render pass");
-	}
-
-	//subpass dependencies for subpass use
+		//subpass dependencies for subpass use
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;	//implicit subpass defined before or render render pass decided by index below
 	dependency.dstSubpass = 0;						//refers to our subpass, first and only one in this case
-	
+
 	//ops to wait on stages in which they occur
 	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.srcAccessMask = 0;
@@ -1195,8 +1236,23 @@ void HelloTriangleApplication::createRenderPass()
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+
+	//renderpass
+	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();	
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
+
+
+	if (vkCreateRenderPass(mDevice, &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create render pass");
+	}
 }
 
 
@@ -1356,7 +1412,7 @@ void HelloTriangleApplication::createTextureImage()
 	int textureWidth, textureHeight, textureChannels;
 
 	//take file path and number of channels to load as args
-	stbi_uc* pixels = stbi_load("../textures/VulkanICO.jpg",
+	stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(),
 					&textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
 	
 	//we use 4 because there are 4 bytes per pixel
@@ -1402,7 +1458,7 @@ void HelloTriangleApplication::createTextureImage()
 
 void HelloTriangleApplication::createTextureImageView()
 {
-	mTextureImageView = createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM);
+	mTextureImageView = createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 
@@ -1677,6 +1733,15 @@ void HelloTriangleApplication::endSingleTimeCommands(VkCommandBuffer commandBuff
 }
 
 
+VkFormat HelloTriangleApplication::findDepthFormat()
+{
+	return findSupportedFormat(
+		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+		VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+	);
+}
+
+
 uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
@@ -1744,7 +1809,21 @@ VkFormat HelloTriangleApplication::findSupportedFormat(const std::vector<VkForma
 	{
 		VkFormatProperties props;
 		vkGetPhysicalDeviceFormatProperties(mPhysicalDevice, format, &props);	//LEFT OFF HERE 11/19/19
+	
+		//use cases supported with linear tiling
+		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+		{
+			return format;
+		}
+
+		//uses cases supported with optimal tiling
+		else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+		{
+			return format;
+		}
 	}
+
+	throw std::runtime_error("failed to find supported format"); //either do this or return special value
 }
 
 
@@ -1780,6 +1859,12 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 }
 
 
+bool HelloTriangleApplication::hasStencilComponent(VkFormat format)
+{
+	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+
 void HelloTriangleApplication::initVulkan()
 {
 	createInstance();
@@ -1792,12 +1877,13 @@ void HelloTriangleApplication::initVulkan()
 	createRenderPass();
 	createDescriptorSetLayout();
 	createGraphicsPipeline();
+	createDepthResource();
 	createFramebuffers();
 	createCommandPool();
-	createDepthResource();
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();
+	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -1863,6 +1949,48 @@ bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
 	return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+}
+
+
+void HelloTriangleApplication::loadModel()
+{
+	tinyobj::attrib_t attrib;	//this holds vertices, normals, and texcoord vectors
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+	{
+		throw std::runtime_error(warn + err);
+	}
+	
+	//combine all faces in file into a single model (triangulation)
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			//using out predefined vertex struct
+			Vertex vertex = {};
+
+			vertex.pos = {
+				attrib.vertices[3 * index.vertex_index + 0],	//its stored as array of floats so we 
+				attrib.vertices[3 * index.vertex_index + 1],	// need to multiply the index by 3 to compensate
+				attrib.vertices[3 * index.vertex_index + 2]		//	for glm::vec3. Offsets 0, 1, and 2 = x, y, and z
+			};
+
+			vertex.textureCoord = {
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				1.0f - attrib.texcoords[2 * index.texcoord_index + 1] //had to flip for vert component
+			};
+
+			vertex.color = { 1.0f, 1.0f, 1.0f };
+
+			mVertices.push_back(vertex);
+			//mIndices.push_back(mIndices.size());		//this was what the tutorial had, i put a limiter on it
+			mIndices.push_back(mIndices.size());
+		}
+	}
+	
 }
 
 
@@ -2097,6 +2225,7 @@ void HelloTriangleApplication::recreateSwapChain()
 	createImageViews();
 	createRenderPass();
 	createGraphicsPipeline();
+	createDepthResource();
 	createFramebuffers();
 	createUniformBuffers();
 	createDescriptorPool();
@@ -2204,12 +2333,14 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	ubo.screenWidth = (float)mSwapChainExtent.width;
 	ubo.time = time;
 
-	
 
 	//MODEL VIEW PROJ MATRIX
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
-	ubo.proj = glm::perspective(glm::radians(45.0f), ubo.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+	//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+	//ubo.model = glm::rotate(ubo.model, time * glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	
+	ubo.view = glm::lookAt(glm::vec3(-2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
+	ubo.proj = glm::perspective(glm::radians(50.0f), ubo.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
 	ubo.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
 
 

@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
 
 
+
 //error reporting
 #include <iostream>
 #include <stdexcept>
@@ -41,7 +42,6 @@
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-
 
 //validation layers set up
 const std::vector<const char*> validationLayers = {
@@ -323,11 +323,25 @@ private:
 	void createTextureImageView();
 
 	//generalized createImageView function (imageViews/ textureImageViews)
-	VkImageView createImageView(VkImage image, VkFormat format);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 	//sampler stuff
 	void createTextureSampler();
 
+	//basically we set stuff up with image, memory, and image view
+	void createDepthResource();
+
+	//find support for format of depth testing
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
+	//select format with depth component that supporst usage as depth attachment
+	VkFormat findDepthFormat();
+
+	//if chosen depth has stencil component return true
+	bool hasStencilComponent(VkFormat format);
+
+	//model loading
+	void loadModel();
 
 	//----------------------//
 	//		static stuff	//
@@ -343,11 +357,6 @@ private:
 	//resizing (has to be static because GLFW cant call member function with "this" pointer
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-	//basically we set stuff up with image, memory, and image view
-	void createDepthResource();
-
-	//find support for format of depth testing
-	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 	//*********************//
 	//     Member Data     //
@@ -356,6 +365,18 @@ private:
 	//consts
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 	
+	//model paths
+	//const std::string MODEL_PATH = "../models/lulamerga.OBJ";
+	//const std::string TEXTURE_PATH = "../textures/internal_ground_ao_texture.jpeg";
+	const std::string MODEL_PATH = "../models/chalet.obj";
+	const std::string TEXTURE_PATH = "../textures/chalet.jpg";
+
+	//AUTOMATED VERTICES AND INDICES
+	std::vector<Vertex> mVertices;
+	std::vector<uint32_t> mIndices;
+
+	//MANUAL VERTICES AND INDICES CREATION
+	/*
 	const std::vector<Vertex> mVertices = {
 	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
 	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
@@ -373,6 +394,7 @@ private:
 		0, 1, 2, 2, 3, 0,
 		4, 5, 6, 6, 7, 4
 	};
+	*/
 
 	//GLFW
 	GLFWwindow* mpWindow;
