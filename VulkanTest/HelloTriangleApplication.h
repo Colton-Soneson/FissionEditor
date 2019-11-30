@@ -322,7 +322,7 @@ private:
 	void createTextureImage();
 
 	//loading buffer into image objects
-	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
+	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
 							VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
 	//record and execute command buffer again
@@ -363,6 +363,12 @@ private:
 
 	//mipmap generation, uses a mem barrier and CB
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t textureWidth, int32_t textureHeight, uint32_t mipLevels);
+
+	//be able to check how high we can go on antialiasing/ multisampling
+	VkSampleCountFlagBits getMaxUsableSampleCount();
+
+	//multisampled color buffer
+	void createColorResources();
 
 	//----------------------//
 	//		static stuff	//
@@ -496,6 +502,12 @@ private:
 	VkImage mDepthImage;
 	VkDeviceMemory mDepthImageMemory;
 	VkImageView mDepthImageView;
+
+	//msaa
+	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	VkImage mColorImage;		//this is to store desired samples per pixel
+	VkDeviceMemory mColorImageMemory;
+	VkImageView mColorImageView;
 
 	//Debugging
 	VkDebugUtilsMessengerEXT mDebugMessenger;
