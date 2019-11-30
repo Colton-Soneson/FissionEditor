@@ -8,9 +8,10 @@
 #define GLM_FORCE_RADIANS	//makes it so shit like rotate uses radians instead of eulerAngles
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES		//This is for solving contiguous memory for you (may have problems with nested stuff)
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE		//depth testing, configure matrix to range of 0 to 1 instead of -1 to 1
+#define GLM_ENABLE_EXPERIMENTAL			//to use with hash functions
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
-
+#include <glm/gtx/hash.hpp>
 
 
 //error reporting
@@ -35,6 +36,8 @@
 #include <fstream>		//shader loading
 #include <array>
 #include <chrono>		//use for time, this can determine math is the same regaurdless of framerate
+#include <unordered_map>	//use for vertex duplication on 3d models
+
 
 //***************//
 //    const      //
@@ -139,7 +142,22 @@ struct Vertex {
 
 		return attributeDescriptions;
 	}
+
+	//use for unordered map, loading models (equality test and hash calculation)
+	bool operator==(const Vertex& rhs) const {
+		return pos == rhs.pos && color == rhs.color && textureCoord == rhs.textureCoord;
+	}
 };
+
+//this is a hash function that combines fields of a struct (in this case vertex) to create 
+namespace std {
+	template<> struct hash<Vertex> {
+		size_t operator()(Vertex const& vertex) const {
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+				(hash<glm::vec2>()(vertex.textureCoord) << 1);
+		}
+	};
+}
 
 struct UniformBufferObject
 {
@@ -304,7 +322,7 @@ private:
 	void createTextureImage();
 
 	//loading buffer into image objects
-	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
 							VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
 	//record and execute command buffer again
@@ -314,7 +332,7 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 	//layout transitions to finish the vkCmdCopyBufferToImage command
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	
 	//called before finishing createTextureImage
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
@@ -323,7 +341,7 @@ private:
 	void createTextureImageView();
 
 	//generalized createImageView function (imageViews/ textureImageViews)
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
 	//sampler stuff
 	void createTextureSampler();
@@ -342,6 +360,9 @@ private:
 
 	//model loading
 	void loadModel();
+
+	//mipmap generation, uses a mem barrier and CB
+	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t textureWidth, int32_t textureHeight, uint32_t mipLevels);
 
 	//----------------------//
 	//		static stuff	//
@@ -464,7 +485,8 @@ private:
 	VkDescriptorPool mDescriptorPool;
 	std::vector<VkDescriptorSet> mDescriptorSets;
 
-	//texture and images
+	//texture and images (including miplevels)
+	uint32_t mMipLevels;
 	VkImage mTextureImage;
 	VkDeviceMemory mTextureImageMemory;
 	VkImageView mTextureImageView;
