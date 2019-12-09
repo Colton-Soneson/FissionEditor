@@ -677,12 +677,16 @@ void HelloTriangleApplication::createFramebuffers()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
-	auto vertShaderCode = readFile("../shaders/vert.spv");
-	auto fragShaderCode = readFile("../shaders/frag.spv");
+	VkShaderModule vertShaderModule;
+	VkShaderModule fragShaderModule;
+
+	auto vertShaderCode = readFile(objects[0].msVertShaderPath);
+	auto fragShaderCode = readFile(objects[0].msFragShaderPath);
 
 	//create the modules (same way for both vetex and frag)
-	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+	vertShaderModule = createShaderModule(vertShaderCode);
+	fragShaderModule = createShaderModule(fragShaderCode);
+	
 
 	//vertex shader graphics pipeline object fill
 	//	sType here describes which pipeline stage we are on
@@ -704,6 +708,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 
 	//array to contain them
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
 
 	//formatting the vertex data
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -889,9 +894,11 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	}
 
 	//MAKE SURE THIS IS LAST
+	
+	
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(mDevice, vertShaderModule, nullptr);
-
+	
 }
 
 
@@ -2532,13 +2539,38 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
-	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
-	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));	
+	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f));	
+	objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));	
+	objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));	
+	
+	//objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//objects[2].msUBO.model = glm::rotate(objects[3].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	//just ambient
+	objects[0].msUBO.ambientStrength = 1.0;
+	objects[0].msUBO.diffuseStrength = 0.0;
+	objects[0].msUBO.specularStrength = 0.0;
+
+	//just diffuse
+	objects[1].msUBO.ambientStrength = 0.0;
+	objects[1].msUBO.diffuseStrength = 1.0;
+	objects[1].msUBO.specularStrength = 0.0;
+
+	//just specular
+	objects[2].msUBO.ambientStrength = 0.0;
+	objects[2].msUBO.diffuseStrength = 0.0;
+	objects[2].msUBO.specularStrength = 0.7;
+
+	//all of them
+	objects[3].msUBO.ambientStrength = 0.5;
+	objects[3].msUBO.diffuseStrength = 1.0;
+	objects[3].msUBO.specularStrength = 0.7;
 
 	for (auto& object : objects)
 	{
-		object.msUBO.lightSource = glm::vec3(3.2f, 3.0f, 2.0f);
-		object.msUBO.eyePos = glm::vec3(0.0f, 2.0f, 4.0f);
+		object.msUBO.lightSource = glm::vec3(0.0f, 4.0f, 6.0f);
+		object.msUBO.eyePos = glm::vec3(0.0f, 4.0f, 6.0f);
 		//my shit
 		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
 		object.msUBO.screenHeight = (float)mSwapChainExtent.height;

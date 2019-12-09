@@ -185,6 +185,11 @@ struct UniformBufferObject
 	glm::float32 time;
 	glm::vec3 lightSource;
 	glm::vec3 eyePos;
+
+	//lighting
+	glm::float32 ambientStrength;
+	glm::float32 diffuseStrength;
+	glm::float32 specularStrength;
 };
 
 struct sourced3D
@@ -201,8 +206,12 @@ struct sourced3D
 	VkImageView msTextureImageView;
 	VkSampler msTextureSampler;
 
-	std::string msModelPath = "../models/chalet2.obj";;
-	std::string msTexturePath = "../textures/chalet.jpg";;
+	std::string msModelPath = "../models/chalet2.obj";
+	std::string msTexturePath = "../textures/chalet.jpg";
+
+	std::string msVertShaderPath = "../shaders/vert.spv";
+	std::string msFragShaderPath = "../shaders/frag.spv";
+	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
 };
 
 
@@ -227,9 +236,11 @@ public:
 		std::vector<uint32_t> msIndices;
 	} models;
 
-	std::array<sourced3D, 2> objects;
+	std::array<sourced3D, 4> objects;
 
 private:
+	
+
 	//we need initWindow because GLFW stock is OpenGL and we need to tell
 	//it not to do that
 	void initWindow();
