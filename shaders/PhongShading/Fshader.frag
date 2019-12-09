@@ -28,7 +28,7 @@ void main()
 	vec3 lightDir = normalize(inLightSource - fragPos);	//distance between light source position and the actual spot on the object
 
 	//ambient lighting
-	float ambientStength = 0.5;
+	float ambientStength = 0.1;
 	vec4 ambient = vec4(ambientStength * lightColor, 1.0); 
 
 	//diffuse lighting

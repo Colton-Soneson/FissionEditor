@@ -34,6 +34,11 @@ https://learnopengl.com/Advanced-Lighting/Advanced-Lighting
 https://cglearn.codelight.eu/pub/computer-graphics/shading-and-lighting
 https://learnopengl.com/Advanced-Lighting/Bloom
 https://learnopengl.com/Advanced-Lighting/Deferred-Shading
+https://www.youtube.com/watch?v=tddgluBdjcQ
+http://aicdg.com/common-shading-algorithms/
+http://www.bentonian.com/Lectures/AdvGraph1314/7.%20OpenGL%20and%20shaders%202.pdf
+https://www.shadertoy.com/view/Ws3XRj
+https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FrontFacing.xhtml
 
 GLSL/ OpenGL Basic Stuff
 https://learnopengl.com/Getting-started/Textures

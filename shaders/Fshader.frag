@@ -24,11 +24,21 @@ void main()
 	//	we can also change color of the light
 	
 	vec3 lightColor = vec3(1.0, 1.0, 1.0);
+	vec4 sceneColor = vec4(0.0,0.0,0.0,1.0); //ambient color of the scene
+	float diffuseCool = 0.3;
+	float diffuseWarm = 0.3;
+
+	//these two act as the range from cool to warm
+	vec3 cool = vec3(0.0, 0.0, 0.5);	
+	vec3 warm = vec3(0.5, 0.0, 0.0);
+
+
 	vec3 norm = normalize(inNormal);	//normalized normal vector
 	vec3 lightDir = normalize(inLightSource - fragPos);	//distance between light source position and the actual spot on the object
 
+
 	//ambient lighting
-	float ambientStength = 0.5;
+	float ambientStength = 0.1;
 	vec4 ambient = vec4(ambientStength * lightColor, 1.0); 
 
 	//diffuse lighting
@@ -43,14 +53,18 @@ void main()
 	vec3 reflectDir = reflect(-lightDir, norm);		//lD is negative because its pointing FROM light source, in current state it points towards it
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), shine);	// positive dot product raised to the power of shine
 	vec4 specular = vec4(specularStrength * spec * lightColor, 1.0);
-//	vec4 specular = vec4(0.0);
-//	if(dot(inEyePos, norm) < 0.0)
-//	{
-//		specular = vec4(specularStrength * spec * lightColor, 1.0);
-//	}
 	specular = clamp(specular, 0.0, 1.0);
 
-	//outColor = (ambient + diffuse) * texture(texSampler, fragTextureCoord) + specular;	
-	vec4 sceneColor = vec4(0.0,0.0,0.0,1.0); //ambient color of the scene
-	outColor = texture(texSampler, fragTextureCoord) * (vec4(0.0,0.0,0.0,1.0) + ambient + diffuse + specular);	
+	//gooch shading
+	//-------------------
+	cool = min(cool + diffuseCool * texture(texSampler, fragTextureCoord).xyz, 1.0);
+	warm = min(warm + diffuseWarm * texture(texSampler, fragTextureCoord).xyz, 1.0);
+	float NdotL = (dot(lightDir, norm) + 1.0) * 0.5;
+	vec3 final = mix(cool, warm, NdotL);
+
+	outColor = vec4(min(final + spec, 1.0), 1.0);
+
+
+
+
 }

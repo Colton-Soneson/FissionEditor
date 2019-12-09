@@ -2509,7 +2509,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
 	UniformBufferObject ubo = {};
-	ubo.lightSource = glm::vec3(1.2f, 1.0f, 2.0f);
+	ubo.lightSource = glm::vec3(3.2f, 3.0f, 2.0f);
 	ubo.eyePos = glm::vec3(-2.0f, 2.0f, 2.0f);
 	//my shit
 	ubo.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;

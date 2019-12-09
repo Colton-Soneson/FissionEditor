@@ -39,7 +39,7 @@ void main()
 	fragPos = vec3(ubo.view * ubo.model * vec4(inPosition, 1.0));	//actual fragments position
 	
 	//normal matrix ( to go from model space to world space)
-	mat3 normalMatrix = mat3(transpose(inverse(ubo.model)));
+	mat3 normalMatrix = mat3(transpose(inverse(ubo.view * ubo.model)));
 	outNormal = normalMatrix * inNormal;
 
 	//light pos
