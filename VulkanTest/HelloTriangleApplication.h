@@ -102,9 +102,10 @@ struct SwapChainSupportDetails
 	lfs and then ALL THIS FUCKING SHIT GOT LOST. fuck git. i learned this.
 */
 struct Vertex {
-	glm::vec3 pos;
+	glm::vec3 pos;				//v (xyz)
 	glm::vec3 color;
-	glm::vec2 textureCoord;
+	glm::vec2 textureCoord;		//vt (uv)
+	glm::vec3 normal;			//vn s
 
 	static VkVertexInputBindingDescription getBindingDescription() {
 		VkVertexInputBindingDescription bindingDescription = {};
@@ -115,8 +116,8 @@ struct Vertex {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
+	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
@@ -139,6 +140,11 @@ struct Vertex {
 		attributeDescriptions[2].location = 2;
 		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 		attributeDescriptions[2].offset = offsetof(Vertex, textureCoord);
+
+		attributeDescriptions[3].binding = 0;
+		attributeDescriptions[3].location = 3;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[3].offset = offsetof(Vertex, normal);
 
 		return attributeDescriptions;
 	}
@@ -178,7 +184,8 @@ struct UniformBufferObject
 	glm::float32 screenHeight;
 	glm::float32 screenWidth;
 	glm::float32 time;
-	glm::vec2 uv;
+	glm::vec3 lightSource;
+	glm::vec3 eyePos;
 };
 
 
@@ -395,7 +402,7 @@ private:
 	//model paths
 	//const std::string MODEL_PATH = "../models/lulamerga.OBJ";
 	//const std::string TEXTURE_PATH = "../textures/internal_ground_ao_texture.jpeg";
-	const std::string MODEL_PATH = "../models/chalet.obj";
+	const std::string MODEL_PATH = "../models/chalet2.obj";
 	const std::string TEXTURE_PATH = "../textures/chalet.jpg";
 
 	//AUTOMATED VERTICES AND INDICES

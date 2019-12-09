@@ -2138,7 +2138,8 @@ void HelloTriangleApplication::loadModel()
 			//using out predefined vertex struct
 			Vertex vertex = {};
 
-			vertex.pos = {
+			
+				vertex.pos = {
 				attrib.vertices[3 * index.vertex_index + 0],	//its stored as array of floats so we 
 				attrib.vertices[3 * index.vertex_index + 1],	// need to multiply the index by 3 to compensate
 				attrib.vertices[3 * index.vertex_index + 2]		//	for glm::vec3. Offsets 0, 1, and 2 = x, y, and z
@@ -2147,6 +2148,12 @@ void HelloTriangleApplication::loadModel()
 			vertex.textureCoord = {
 				attrib.texcoords[2 * index.texcoord_index + 0],
 				1.0f - attrib.texcoords[2 * index.texcoord_index + 1] //had to flip for vert component
+			};
+
+			vertex.normal = {
+				attrib.normals[3 * index.normal_index + 0],
+				attrib.normals[3 * index.normal_index + 1],
+				attrib.normals[3 * index.normal_index + 2]
 			};
 
 			vertex.color = { 1.0f, 1.0f, 1.0f };
@@ -2502,7 +2509,8 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
 	UniformBufferObject ubo = {};
-
+	ubo.lightSource = glm::vec3(1.2f, 1.0f, 2.0f);
+	ubo.eyePos = glm::vec3(-2.0f, 2.0f, 2.0f);
 	//my shit
 	ubo.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
 	ubo.screenHeight = (float)mSwapChainExtent.height;
@@ -2515,7 +2523,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
 	//ubo.model = glm::rotate(ubo.model, time * glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	
-	ubo.view = glm::lookAt(glm::vec3(-2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
+	ubo.view = glm::lookAt(ubo.eyePos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
 	ubo.proj = glm::perspective(glm::radians(50.0f), ubo.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
 	ubo.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
 
