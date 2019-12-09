@@ -165,29 +165,31 @@ void HelloTriangleApplication::cleanup()
 {
 	cleanupSwapChain();
 
-	//sampler destruction
-	vkDestroySampler(mDevice, mTextureSampler, nullptr);
+	for (auto& object : objects)
+	{
+		//sampler destruction
+		vkDestroySampler(mDevice, object.msTextureSampler, nullptr);
 
-	//destroy texture image views out
-	vkDestroyImageView(mDevice, mTextureImageView, nullptr);
+		//destroy texture image views out
+		vkDestroyImageView(mDevice, object.msTextureImageView, nullptr);
 
-	//this is for textures
-	vkDestroyImage(mDevice, mTextureImage, nullptr);
-	vkFreeMemory(mDevice, mTextureImageMemory, nullptr);
+		//this is for textures
+		vkDestroyImage(mDevice, object.msTextureImage, nullptr);
+		vkFreeMemory(mDevice, object.msTextureImageMemory, nullptr);
+	}
 
-	//descriptor destruction
-	vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
+		//descriptor destruction
+		vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
 
-	//index buffer deletion (works same as vertex stuff really)
-	vkDestroyBuffer(mDevice, mIndexBuffer, nullptr);
-	vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
+		//index buffer deletion (works same as vertex stuff really)s
+		vkDestroyBuffer(mDevice, models.msIndexBuffer, nullptr);
+		vkFreeMemory(mDevice, models.msIndexBufferMemory, nullptr);
 
-	//we dont need the vertex buffer in memory anymore
-	vkDestroyBuffer(mDevice, mVertexBuffer, nullptr);
+		//we dont need the vertex buffer in memory anymore
+		vkDestroyBuffer(mDevice, models.msVertexBuffer, nullptr);
 
-	//free out VBM
-	vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
-
+		//free out VBM
+		vkFreeMemory(mDevice, models.msVertexBufferMemory, nullptr);
 	//semaphore destruction (multiple per pipeline)
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
@@ -304,11 +306,14 @@ void HelloTriangleApplication::cleanupSwapChain()
 	}
 
 	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
-
-	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+	
+	for (auto& object : objects)
 	{
-		vkDestroyBuffer(mDevice, mUniformBuffers[i], nullptr);
-		vkFreeMemory(mDevice, mUniformBuffersMemory[i], nullptr);
+		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+		{
+			vkDestroyBuffer(mDevice, object.msUniformBuffers[i], nullptr);
+			vkFreeMemory(mDevice, object.msUniformBuffersMemory[i], nullptr);
+		}
 	}
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
@@ -421,71 +426,74 @@ void HelloTriangleApplication::createCommandBuffers()
 	}
 
 	//begin recording commands buffers
-	for (size_t i = 0; i < mCommandBuffers.size(); ++i)
-	{
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0;
-		beginInfo.pInheritanceInfo = nullptr;	//only relavant for secondary CBs
 
-		if (vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo) != VK_SUCCESS)
+		for (size_t i = 0; i < mCommandBuffers.size(); ++i)
 		{
-			throw std::runtime_error("failed to begin recording command buffer");
+			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = 0;
+			beginInfo.pInheritanceInfo = nullptr;	//only relavant for secondary CBs
+
+			if (vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to begin recording command buffer");
+			}
+
+			//start the render pass
+			VkRenderPassBeginInfo renderPassInfo = {};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = mRenderPass;
+			renderPassInfo.framebuffer = mSwapChainFrameBuffers[i];
+
+			//define render area (everything not in this range will be undefined)
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = mSwapChainExtent;
+
+			//the VK_ATTACHMENT_LOAD_OP_CLEAR requires use of clearVals
+			std::array<VkClearValue, 2> clearValues = {};
+			clearValues[0] = { 0.0f, 0.0f, 0.0f, 1.0f };
+			clearValues[1].depthStencil = { 1.0f, 0 };	//1.0 is far view plane 0.0 is at near view plane
+
+			//these two define use for VK_ATTACHMENT_LOAD_OP_CLEAR (load op for color attachment)
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
+
+			//take into account renderpass and stuff it in a CB (choice of secondary or primary)
+			vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			//bind to graphics pipeline
+			vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
+
+			//custom input from vertex buffers into vertex count
+			VkBuffer vertexBuffers[] = { models.msVertexBuffer };
+			VkDeviceSize offsets[1] = { 0 };
+			vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(mCommandBuffers[i], models.msIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
+
+			for (auto object : objects)
+			{
+				//bind right descriptor for each swap chain image
+				vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &(object.msDescriptorSets[i]), 0, nullptr);
+				//specify bind descriptor to gpu or cpu, layout descriptors are based on, 
+				//index of the first descriptor set, number of sets to bind, array of sets to bind, (last two) specify array of offsets
+
+
+				//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
+				//Parameters:
+				//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
+				//vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);	//this is without IBs
+				vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(models.msIndices.size()), 1, 0, 0, 0);
+			}
+			//end the render pass first
+			vkCmdEndRenderPass(mCommandBuffers[i]);
+
+			if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to record command buffer");
+			}
 		}
 
-		//start the render pass
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = mRenderPass;
-		renderPassInfo.framebuffer = mSwapChainFrameBuffers[i];
-
-		//define render area (everything not in this range will be undefined)
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = mSwapChainExtent;
-
-		//the VK_ATTACHMENT_LOAD_OP_CLEAR requires use of clearVals
-		std::array<VkClearValue, 2> clearValues = {};
-		clearValues[0] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearValues[1].depthStencil = { 1.0f, 0 };	//1.0 is far view plane 0.0 is at near view plane
-
-		//these two define use for VK_ATTACHMENT_LOAD_OP_CLEAR (load op for color attachment)
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
-
-		//take into account renderpass and stuff it in a CB (choice of secondary or primary)
-		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		//bind to graphics pipeline
-		vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
-
-		//custom input from vertex buffers into vertex count
-		VkBuffer vertexBuffers[] = { mVertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(mCommandBuffers[i], mIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
-
-		//bind right descriptor for each swap chain image
-		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[i], 0, nullptr);
-					//specify bind descriptor to gpu or cpu, layout descriptors are based on, 
-					//index of the first descriptor set, number of sets to bind, array of sets to bind, (last two) specify array of offsets
-				
-
-		//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
-		//Parameters:
-		//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
-		//vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);	//this is without IBs
-		vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(mIndices.size()), 1, 0, 0, 0);
-
-		//end the render pass first
-		vkCmdEndRenderPass(mCommandBuffers[i]);
-
-		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to record command buffer");
-		}
-	}
-
-
+	
 }
 
 
@@ -528,16 +536,16 @@ void HelloTriangleApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
 
 	//allocate one descriptor every frame
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size());
+	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
 	
 	if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{
@@ -581,53 +589,56 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 
 void HelloTriangleApplication::createDescriptorSets()
 {
-	std::vector<VkDescriptorSetLayout> layouts(mSwapChainImages.size(), mDescriptorSetLayout);
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = mDescriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(mSwapChainImages.size());
-	allocInfo.pSetLayouts = layouts.data();
-
-	mDescriptorSets.resize(mSwapChainImages.size());
-	if (vkAllocateDescriptorSets(mDevice, &allocInfo, mDescriptorSets.data()) != VK_SUCCESS)
+	for (auto& object : objects)
 	{
-		throw std::runtime_error("failed to allocate descriptor sets");
-	}
+		std::vector<VkDescriptorSetLayout> layouts(mSwapChainImages.size(), mDescriptorSetLayout);
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = mDescriptorPool;
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(mSwapChainImages.size());
+		allocInfo.pSetLayouts = layouts.data();
 
-	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
-	{
-		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = mUniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
+		object.msDescriptorSets.resize(mSwapChainImages.size());
+		
+		if (vkAllocateDescriptorSets(mDevice, &allocInfo, object.msDescriptorSets.data()) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to allocate descriptor sets");
+		}
 
-		VkDescriptorImageInfo imageInfo = {};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = mTextureImageView;
-		imageInfo.sampler = mTextureSampler;
+		for (size_t i = 0; i < mSwapChainImages.size(); i++)
+		{
+			VkDescriptorBufferInfo bufferInfo = {};
+			bufferInfo.buffer = object.msUniformBuffers[i];
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformBufferObject);
 
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = mDescriptorSets[i];
-		descriptorWrites[0].dstBinding = 0;			//UB binding was index 0
-		descriptorWrites[0].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;	//how many array elements you want to update
-		descriptorWrites[0].pImageInfo = nullptr;		//refer to image data
-		descriptorWrites[0].pTexelBufferView = nullptr;	//refer to buffer views
-		descriptorWrites[0].pBufferInfo = &bufferInfo;	//for referal to buffer data
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = object.msTextureImageView;
+			imageInfo.sampler = object.msTextureSampler;
 
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = mDescriptorSets[i];
-		descriptorWrites[1].dstBinding = 1;			//UB binding was index 0
-		descriptorWrites[1].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;	//how many array elements you want to update
-		descriptorWrites[1].pImageInfo = &imageInfo;		//refer to image data
+			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[0].dstSet = object.msDescriptorSets[i];
+			descriptorWrites[0].dstBinding = 0;			//UB binding was index 0
+			descriptorWrites[0].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[0].descriptorCount = 1;	//how many array elements you want to update
+			descriptorWrites[0].pImageInfo = nullptr;		//refer to image data
+			descriptorWrites[0].pTexelBufferView = nullptr;	//refer to buffer views
+			descriptorWrites[0].pBufferInfo = &bufferInfo;	//for referal to buffer data
+
+			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[1].dstSet = object.msDescriptorSets[i];
+			descriptorWrites[1].dstBinding = 1;			//UB binding was index 0
+			descriptorWrites[1].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorCount = 1;	//how many array elements you want to update
+			descriptorWrites[1].pImageInfo = &imageInfo;		//refer to image data
 
 
-		vkUpdateDescriptorSets(mDevice, static_cast<uint32_t>(descriptorWrites.size()),
-									descriptorWrites.data(), 0, nullptr);
+			vkUpdateDescriptorSets(mDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
 	}
 }
 
@@ -996,7 +1007,8 @@ void HelloTriangleApplication::createImageViews()
 
 void HelloTriangleApplication::createIndexBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(mIndices[0]) * mIndices.size();
+
+	VkDeviceSize bufferSize = sizeof(models.msIndices[0]) * models.msIndices.size();
 
 	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
 	VkBuffer stagingBuffer;
@@ -1010,17 +1022,17 @@ void HelloTriangleApplication::createIndexBuffer()
 
 	//mapping the buffer memory into CPU accessible memory
 	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
-	memcpy(data, mIndices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+	memcpy(data, models.msIndices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
 	vkUnmapMemory(mDevice, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, models.msIndexBuffer, models.msIndexBufferMemory);
 	/*
 		SRC_BIT: Buffer can be used as source in a mem transfer op
 		DST_BIT: Buffer can be used as destination in mem transfer op
 	*/
 
-	copyBuffer(stagingBuffer, mIndexBuffer, bufferSize);	//move vertex data to device local buffer
+	copyBuffer(stagingBuffer, models.msIndexBuffer, bufferSize);	//move vertex data to device local buffer
 	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);		//free out our staging buffer
 	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
@@ -1444,63 +1456,69 @@ void HelloTriangleApplication::createSwapChain()
 
 void HelloTriangleApplication::createTextureImage()
 {
-	int textureWidth, textureHeight, textureChannels;
+	for (auto& object : objects)
+	{
+		int textureWidth, textureHeight, textureChannels;
 
-	//take file path and number of channels to load as args
-	stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(),
-					&textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
-	
-	//we use 4 because there are 4 bytes per pixel
-	VkDeviceSize imageSize = textureWidth * textureHeight * 4;
+		//take file path and number of channels to load as args
+		stbi_uc* pixels = stbi_load(object.msTexturePath.c_str(),
+			&textureWidth, &textureHeight, &textureChannels, STBI_rgb_alpha);
 
-	//mip level division (explained in notes) but obvious
-	mMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(textureWidth, textureHeight)))) + 1;
+		//we use 4 because there are 4 bytes per pixel
+		VkDeviceSize imageSize = textureWidth * textureHeight * 4;
 
-	if (!pixels) { throw std::runtime_error("failed to load texture image"); };
+		//mip level division (explained in notes) but obvious
+		object.msMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(textureWidth, textureHeight)))) + 1;
 
-	//create buffer in host visible memory to use vkMapMem to copy on the pixels
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+		if (!pixels) { throw std::runtime_error("failed to load texture image"); };
 
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					stagingBuffer, stagingBufferMemory);
+		//create buffer in host visible memory to use vkMapMem to copy on the pixels
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
 
-	//copy those pixel values to the buffer
-	void* data;
-	vkMapMemory(mDevice, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(mDevice, stagingBufferMemory);
+		createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			stagingBuffer, stagingBufferMemory);
 
-	//free up the pixel array
-	stbi_image_free(pixels);
+		//copy those pixel values to the buffer
+		void* data;
+		vkMapMemory(mDevice, stagingBufferMemory, 0, imageSize, 0, &data);
+		memcpy(data, pixels, static_cast<size_t>(imageSize));
+		vkUnmapMemory(mDevice, stagingBufferMemory);
 
-	//mipmapping VkCmdBlit transfer op needs SRC and DST here
-	createImage(textureWidth, textureHeight, mMipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		mTextureImage, mTextureImageMemory);
+		//free up the pixel array
+		stbi_image_free(pixels);
 
-	//we need to transition the texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-	//		then execute the buffer to image copy operation
-	transitionImageLayout(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-								VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mMipLevels);
-	copyBufferToImage(stagingBuffer, mTextureImage, static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
-	
-	//VK_IMAGE_LAYOUT_UNDEFINED image will be considered the "old layout" here
-	/*
-	transitionImageLayout(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-								VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mMipLevels);
-	*/
-	//clear up memory
-	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
-	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
+		//mipmapping VkCmdBlit transfer op needs SRC and DST here
+		createImage(textureWidth, textureHeight, object.msMipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			object.msTextureImage, object.msTextureImageMemory);
 
-	generateMipmaps(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, textureWidth, textureHeight, mMipLevels);
+		//we need to transition the texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		//		then execute the buffer to image copy operation
+		transitionImageLayout(object.msTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, object.msMipLevels);
+		copyBufferToImage(stagingBuffer, object.msTextureImage, static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
+
+		//VK_IMAGE_LAYOUT_UNDEFINED image will be considered the "old layout" here
+		/*
+		transitionImageLayout(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+									VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mMipLevels);
+		*/
+		//clear up memory
+		vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
+		vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
+
+		generateMipmaps(object.msTextureImage, VK_FORMAT_R8G8B8A8_UNORM, textureWidth, textureHeight, object.msMipLevels);
+	}
 }
 
 
 void HelloTriangleApplication::createTextureImageView()
 {
-	mTextureImageView = createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mMipLevels);
+	for (auto& object : objects)
+	{
+		object.msTextureImageView = createImageView(object.msTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, object.msMipLevels);
+	}
 }
 
 
@@ -1534,14 +1552,17 @@ void HelloTriangleApplication::createTextureSampler()
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	//MIP MAPS ADJUST HERE
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.minLod = 0.0f;				//change values here with static_cast<float>(mipLevels / k); where k is a real number
-	samplerInfo.maxLod = static_cast<float>(mMipLevels);
-	samplerInfo.mipLodBias = 0.0f;
-
-	if (vkCreateSampler(mDevice, &samplerInfo, nullptr, &mTextureSampler) != VK_SUCCESS)
+	for (auto& object : objects)
 	{
-		throw std::runtime_error("failed to create texture sampler");
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.minLod = 0.0f;				//change values here with static_cast<float>(mipLevels / k); where k is a real number
+		samplerInfo.maxLod = static_cast<float>(object.msMipLevels);
+		samplerInfo.mipLodBias = 0.0f;
+
+		if (vkCreateSampler(mDevice, &samplerInfo, nullptr, &object.msTextureSampler) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create texture sampler");
+		}
 	}
 }
 
@@ -1549,23 +1570,26 @@ void HelloTriangleApplication::createTextureSampler()
 void HelloTriangleApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	mUniformBuffers.resize(mSwapChainImages.size());
-	mUniformBuffersMemory.resize(mSwapChainImages.size());
-
 	//uniform buffers with a new transformation every frame
-	for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+	for (auto& object : objects)
 	{
-		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			mUniformBuffers[i], mUniformBuffersMemory[i]);
+		object.msUniformBuffers.resize(mSwapChainImages.size());
+		object.msUniformBuffersMemory.resize(mSwapChainImages.size());
+
+	
+		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+		{
+			createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				object.msUniformBuffers[i], object.msUniformBuffersMemory[i]);
+		}
 	}
 }
 
 
 void HelloTriangleApplication::createVertexBuffer() {
 
-	VkDeviceSize bufferSize = sizeof(mVertices[0]) * mVertices.size();
+	VkDeviceSize bufferSize = sizeof(models.msVertices[0]) * models.msVertices.size();
 
 	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
 	VkBuffer stagingBuffer;
@@ -1608,17 +1632,17 @@ void HelloTriangleApplication::createVertexBuffer() {
 
 	//mapping the buffer memory into CPU accessible memory
 	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
-	memcpy(data, mVertices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+	memcpy(data, models.msVertices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
 	vkUnmapMemory(mDevice, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,		
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, models.msVertexBuffer, models.msVertexBufferMemory);
 	/*
 		SRC_BIT: Buffer can be used as source in a mem transfer op
 		DST_BIT: Buffer can be used as destination in mem transfer op
 	*/
 
-	copyBuffer(stagingBuffer, mVertexBuffer, bufferSize);	//move vertex data to device local buffer
+	copyBuffer(stagingBuffer, models.msVertexBuffer, bufferSize);	//move vertex data to device local buffer
 	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);		//free out our staging buffer
 	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
@@ -2162,12 +2186,12 @@ void HelloTriangleApplication::loadModel()
 			//	check if we have already seen same pos (== is overloaded in Vertex)
 			if (uniqueVertices.count(vertex) == 0)
 			{
-				uniqueVertices[vertex] = static_cast<uint32_t>(mVertices.size());
-				mVertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(models.msVertices.size());
+				models.msVertices.push_back(vertex);
 			}
 
 			//only push back non repeated vertices
-			mIndices.push_back(uniqueVertices[vertex]);
+			models.msIndices.push_back(uniqueVertices[vertex]);
 		}
 	}
 	
@@ -2508,28 +2532,33 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
-	UniformBufferObject ubo = {};
-	ubo.lightSource = glm::vec3(3.2f, 3.0f, 2.0f);
-	ubo.eyePos = glm::vec3(-2.0f, 2.0f, 2.0f);
-	//my shit
-	ubo.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
-	ubo.screenHeight = (float)mSwapChainExtent.height;
-	ubo.screenWidth = (float)mSwapChainExtent.width;
-	ubo.time = time;
+	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+
+	for (auto& object : objects)
+	{
+		object.msUBO.lightSource = glm::vec3(3.2f, 3.0f, 2.0f);
+		object.msUBO.eyePos = glm::vec3(0.0f, 2.0f, 4.0f);
+		//my shit
+		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
+		object.msUBO.screenHeight = (float)mSwapChainExtent.height;
+		object.msUBO.screenWidth = (float)mSwapChainExtent.width;
+		object.msUBO.time = time;
 
 
-	//MODEL VIEW PROJ MATRIX
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
-	//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
-	//ubo.model = glm::rotate(ubo.model, time * glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	
-	ubo.view = glm::lookAt(ubo.eyePos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
-	ubo.proj = glm::perspective(glm::radians(50.0f), ubo.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
-	ubo.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
+		//MODEL VIEW PROJ MATRIX
+		//object.msUBO.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+		//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));	//rotate 0 degrees (multiply the radians bit by time and you can do some crazy shit)
+		//ubo.model = glm::rotate(ubo.model, time * glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		object.msUBO.view = glm::lookAt(object.msUBO.eyePos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
+		object.msUBO.proj = glm::perspective(glm::radians(50.0f), object.msUBO.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
+		object.msUBO.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
 
 
-	void* data;
-	vkMapMemory(mDevice, mUniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(mDevice, mUniformBuffersMemory[currentImage]);
+		void* data;
+		vkMapMemory(mDevice, object.msUniformBuffersMemory[currentImage], 0, sizeof(object.msUBO), 0, &data);
+		memcpy(data, &object.msUBO, sizeof(object.msUBO));
+		vkUnmapMemory(mDevice, object.msUniformBuffersMemory[currentImage]);
+	}
 }

@@ -13,7 +13,6 @@
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
 #include <glm/gtx/hash.hpp>
 
-
 //error reporting
 #include <iostream>
 #include <stdexcept>
@@ -169,11 +168,11 @@ struct UniformBufferObject
 {
 	//oh here we go again...
 	//they say use align as with this stuff because nested for loops can ruin the contiguous mem
-	
+
 	//alignas(16) glm::mat4 model;
 	//alignas(16) glm::mat4 view;
 	//alignas(16) glm::mat4 proj;
-	
+
 	//if you GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 	glm::mat4 model;
 	glm::mat4 view;
@@ -188,6 +187,25 @@ struct UniformBufferObject
 	glm::vec3 eyePos;
 };
 
+struct sourced3D
+{
+	UniformBufferObject msUBO = {};
+
+	std::vector<VkDescriptorSet> msDescriptorSets;
+
+	std::vector<VkBuffer> msUniformBuffers;
+	std::vector<VkDeviceMemory> msUniformBuffersMemory;
+	uint32_t msMipLevels;
+	VkImage msTextureImage;
+	VkDeviceMemory msTextureImageMemory;
+	VkImageView msTextureImageView;
+	VkSampler msTextureSampler;
+
+	std::string msModelPath = "../models/chalet2.obj";;
+	std::string msTexturePath = "../textures/chalet.jpg";;
+};
+
+
 
 class HelloTriangleApplication {
 public:
@@ -197,6 +215,19 @@ public:
 		mainLoop();
 		cleanup();
 	}
+
+
+	struct modelDatas
+	{
+		VkBuffer msVertexBuffer;
+		VkDeviceMemory msVertexBufferMemory;
+		VkBuffer msIndexBuffer;
+		VkDeviceMemory msIndexBufferMemory;
+		std::vector<Vertex> msVertices;
+		std::vector<uint32_t> msIndices;
+	} models;
+
+	std::array<sourced3D, 2> objects;
 
 private:
 	//we need initWindow because GLFW stock is OpenGL and we need to tell
@@ -487,23 +518,23 @@ private:
 
 
 	//vertex buffers
-	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
-	VkBuffer mIndexBuffer;
-	VkDeviceMemory mIndexBufferMemory;
+	//VkBuffer mVertexBuffer;
+	//VkDeviceMemory mVertexBufferMemory;
+	//VkBuffer mIndexBuffer;
+	//VkDeviceMemory mIndexBufferMemory;
 
 	//uniform buffers (covers frames in flight)
-	std::vector<VkBuffer> mUniformBuffers;
-	std::vector<VkDeviceMemory> mUniformBuffersMemory;
+	//std::vector<VkBuffer> mUniformBuffers;
+	//std::vector<VkDeviceMemory> mUniformBuffersMemory;
 	VkDescriptorPool mDescriptorPool;
-	std::vector<VkDescriptorSet> mDescriptorSets;
+	//std::vector<VkDescriptorSet> mDescriptorSets;
 
 	//texture and images (including miplevels)
-	uint32_t mMipLevels;
-	VkImage mTextureImage;
-	VkDeviceMemory mTextureImageMemory;
-	VkImageView mTextureImageView;
-	VkSampler mTextureSampler;
+	//uint32_t mMipLevels;
+	//VkImage mTextureImage;
+	//VkDeviceMemory mTextureImageMemory;
+	//VkImageView mTextureImageView;
+	//VkSampler mTextureSampler;
 
 	//depth testing
 	VkImage mDepthImage;
