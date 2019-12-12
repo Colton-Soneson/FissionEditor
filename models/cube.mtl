@@ -1,24 +1,12 @@
-newmtl white
-Ka 0 0 0
-Kd 1 1 1
-Ks 0 0 0
+# Blender MTL File: 'None'
+# Material Count: 1
 
-newmtl red
-Ka 0 0 0
-Kd 1 0 0
-Ks 0 0 0
-
-newmtl green
-Ka 0 0 0
-Kd 0 1 0
-Ks 0 0 0
-
-newmtl blue
-Ka 0 0 0
-Kd 0 0 1
-Ks 0 0 0
-
-newmtl light
-Ka 20 20 20
-Kd 1 1 1
-Ks 0 0 0
+newmtl Material
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2

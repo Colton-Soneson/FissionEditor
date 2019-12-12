@@ -1,4 +1,4 @@
-#version 450
+#version 440
 
 layout(binding = 0) uniform UniformBufferObject {
 	mat4 model;
@@ -13,6 +13,7 @@ layout(binding = 0) uniform UniformBufferObject {
 	float ambientStrength;
 	float diffuseStrength;
 	float specularStrength;
+	mat4 lightSpaceMatrix;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;
@@ -39,6 +40,7 @@ layout(location = 11) out float outAmbientStrength;
 layout(location = 12) out float outDiffuseStrength;
 layout(location = 13) out float outSpecularStrength;
 
+layout(location = 14) out vec4 fragPosLightSpace;
 
 
 void main() 
@@ -47,16 +49,21 @@ void main()
 	outAmbientStrength = ubo.ambientStrength;
 	outDiffuseStrength = ubo.diffuseStrength;
 	outSpecularStrength = ubo.specularStrength;
-
-	fragTextureCoord = inTextureCoord;	
-	fragPos = vec3(ubo.model * vec4(inPosition, 1.0));	//actual fragments position
 	
-	//normal matrix ( to go from model space to world space)
-	mat3 normalMatrix = mat3(transpose(inverse(ubo.model)));
-	outNormal = normalMatrix * inNormal;
+	fragTextureCoord = inTextureCoord;	
 
+	fragPos = vec3((ubo.view * ubo.model) * vec4(inPosition, 1.0));	//actual fragments position
+	
+	fragPosLightSpace = ubo.lightSpaceMatrix * vec4(fragPos, 1.0);
+
+	//normal matrix ( to go from model space to world space)
+	//mat3 normalMatrix = mat3(transpose(inverse(ubo.model))); 
+	mat3 normalMatrix = mat3(ubo.view * ubo.model); 
+	outNormal = normalMatrix * inNormal;
+	//outNormal = inNormal;
 	//light pos
 	outLightSource = ubo.lightSource;
+	//outLightSource = ubo.lightSource;
 
 	//view pos
 	outEyePos = ubo.eyePos;

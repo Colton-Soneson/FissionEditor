@@ -10,6 +10,9 @@ layout(binding = 0) uniform UniformBufferObject {
 	float time;
 	vec3 lightSource;
 	vec3 eyePos;
+	float ambientStrength;
+	float diffuseStrength;
+	float specularStrength;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;
@@ -30,6 +33,8 @@ layout(location = 8) out vec3 outEyePos;
 
 layout(location = 9) out vec3 N;    
 layout(location = 10) out vec3 v;	
+
+
 
 
 

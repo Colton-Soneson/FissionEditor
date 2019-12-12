@@ -39,6 +39,9 @@ http://aicdg.com/common-shading-algorithms/
 http://www.bentonian.com/Lectures/AdvGraph1314/7.%20OpenGL%20and%20shaders%202.pdf
 https://www.shadertoy.com/view/Ws3XRj
 https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FrontFacing.xhtml
+https://stackoverflow.com/questions/39115328/vertex-and-fragment-shaders-for-lighting-effect-in-opengl-es20
+https://partlyshaderly.com/2019/02/08/the-programming-behind-cel-shading/
+
 
 GLSL/ OpenGL Basic Stuff
 https://learnopengl.com/Getting-started/Textures
@@ -49,6 +52,7 @@ https://www.lighthouse3d.com/tutorials/glsl-tutorial/texture-coordinates/
 https://relativity.net.au/gaming/glsl/Functions.html
 https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FragCoord.xhtml
 https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php
+
 
 GLSL basic shapes (with RayMarching)
 https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm

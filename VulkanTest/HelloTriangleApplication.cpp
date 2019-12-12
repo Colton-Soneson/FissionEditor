@@ -481,7 +481,6 @@ void HelloTriangleApplication::createCommandBuffers()
 				//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
 				//Parameters:
 				//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
-				//vkCmdDraw(mCommandBuffers[i], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);	//this is without IBs
 				vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(models.msIndices.size()), 1, 0, 0, 0);
 			}
 			//end the render pass first
@@ -531,6 +530,45 @@ void HelloTriangleApplication::createDepthResource()
 	//transitionImageLayout(mDepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
+void HelloTriangleApplication::createDepthSampler()
+{
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+	//linear works for shadowmaps
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+	//texture space coords
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+	//anistrophic filtering
+	samplerInfo.maxAnisotropy = 1.0f;		
+
+	//which color is returned when sampling beyond the image WITH CLAMP TO BORDER ADDRESSING MODE
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;		//true means you use coords of 0 to textureWidth/Height
+														//false means its 0 to 1
+
+	samplerInfo.compareEnable = VK_FALSE;			//true means texels will first be compared to value 
+													//	then the result will be used in filter operation
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 1.0f;
+	samplerInfo.mipLodBias = 0.0f;
+
+	if (vkCreateSampler(mDevice, &samplerInfo, nullptr, &mDepthImageSampler) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create shadowmap sampler");
+	}
+	
+}
 
 void HelloTriangleApplication::createDescriptorPool()
 {
@@ -617,6 +655,11 @@ void HelloTriangleApplication::createDescriptorSets()
 			imageInfo.imageView = object.msTextureImageView;
 			imageInfo.sampler = object.msTextureSampler;
 
+	/*		VkDescriptorImageInfo depthImageInfo = {};
+			depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+			depthImageInfo.imageView = mDepthImageView;
+			depthImageInfo.sampler = mDepthImageSampler;*/
+
 			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[0].dstSet = object.msDescriptorSets[i];
@@ -636,6 +679,14 @@ void HelloTriangleApplication::createDescriptorSets()
 			descriptorWrites[1].descriptorCount = 1;	//how many array elements you want to update
 			descriptorWrites[1].pImageInfo = &imageInfo;		//refer to image data
 
+			
+			//descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			//descriptorWrites[2].dstSet = object.msDescriptorSets[i];
+			//descriptorWrites[2].dstBinding = 2;			//UB binding was index 0
+			//descriptorWrites[2].dstArrayElement = 0;	//first index of the array we want to update, we arent using an array though
+			//descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			//descriptorWrites[2].descriptorCount = 1;	//how many array elements you want to update
+			//descriptorWrites[2].pImageInfo = &depthImageInfo;		//refer to image data
 
 			vkUpdateDescriptorSets(mDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
@@ -775,7 +826,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	//Multisampling (anti-aliasing is sharper edges and without running frag shader a lot)
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_TRUE;	//enable sample shading in pipeline
+	multisampling.sampleShadingEnable = VK_FALSE;	//enable sample shading in pipeline
 	multisampling.rasterizationSamples = mMSAASamples;
 	multisampling.minSampleShading = 0.5f;			//min fraction for sample shading (closer to one is smoother)
 	multisampling.pSampleMask = nullptr;			//opt
@@ -1177,7 +1228,7 @@ void HelloTriangleApplication::createLogicalDevice()
 
 	mDeviceFeatures = {};
 	mDeviceFeatures.samplerAnisotropy = VK_TRUE;	//for AA as optional device feature
-	mDeviceFeatures.sampleRateShading = VK_TRUE;	//enable sample shading feature
+	mDeviceFeatures.sampleRateShading = VK_FALSE;	//enable sample shading feature
 
 	//from this point on its very similar to VkInstanceCreateInfo but with device shit
 	mDeviceCreateInfo = {};
@@ -2539,38 +2590,57 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
-	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));	
-	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f));	
-	objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));	
-	objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));	
+	glm::vec3 lightSource(0.0f, 0.0f, 4.0f);
+
+	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(lightSource));	
+	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f, 0.0f, 0.0f));	
+	objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -20.0f, 0.0f));	
+	objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 20.0f, 0.0f));
+
+	//floor
+	objects[4].msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
+	objects[4].msUBO.model = glm::translate(objects[4].msUBO.model, glm::vec3(0.0f, 0.0f, -4.0f));
+	objects[4].msUBO.model = glm::rotate(objects[4].msUBO.model, glm::radians(-190.0f),glm::vec3(0.0f, 0.0f, 1.0f));
+
+	//light
+	//objects[4].msUBO.model = glm::translate(glm::mat4(1.0f), lightSource);	
+	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f));	
+
 	
 	//objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//objects[2].msUBO.model = glm::rotate(objects[3].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    objects[2].msUBO.model = glm::rotate(objects[2].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	
-	//just ambient
-	objects[0].msUBO.ambientStrength = 1.0;
-	objects[0].msUBO.diffuseStrength = 0.0;
-	objects[0].msUBO.specularStrength = 0.0;
-
-	//just diffuse
-	objects[1].msUBO.ambientStrength = 0.0;
-	objects[1].msUBO.diffuseStrength = 1.0;
-	objects[1].msUBO.specularStrength = 0.0;
-
-	//just specular
-	objects[2].msUBO.ambientStrength = 0.0;
-	objects[2].msUBO.diffuseStrength = 0.0;
-	objects[2].msUBO.specularStrength = 0.7;
+	//light source
+	objects[0].msUBO.ambientStrength = 5.0;
+	objects[0].msUBO.diffuseStrength = 1.0;
+	objects[0].msUBO.specularStrength = 0.7;
 
 	//all of them
-	objects[3].msUBO.ambientStrength = 0.5;
+	objects[1].msUBO.ambientStrength = 1.5;
+	objects[1].msUBO.diffuseStrength = 1.0;
+	objects[1].msUBO.specularStrength = 0.7;
+
+	////just ambient
+	objects[2].msUBO.ambientStrength = 1.0;
+	objects[2].msUBO.diffuseStrength = 0.0;
+	objects[2].msUBO.specularStrength = 0.0;
+
+	//just diff
+	objects[3].msUBO.ambientStrength = 0.0;
 	objects[3].msUBO.diffuseStrength = 1.0;
-	objects[3].msUBO.specularStrength = 0.7;
+	objects[3].msUBO.specularStrength = 0.0;
+
+
+	////just spec
+	objects[4].msUBO.ambientStrength = 1.0;
+	objects[4].msUBO.diffuseStrength = 0.0;
+	objects[4].msUBO.specularStrength = 0.0;
 
 	for (auto& object : objects)
 	{
-		object.msUBO.lightSource = glm::vec3(0.0f, 4.0f, 6.0f);
-		object.msUBO.eyePos = glm::vec3(0.0f, 4.0f, 6.0f);
+		object.msUBO.lightSource = lightSource;
+		object.msUBO.eyePos = glm::vec3(20.0f, 20.0f, 30.0f);
 		//my shit
 		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
 		object.msUBO.screenHeight = (float)mSwapChainExtent.height;
@@ -2584,9 +2654,13 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 		//ubo.model = glm::rotate(ubo.model, time * glm::radians(10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		object.msUBO.view = glm::lookAt(object.msUBO.eyePos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));	//take eye position, center position, and up axis as params
-		object.msUBO.proj = glm::perspective(glm::radians(50.0f), object.msUBO.aspectRatio, 0.1f, 10.f);	//takes FOV, aspect ratio, and near and far clipping planes
+		object.msUBO.proj = glm::perspective(glm::radians(50.0f), object.msUBO.aspectRatio, 0.1f, 70.f);	//takes FOV, aspect ratio, and near and far clipping planes
 		object.msUBO.proj[1][1] *= -1;	//WE NEED TO FLIP Y COORD OF CLIPS BECAUSE GLM WAS FOR OPENGL
 
+		//light space matrix (for shadowmapping)
+		object.msUBO.lightSpaceMatrix = glm::mat4(1.0f) * glm::lookAt(object.msUBO.lightSource, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+											* glm::perspective(glm::radians(359.0f), 1.0f, 0.1f, 100.0f);
+										
 
 		void* data;
 		vkMapMemory(mDevice, object.msUniformBuffersMemory[currentImage], 0, sizeof(object.msUBO), 0, &data);

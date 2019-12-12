@@ -190,7 +190,12 @@ struct UniformBufferObject
 	glm::float32 ambientStrength;
 	glm::float32 diffuseStrength;
 	glm::float32 specularStrength;
+	glm::mat4 lightSpaceMatrix;
+
 };
+
+
+
 
 struct sourced3D
 {
@@ -206,8 +211,10 @@ struct sourced3D
 	VkImageView msTextureImageView;
 	VkSampler msTextureSampler;
 
-	std::string msModelPath = "../models/chalet2.obj";
-	std::string msTexturePath = "../textures/chalet.jpg";
+	//std::string msModelPath = "../models/chalet2.obj";
+	std::string msModelPath = "../models/cube.obj";
+	//std::string msTexturePath = "../textures/chalet.jpg";
+	std::string msTexturePath = "../textures/grey.jpg";
 
 	std::string msVertShaderPath = "../shaders/vert.spv";
 	std::string msFragShaderPath = "../shaders/frag.spv";
@@ -236,7 +243,7 @@ public:
 		std::vector<uint32_t> msIndices;
 	} models;
 
-	std::array<sourced3D, 4> objects;
+	std::array<sourced3D, 5> objects;
 
 private:
 	
@@ -419,6 +426,9 @@ private:
 	//multisampled color buffer
 	void createColorResources();
 
+	//for shadowmapping
+	void createDepthSampler();
+
 	//----------------------//
 	//		static stuff	//
 	//----------------------//
@@ -444,8 +454,10 @@ private:
 	//model paths
 	//const std::string MODEL_PATH = "../models/lulamerga.OBJ";
 	//const std::string TEXTURE_PATH = "../textures/internal_ground_ao_texture.jpeg";
-	const std::string MODEL_PATH = "../models/chalet2.obj";
-	const std::string TEXTURE_PATH = "../textures/chalet.jpg";
+	//const std::string MODEL_PATH = "../models/chalet2.obj";
+	const std::string MODEL_PATH = "../models/cube.obj";
+	//const std::string TEXTURE_PATH = "../textures/chalet.jpg";
+	const std::string TEXTURE_PATH = "../textures/grey.jpg";
 
 	//AUTOMATED VERTICES AND INDICES
 	std::vector<Vertex> mVertices;
@@ -551,6 +563,7 @@ private:
 	VkImage mDepthImage;
 	VkDeviceMemory mDepthImageMemory;
 	VkImageView mDepthImageView;
+	VkSampler mDepthImageSampler;
 
 	//msaa
 	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
