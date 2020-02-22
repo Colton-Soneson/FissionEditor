@@ -1,7 +1,7 @@
-#include "HelloTriangleApplication.h"
+#include "DemoApplication.h"
 
 int main() {
-	HelloTriangleApplication app;
+	DemoApplication app;
 
 	try {
 		app.run();

@@ -1,4 +1,4 @@
-#include "HelloTriangleApplication.h"
+#include "DemoApplication.h"
 #include "DebugTools.h"
 
 //stb for image/ texture (reinclude this when doing shit)
@@ -13,7 +13,7 @@
 //#include <tiny_obj_loader.h>
 #include <tol/tiny_obj_loader.h>
 
-VkCommandBuffer HelloTriangleApplication::beginSingleTimeCommands()
+VkCommandBuffer DemoApplication::beginSingleTimeCommands()
 {
 	//temp command buffer (can be optimized at some point with VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
 	// for this temp crap)
@@ -37,7 +37,7 @@ VkCommandBuffer HelloTriangleApplication::beginSingleTimeCommands()
 }
 
 
-bool HelloTriangleApplication::checkValidationLayerSupport()
+bool DemoApplication::checkValidationLayerSupport()
 {
 	//find total number of layers and pass it into layerCount
 	uint32_t layerCount;
@@ -75,7 +75,7 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
 }
 
 
-VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D DemoApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	//query current size of framebuffer (to make sure swap chain images are correct size)
 	if (capabilities.currentExtent.width != UINT64_MAX)
@@ -99,7 +99,7 @@ VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitie
 }
 
 
-VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+VkPresentModeKHR DemoApplication::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	//Four modes:
 	//		VK_PRESENT_MODE_IMMEDIATE_KHR
@@ -121,7 +121,7 @@ VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vect
 }
 
 
-VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+VkSurfaceFormatKHR DemoApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	//color space, using VK_FORMAT_B8G8R8A8_UNORM as a color base instead of SRGB because its easy
 	//	that means 8 bits per each B R G (different order RGB) and A channels for a 32 bit color pixel
@@ -138,7 +138,7 @@ VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::
 }
 
 
-void HelloTriangleApplication::cleanup()
+void DemoApplication::cleanup()
 {
 	cleanupSwapChain();
 
@@ -253,7 +253,7 @@ void HelloTriangleApplication::cleanup()
 }
 
 
-void HelloTriangleApplication::cleanupSwapChain()
+void DemoApplication::cleanupSwapChain()
 {
 	//color stuff with multisampling
 	vkDestroyImageView(mpDevSel->selectedDevice(), mColorImageView, nullptr);
@@ -297,7 +297,7 @@ void HelloTriangleApplication::cleanupSwapChain()
 }
 
 
-void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void DemoApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
 	//this function can just be called inside buffer creations
 
@@ -331,7 +331,7 @@ void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlag
 }
 
 
-void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void DemoApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -346,7 +346,7 @@ void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer
 }
 
 
-void HelloTriangleApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void DemoApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -374,7 +374,7 @@ void HelloTriangleApplication::copyBufferToImage(VkBuffer buffer, VkImage image,
 }
 
 
-void HelloTriangleApplication::createColorResources()
+void DemoApplication::createColorResources()
 {
 	VkFormat colorFormat = mSwapChainImageFormat;
 
@@ -386,7 +386,7 @@ void HelloTriangleApplication::createColorResources()
 }
 
 
-void HelloTriangleApplication::createCommandBuffers()
+void DemoApplication::createCommandBuffers()
 {
 	//has to be the same number as num of swap chain images
 	mCommandBuffers.resize(mSwapChainFrameBuffers.size());
@@ -473,7 +473,7 @@ void HelloTriangleApplication::createCommandBuffers()
 }
 
 
-void HelloTriangleApplication::createCommandPool()
+void DemoApplication::createCommandPool()
 {
 	//we need a queuefam
 	//QueueFamilyIndices queueFamilyIndices = mQuery.findQueueFamilies(mpDevSel->selectedPhysicalDevice(), mSurface);
@@ -492,7 +492,7 @@ void HelloTriangleApplication::createCommandPool()
 }
 
 
-void HelloTriangleApplication::createDepthResource()
+void DemoApplication::createDepthResource()
 {
 	VkFormat depthFormat = findDepthFormat();
 
@@ -508,7 +508,7 @@ void HelloTriangleApplication::createDepthResource()
 	//transitionImageLayout(mDepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
-void HelloTriangleApplication::createDepthSampler()
+void DemoApplication::createDepthSampler()
 {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -548,7 +548,7 @@ void HelloTriangleApplication::createDepthSampler()
 	
 }
 
-void HelloTriangleApplication::createDescriptorPool()
+void DemoApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -570,7 +570,7 @@ void HelloTriangleApplication::createDescriptorPool()
 }
 
 
-void HelloTriangleApplication::createDescriptorSetLayout()
+void DemoApplication::createDescriptorSetLayout()
 {
 	//provide details about every descriptor binding used in shaders
 
@@ -603,7 +603,7 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 }
 
 
-void HelloTriangleApplication::createDescriptorSets()
+void DemoApplication::createDescriptorSets()
 {
 	for (auto& object : objects)
 	{
@@ -672,7 +672,7 @@ void HelloTriangleApplication::createDescriptorSets()
 }
 
 
-void HelloTriangleApplication::createFramebuffers()
+void DemoApplication::createFramebuffers()
 {
 	//we need the number of framebuffers to equal the number of swapchain image views they
 	//	will be referencing
@@ -704,7 +704,7 @@ void HelloTriangleApplication::createFramebuffers()
 }
 
 
-void HelloTriangleApplication::createGraphicsPipeline()
+void DemoApplication::createGraphicsPipeline()
 {
 	VkShaderModule vertShaderModule;
 	VkShaderModule fragShaderModule;
@@ -908,7 +908,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 }
 
 
-void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
+void DemoApplication::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
 											VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
 	VkImageCreateInfo imageInfo = {};
@@ -951,7 +951,7 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, uint
 }
 
 
-VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+VkImageView DemoApplication::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 {
 	//similar to create image views
 	VkImageViewCreateInfo viewInfo = {};
@@ -975,7 +975,7 @@ VkImageView HelloTriangleApplication::createImageView(VkImage image, VkFormat fo
 }
 
 
-void HelloTriangleApplication::createImageViews()
+void DemoApplication::createImageViews()
 {
 	//be able to fit all the image views to be creating (same size as available images)
 	mSwapChainImageViews.resize(mSwapChainImages.size());
@@ -1018,7 +1018,7 @@ void HelloTriangleApplication::createImageViews()
 }
 
 
-void HelloTriangleApplication::createIndexBuffer()
+void DemoApplication::createIndexBuffer()
 {
 
 	VkDeviceSize bufferSize = sizeof(models.msIndices[0]) * models.msIndices.size();
@@ -1051,7 +1051,7 @@ void HelloTriangleApplication::createIndexBuffer()
 }
 
 
-void HelloTriangleApplication::createInstance() {
+void DemoApplication::createInstance() {
 
 	//do validation layers stuff
 	if (enableValidationLayers && !checkValidationLayerSupport())
@@ -1151,7 +1151,7 @@ void HelloTriangleApplication::createInstance() {
 
 
 
-void HelloTriangleApplication::createRenderPass()
+void DemoApplication::createRenderPass()
 {
 	//single color buffer attachment
 	VkAttachmentDescription colorAttachment = {};
@@ -1245,7 +1245,7 @@ void HelloTriangleApplication::createRenderPass()
 }
 
 
-void HelloTriangleApplication::createSyncObjects()
+void DemoApplication::createSyncObjects()
 {
 	//multiple semaphores, to use the graphics pipeline for more than a frame at a time
 	mImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1287,7 +1287,7 @@ void HelloTriangleApplication::createSyncObjects()
 }
 
 
-VkShaderModule HelloTriangleApplication::createShaderModule(const std::vector<char>& code)
+VkShaderModule DemoApplication::createShaderModule(const std::vector<char>& code)
 {
 	//based upon the SPIR-V code imported from file
 	//	we just want to delete it in here because its just easier, so no member data
@@ -1308,7 +1308,7 @@ VkShaderModule HelloTriangleApplication::createShaderModule(const std::vector<ch
 }
 
 
-void HelloTriangleApplication::createSurface()
+void DemoApplication::createSurface()
 {
 	if (glfwCreateWindowSurface(mInstance, mpWindow, nullptr, &mSurface) != VK_SUCCESS)
 	{
@@ -1317,7 +1317,7 @@ void HelloTriangleApplication::createSurface()
 }
 
 
-void HelloTriangleApplication::createSwapChain()
+void DemoApplication::createSwapChain()
 {
 	//the properties are finally used
 	//SwapChainSupportDetails swapChainSupport = querySwapChainSupport(mpDevSel->selectedPhysicalDevice(), mSurface);
@@ -1398,7 +1398,7 @@ void HelloTriangleApplication::createSwapChain()
 }
 
 
-void HelloTriangleApplication::createTextureImage()
+void DemoApplication::createTextureImage()
 {
 	for (auto& object : objects)
 	{
@@ -1457,7 +1457,7 @@ void HelloTriangleApplication::createTextureImage()
 }
 
 
-void HelloTriangleApplication::createTextureImageView()
+void DemoApplication::createTextureImageView()
 {
 	for (auto& object : objects)
 	{
@@ -1466,7 +1466,7 @@ void HelloTriangleApplication::createTextureImageView()
 }
 
 
-void HelloTriangleApplication::createTextureSampler()
+void DemoApplication::createTextureSampler()
 {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1511,7 +1511,7 @@ void HelloTriangleApplication::createTextureSampler()
 }
 
 
-void HelloTriangleApplication::createUniformBuffers()
+void DemoApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 	//uniform buffers with a new transformation every frame
@@ -1531,7 +1531,7 @@ void HelloTriangleApplication::createUniformBuffers()
 }
 
 
-void HelloTriangleApplication::createVertexBuffer() {
+void DemoApplication::createVertexBuffer() {
 
 	VkDeviceSize bufferSize = sizeof(models.msVertices[0]) * models.msVertices.size();
 
@@ -1592,7 +1592,7 @@ void HelloTriangleApplication::createVertexBuffer() {
 }
 
 
-VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+VKAPI_ATTR VkBool32 VKAPI_CALL DemoApplication::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
@@ -1632,7 +1632,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 }
 
 
-void HelloTriangleApplication::drawFrame()
+void DemoApplication::drawFrame()
 {
 	//waits for end of frame to be finished by waiting for signal
 	vkWaitForFences(mpDevSel->selectedDevice(), 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
@@ -1728,7 +1728,7 @@ void HelloTriangleApplication::drawFrame()
 }
 
 
-void HelloTriangleApplication::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+void DemoApplication::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 {
 	vkEndCommandBuffer(commandBuffer);	//all we need to do is hold the copy, so i ends here
 
@@ -1744,7 +1744,7 @@ void HelloTriangleApplication::endSingleTimeCommands(VkCommandBuffer commandBuff
 }
 
 
-VkFormat HelloTriangleApplication::findDepthFormat()
+VkFormat DemoApplication::findDepthFormat()
 {
 	return findSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -1753,7 +1753,7 @@ VkFormat HelloTriangleApplication::findDepthFormat()
 }
 
 
-uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t DemoApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(mpDevSel->selectedPhysicalDevice(), &memProperties);
 
@@ -1769,7 +1769,7 @@ uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryP
 
 
 
-VkFormat HelloTriangleApplication::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+VkFormat DemoApplication::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 {
 	//support depends on tiling mode and usage
 	for (VkFormat format : candidates)
@@ -1794,17 +1794,17 @@ VkFormat HelloTriangleApplication::findSupportedFormat(const std::vector<VkForma
 }
 
 
-void HelloTriangleApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+void DemoApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
 	//the pointer provided is provided above this functions call in initWindow, 
 	//	GLFW needs to identify the pointer of the user to the window first
-	auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+	auto app = reinterpret_cast<DemoApplication*>(glfwGetWindowUserPointer(window));
 
 	app->mFrameBufferResized = true;
 }
 
 
-void HelloTriangleApplication::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t textureWidth, int32_t textureHeight, uint32_t mipLevels)
+void DemoApplication::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t textureWidth, int32_t textureHeight, uint32_t mipLevels)
 {
 	//check if image format can actually support linear blitting
 	VkFormatProperties formatProperties;
@@ -1906,7 +1906,7 @@ void HelloTriangleApplication::generateMipmaps(VkImage image, VkFormat imageForm
 
 
 
-std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
+std::vector<const char*> DemoApplication::getRequiredExtensions()
 {
 	//agnostic API (extensions to interface with OS required)
 	uint32_t glfwExtensionCount = 0;
@@ -1928,13 +1928,13 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 }
 
 
-bool HelloTriangleApplication::hasStencilComponent(VkFormat format)
+bool DemoApplication::hasStencilComponent(VkFormat format)
 {
 	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 
-void HelloTriangleApplication::initGUIWindow()
+void DemoApplication::initGUIWindow()
 {
 //	mpIGWindow->Surface = mIGSurface;
 //	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(mpDevSel->selectedPhysicalDevice());
@@ -1966,7 +1966,7 @@ void HelloTriangleApplication::initGUIWindow()
 
 }
 
-void HelloTriangleApplication::initVulkan()
+void DemoApplication::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
@@ -1998,7 +1998,7 @@ void HelloTriangleApplication::initVulkan()
 }
 
 
-void HelloTriangleApplication::initWindow() 
+void DemoApplication::initWindow() 
 {
 
 	//needed by GLFW
@@ -2022,7 +2022,7 @@ void HelloTriangleApplication::initWindow()
 
 
 
-void HelloTriangleApplication::loadModel()
+void DemoApplication::loadModel()
 {
 	tinyobj::attrib_t attrib;	//this holds vertices, normals, and texcoord vectors
 	std::vector<tinyobj::shape_t> shapes;
@@ -2083,7 +2083,7 @@ void HelloTriangleApplication::loadModel()
 }
 
 
-void HelloTriangleApplication::mainLoop() 
+void DemoApplication::mainLoop() 
 {
 	bool show_options_window = true;
 
@@ -2099,7 +2099,7 @@ void HelloTriangleApplication::mainLoop()
 
 
 
-void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo)
+void DemoApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo)
 {
 	//setting up debug info
 	debugCreateInfo = {};
@@ -2117,7 +2117,7 @@ void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMess
 	debugCreateInfo.pfnUserCallback = debugCallback;
 }
 
-void HelloTriangleApplication::selectDevice()
+void DemoApplication::selectDevice()
 {
 	//DeviceSelection devSel(mpWindow, mSurface, mInstance);
 
@@ -2128,7 +2128,7 @@ void HelloTriangleApplication::selectDevice()
 
 
 
-std::vector<char> HelloTriangleApplication::readFile(const std::string& filename)
+std::vector<char> DemoApplication::readFile(const std::string& filename)
 {
 	//ate: start reading at eof
 	//binary: read file as binary
@@ -2149,7 +2149,7 @@ std::vector<char> HelloTriangleApplication::readFile(const std::string& filename
 }
 
 
-void HelloTriangleApplication::recreateSwapChain()
+void DemoApplication::recreateSwapChain()
 {
 	//actual resize event handling
 	int width = 0;
@@ -2182,7 +2182,7 @@ void HelloTriangleApplication::recreateSwapChain()
 }
 
 
-void HelloTriangleApplication::setupDebugMessenger()
+void DemoApplication::setupDebugMessenger()
 {
 	if (enableValidationLayers == false) return;
 
@@ -2202,7 +2202,7 @@ void HelloTriangleApplication::setupDebugMessenger()
 }
 
 
-void HelloTriangleApplication::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+void DemoApplication::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -2267,7 +2267,7 @@ void HelloTriangleApplication::transitionImageLayout(VkImage image, VkFormat for
 }
 
 
-void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
+void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();	//our continuous time from first use
 	auto currentTime = std::chrono::high_resolution_clock::now();

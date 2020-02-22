@@ -25,12 +25,18 @@
     <Filter Include="Header Files\Core">
       <UniqueIdentifier>{dfc8ede9-f8f8-4432-8a1b-56d53fa2ae64}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\SceneData">
+      <UniqueIdentifier>{07e2739c-79bd-43da-b694-f211c34bd5d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GUI">
+      <UniqueIdentifier>{6601ec84-5b0f-4a42-a87b-275afdb80db2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GUI">
+      <UniqueIdentifier>{0cc2f33f-ff24-4876-af33-851fd6a49062}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HelloTriangleApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Ray.cpp">
@@ -42,11 +48,14 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DemoApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HelloTriangleApplication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DebugTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -58,6 +67,18 @@
     </ClInclude>
     <ClInclude Include="Engine.h">
       <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelData.h">
+      <Filter>Header Files\Core\SceneData</Filter>
+    </ClInclude>
+    <ClInclude Include="UBOs.h">
+      <Filter>Header Files\Core\SceneData</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

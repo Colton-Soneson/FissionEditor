@@ -161,16 +161,20 @@
   <ItemGroup>
     <ClCompile Include="DeviceSelection.cpp" />
     <ClCompile Include="Engine.cpp" />
-    <ClCompile Include="HelloTriangleApplication.cpp" />
+    <ClCompile Include="DemoApplication.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Ray.cpp" />
+    <ClCompile Include="Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugTools.h" />
     <ClInclude Include="DeviceSelection.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="HelloTriangleApplication.h" />
+    <ClInclude Include="DemoApplication.h" />
+    <ClInclude Include="ModelData.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="UBOs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
