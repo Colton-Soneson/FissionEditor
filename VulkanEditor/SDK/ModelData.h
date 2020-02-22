@@ -80,6 +80,15 @@ namespace std {
 
 }
 
+struct modelDatas
+{
+	VkBuffer msVertexBuffer;
+	VkDeviceMemory msVertexBufferMemory;
+	VkBuffer msIndexBuffer;
+	VkDeviceMemory msIndexBufferMemory;
+	std::vector<Vertex> msVertices;
+	std::vector<uint32_t> msIndices;
+};
 
 struct sourced3D
 {
@@ -97,6 +106,8 @@ struct sourced3D
 
 	std::string msTexturePath;
 	std::string msModelPath;
+
+	modelDatas mModel;
 
 	std::string msVertShaderPath = "../shaders/vert.spv";
 	std::string msFragShaderPath = "../shaders/frag.spv";

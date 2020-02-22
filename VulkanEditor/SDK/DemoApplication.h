@@ -15,7 +15,7 @@ public:
 	}
 
 
-	struct modelDatas
+	/*struct modelDatas
 	{
 		VkBuffer msVertexBuffer;
 		VkDeviceMemory msVertexBufferMemory;
@@ -23,7 +23,10 @@ public:
 		VkDeviceMemory msIndexBufferMemory;
 		std::vector<Vertex> msVertices;
 		std::vector<uint32_t> msIndices;
-	} models;
+	};*/
+	//} models;
+
+	//std::vector<modelDatas> models;
 
 	//std::array<sourced3D, 5> objects;
 
@@ -220,7 +223,7 @@ private:
 	//const std::string MODEL_PATH = "../models/lulamerga.OBJ";
 	//const std::string TEXTURE_PATH = "../textures/internal_ground_ao_texture.jpeg";
 	//const std::string MODEL_PATH = "../models/chalet2.obj";
-	const std::string MODEL_PATH = "../models/cube.obj";
+	//const std::string MODEL_PATH = "../models/cube.obj";
 	//const std::string TEXTURE_PATH = "../textures/chalet.jpg";
 	//const std::string TEXTURE_PATH = "../textures/grey.jpg";
 

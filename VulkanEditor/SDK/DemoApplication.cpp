@@ -142,7 +142,7 @@ void DemoApplication::cleanup()
 {
 	cleanupSwapChain();
 
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		//sampler destruction
 		vkDestroySampler(mpDevSel->selectedDevice(), object.msTextureSampler, nullptr);
@@ -153,20 +153,21 @@ void DemoApplication::cleanup()
 		//this is for textures
 		vkDestroyImage(mpDevSel->selectedDevice(), object.msTextureImage, nullptr);
 		vkFreeMemory(mpDevSel->selectedDevice(), object.msTextureImageMemory, nullptr);
-	}
 
 		//descriptor destruction
 		vkDestroyDescriptorSetLayout(mpDevSel->selectedDevice(), mDescriptorSetLayout, nullptr);
 
 		//index buffer deletion (works same as vertex stuff really)s
-		vkDestroyBuffer(mpDevSel->selectedDevice(), models.msIndexBuffer, nullptr);
-		vkFreeMemory(mpDevSel->selectedDevice(), models.msIndexBufferMemory, nullptr);
+		vkDestroyBuffer(mpDevSel->selectedDevice(), object.mModel.msIndexBuffer, nullptr);
+		vkFreeMemory(mpDevSel->selectedDevice(), object.mModel.msIndexBufferMemory, nullptr);
 
 		//we dont need the vertex buffer in memory anymore
-		vkDestroyBuffer(mpDevSel->selectedDevice(), models.msVertexBuffer, nullptr);
+		vkDestroyBuffer(mpDevSel->selectedDevice(), object.mModel.msVertexBuffer, nullptr);
 
 		//free out VBM
-		vkFreeMemory(mpDevSel->selectedDevice(), models.msVertexBufferMemory, nullptr);
+		vkFreeMemory(mpDevSel->selectedDevice(), object.mModel.msVertexBufferMemory, nullptr);
+	}
+
 	//semaphore destruction (multiple per pipeline)
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
@@ -284,7 +285,7 @@ void DemoApplication::cleanupSwapChain()
 
 	vkDestroySwapchainKHR(mpDevSel->selectedDevice(), mSwapChain, nullptr);
 	
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
 		{
@@ -442,13 +443,14 @@ void DemoApplication::createCommandBuffers()
 			vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 
 			//custom input from vertex buffers into vertex count
-			VkBuffer vertexBuffers[] = { models.msVertexBuffer };
-			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(mCommandBuffers[i], models.msIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
-
-			for (auto object : objects)
+			for (auto object : mScene.getObjects())
 			{
+				VkBuffer vertexBuffers[] = { object.mModel.msVertexBuffer };
+				VkDeviceSize offsets[1] = { 0 };
+				vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
+				vkCmdBindIndexBuffer(mCommandBuffers[i], object.mModel.msIndexBuffer, 0, VK_INDEX_TYPE_UINT32);	//FOR SMALL APPS UINT16 is used and defined by mIndices
+
+			
 				//bind right descriptor for each swap chain image
 				vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &(object.msDescriptorSets[i]), 0, nullptr);
 				//specify bind descriptor to gpu or cpu, layout descriptors are based on, 
@@ -458,7 +460,7 @@ void DemoApplication::createCommandBuffers()
 				//SUPER TRIANGLE SPECIFIC (fixed in vertex buffer)
 				//Parameters:
 				//	commandBuffer passed into, vertexCount, instanceCount, firstVertex, firstInstance
-				vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(models.msIndices.size()), 1, 0, 0, 0);
+				vkCmdDrawIndexed(mCommandBuffers[i], static_cast<uint32_t>(object.mModel.msIndices.size()), 1, 0, 0, 0);
 			}
 			//end the render pass first
 			vkCmdEndRenderPass(mCommandBuffers[i]);
@@ -552,16 +554,16 @@ void DemoApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
 
 	//allocate one descriptor every frame
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * objects.size());
+	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
 	
 	if (vkCreateDescriptorPool(mpDevSel->selectedDevice(), &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{
@@ -605,7 +607,7 @@ void DemoApplication::createDescriptorSetLayout()
 
 void DemoApplication::createDescriptorSets()
 {
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		std::vector<VkDescriptorSetLayout> layouts(mSwapChainImages.size(), mDescriptorSetLayout);
 		VkDescriptorSetAllocateInfo allocInfo = {};
@@ -709,8 +711,8 @@ void DemoApplication::createGraphicsPipeline()
 	VkShaderModule vertShaderModule;
 	VkShaderModule fragShaderModule;
 
-	auto vertShaderCode = readFile(objects[0].msVertShaderPath);
-	auto fragShaderCode = readFile(objects[0].msFragShaderPath);
+	auto vertShaderCode = readFile(mScene.getObjects().at(0).msVertShaderPath);
+	auto fragShaderCode = readFile(mScene.getObjects().at(0).msFragShaderPath);
 
 	//create the modules (same way for both vetex and frag)
 	vertShaderModule = createShaderModule(vertShaderCode);
@@ -1020,34 +1022,36 @@ void DemoApplication::createImageViews()
 
 void DemoApplication::createIndexBuffer()
 {
+	for (auto& object : mScene.getObjects())
+	{
+		VkDeviceSize bufferSize = sizeof(object.mModel.msIndices[0]) * object.mModel.msIndices.size();
 
-	VkDeviceSize bufferSize = sizeof(models.msIndices[0]) * models.msIndices.size();
-
-	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+		//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			stagingBuffer, stagingBufferMemory);
 
 
-	void* data;
+		void* data;
 
-	//mapping the buffer memory into CPU accessible memory
-	vkMapMemory(mpDevSel->selectedDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
-	memcpy(data, models.msIndices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
-	vkUnmapMemory(mpDevSel->selectedDevice(), stagingBufferMemory);
+		//mapping the buffer memory into CPU accessible memory
+		vkMapMemory(mpDevSel->selectedDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
+		memcpy(data, object.mModel.msIndices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+		vkUnmapMemory(mpDevSel->selectedDevice(), stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, models.msIndexBuffer, models.msIndexBufferMemory);
-	/*
-		SRC_BIT: Buffer can be used as source in a mem transfer op
-		DST_BIT: Buffer can be used as destination in mem transfer op
-	*/
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, object.mModel.msIndexBuffer, object.mModel.msIndexBufferMemory);
+		/*
+			SRC_BIT: Buffer can be used as source in a mem transfer op
+			DST_BIT: Buffer can be used as destination in mem transfer op
+		*/
 
-	copyBuffer(stagingBuffer, models.msIndexBuffer, bufferSize);	//move vertex data to device local buffer
-	vkDestroyBuffer(mpDevSel->selectedDevice(), stagingBuffer, nullptr);		//free out our staging buffer
-	vkFreeMemory(mpDevSel->selectedDevice(), stagingBufferMemory, nullptr);
+		copyBuffer(stagingBuffer, object.mModel.msIndexBuffer, bufferSize);	//move vertex data to device local buffer
+		vkDestroyBuffer(mpDevSel->selectedDevice(), stagingBuffer, nullptr);		//free out our staging buffer
+		vkFreeMemory(mpDevSel->selectedDevice(), stagingBufferMemory, nullptr);
+	}
 }
 
 
@@ -1400,7 +1404,7 @@ void DemoApplication::createSwapChain()
 
 void DemoApplication::createTextureImage()
 {
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		int textureWidth, textureHeight, textureChannels;
 
@@ -1459,7 +1463,7 @@ void DemoApplication::createTextureImage()
 
 void DemoApplication::createTextureImageView()
 {
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		object.msTextureImageView = createImageView(object.msTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, object.msMipLevels);
 	}
@@ -1496,7 +1500,7 @@ void DemoApplication::createTextureSampler()
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	//MIP MAPS ADJUST HERE
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.minLod = 0.0f;				//change values here with static_cast<float>(mipLevels / k); where k is a real number
@@ -1515,7 +1519,7 @@ void DemoApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 	//uniform buffers with a new transformation every frame
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
 		object.msUniformBuffers.resize(mSwapChainImages.size());
 		object.msUniformBuffersMemory.resize(mSwapChainImages.size());
@@ -1533,21 +1537,23 @@ void DemoApplication::createUniformBuffers()
 
 void DemoApplication::createVertexBuffer() {
 
-	VkDeviceSize bufferSize = sizeof(models.msVertices[0]) * models.msVertices.size();
+	for (auto& object : mScene.getObjects())
+	{
+		VkDeviceSize bufferSize = sizeof(object.mModel.msVertices[0]) * object.mModel.msVertices.size();
 
-	//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+		//actual staging buffer that only host visible buffer as temp buffer (then we later use device local as actual)
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			stagingBuffer, stagingBufferMemory);
 
 	/*
 	//without create buffer for staging
 
 	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;	
-	bufferInfo.size = sizeof(mVertices[0]) * mVertices.size();	//easy mem byte size 
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(mVertices[0]) * mVertices.size();	//easy mem byte size
 	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;	//purpose for use
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;		//means we cant get this from other queuefamilies
 
@@ -1572,23 +1578,24 @@ void DemoApplication::createVertexBuffer() {
 	vkBindBufferMemory(mpDevSel->selectedDevice(), mVertexBuffer, mVertexBufferMemory, 0);
 	*/
 
-	void* data;
+		void* data;
 
-	//mapping the buffer memory into CPU accessible memory
-	vkMapMemory(mpDevSel->selectedDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
-	memcpy(data, models.msVertices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
-	vkUnmapMemory(mpDevSel->selectedDevice(), stagingBufferMemory);
+		//mapping the buffer memory into CPU accessible memory
+		vkMapMemory(mpDevSel->selectedDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);	//doesnt immdeiately copy into buffer mem
+		memcpy(data, object.mModel.msVertices.data(), (size_t)bufferSize);	//We can do this from the above HOST_COHERENT_BIT
+		vkUnmapMemory(mpDevSel->selectedDevice(), stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,		
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, models.msVertexBuffer, models.msVertexBufferMemory);
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, object.mModel.msVertexBuffer, object.mModel.msVertexBufferMemory);
 	/*
 		SRC_BIT: Buffer can be used as source in a mem transfer op
 		DST_BIT: Buffer can be used as destination in mem transfer op
 	*/
 
-	copyBuffer(stagingBuffer, models.msVertexBuffer, bufferSize);	//move vertex data to device local buffer
-	vkDestroyBuffer(mpDevSel->selectedDevice(), stagingBuffer, nullptr);		//free out our staging buffer
-	vkFreeMemory(mpDevSel->selectedDevice(), stagingBufferMemory, nullptr);
+		copyBuffer(stagingBuffer, object.mModel.msVertexBuffer, bufferSize);	//move vertex data to device local buffer
+		vkDestroyBuffer(mpDevSel->selectedDevice(), stagingBuffer, nullptr);		//free out our staging buffer
+		vkFreeMemory(mpDevSel->selectedDevice(), stagingBufferMemory, nullptr);
+	}
 }
 
 
@@ -1966,6 +1973,7 @@ void DemoApplication::initGUIWindow()
 
 }
 
+
 void DemoApplication::initScene()
 {
 	sourced3D obj1;
@@ -1975,6 +1983,14 @@ void DemoApplication::initScene()
 	obj1.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0, 0.0, 1.0));
 	obj2.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(10.0, 0.0, 1.0));
 	obj3.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 10.0, 1.0));
+
+	obj1.msModelPath = "../models/cube.obj";
+	obj2.msModelPath = "../models/cube.obj";
+	obj3.msModelPath = "../models/chalet2.obj";
+
+	obj1.msTexturePath = "../textures/grey.jpg";
+	obj2.msTexturePath = "../textures/grey.jpg";
+	obj3.msTexturePath = "../textures/chalet.jpg";
 
 	light3D light1;
 
@@ -2047,62 +2063,64 @@ void DemoApplication::initWindow()
 
 void DemoApplication::loadModel()
 {
-	tinyobj::attrib_t attrib;	//this holds vertices, normals, and texcoord vectors
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-	std::string warn, err;
-
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+	for (auto& object : mScene.getObjects())
 	{
-		throw std::runtime_error(warn + err);
-	}
+		tinyobj::attrib_t attrib;	//this holds vertices, normals, and texcoord vectors
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string warn, err;
 
-	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};	//need to use this for index buffer
-																//	removal of duplicate data
-	
-	//combine all faces in file into a single model (triangulation)
-	for (const auto& shape : shapes)
-	{
-		for (const auto& index : shape.mesh.indices)
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, object.msModelPath.c_str()))
 		{
-			//using out predefined vertex struct
-			Vertex vertex = {};
+			throw std::runtime_error(warn + err);
+		}
 
-			
+		std::unordered_map<Vertex, uint32_t> uniqueVertices = {};	//need to use this for index buffer
+																	//	removal of duplicate data
+
+		//combine all faces in file into a single model (triangulation)
+		for (const auto& shape : shapes)
+		{
+			for (const auto& index : shape.mesh.indices)
+			{
+				//using out predefined vertex struct
+				Vertex vertex = {};
+
+
 				vertex.pos = {
 				attrib.vertices[3 * index.vertex_index + 0],	//its stored as array of floats so we 
 				attrib.vertices[3 * index.vertex_index + 1],	// need to multiply the index by 3 to compensate
 				attrib.vertices[3 * index.vertex_index + 2]		//	for glm::vec3. Offsets 0, 1, and 2 = x, y, and z
-			};
+				};
 
-			vertex.textureCoord = {
-				attrib.texcoords[2 * index.texcoord_index + 0],
-				1.0f - attrib.texcoords[2 * index.texcoord_index + 1] //had to flip for vert component
-			};
+				vertex.textureCoord = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					1.0f - attrib.texcoords[2 * index.texcoord_index + 1] //had to flip for vert component
+				};
 
-			vertex.normal = {
-				attrib.normals[3 * index.normal_index + 0],
-				attrib.normals[3 * index.normal_index + 1],
-				attrib.normals[3 * index.normal_index + 2]
-			};
+				vertex.normal = {
+					attrib.normals[3 * index.normal_index + 0],
+					attrib.normals[3 * index.normal_index + 1],
+					attrib.normals[3 * index.normal_index + 2]
+				};
 
-			//std::cout << " " << attrib.normals[3 * index.normal_index + 0] << " " << attrib.normals[3 * index.normal_index + 1] << " " << attrib.normals[3 * index.normal_index + 2] << std::endl;
+				//std::cout << " " << attrib.normals[3 * index.normal_index + 0] << " " << attrib.normals[3 * index.normal_index + 1] << " " << attrib.normals[3 * index.normal_index + 2] << std::endl;
 
-			vertex.color = { 1.0f, 1.0f, 1.0f };
+				vertex.color = { 1.0f, 1.0f, 1.0f };
 
-			//make sure we dont have duplicate vertices data
-			//	check if we have already seen same pos (== is overloaded in Vertex)
-			if (uniqueVertices.count(vertex) == 0)
-			{
-				uniqueVertices[vertex] = static_cast<uint32_t>(models.msVertices.size());
-				models.msVertices.push_back(vertex);
+				//make sure we dont have duplicate vertices data
+				//	check if we have already seen same pos (== is overloaded in Vertex)
+				if (uniqueVertices.count(vertex) == 0)
+				{
+					uniqueVertices[vertex] = static_cast<uint32_t>(object.mModel.msVertices.size());
+					object.mModel.msVertices.push_back(vertex);
+				}
+
+				//only push back non repeated vertices
+				object.mModel.msIndices.push_back(uniqueVertices[vertex]);
 			}
-
-			//only push back non repeated vertices
-			models.msIndices.push_back(uniqueVertices[vertex]);
 		}
 	}
-	
 }
 
 
@@ -2296,31 +2314,32 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
-	glm::vec3 lightSource(2.0f, 12.0f, 7.0f);
+	//glm::vec3 lightSource(2.0f, 12.0f, 7.0f);
 
-	objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 1.0, 1.0));	
-	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f, 0.0f, 0.0f));	
-	objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -20.0f, 0.0f));	
-	objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 20.0f, 0.0f));
+	//objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 1.0, 1.0));	
+	//objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f, 0.0f, 0.0f));	
+	//objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -20.0f, 0.0f));	
+	//objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 20.0f, 0.0f));
 
-	//floor
-	objects[4].msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
-	objects[4].msUBO.model = glm::translate(objects[4].msUBO.model, glm::vec3(0.0f, 0.0f, -4.0f));
-	objects[4].msUBO.model = glm::rotate(objects[4].msUBO.model, glm::radians(-190.0f),glm::vec3(0.0f, 0.0f, 1.0f));
+	////floor
+	//objects[4].msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
+	//objects[4].msUBO.model = glm::translate(objects[4].msUBO.model, glm::vec3(0.0f, 0.0f, -4.0f));
+	//objects[4].msUBO.model = glm::rotate(objects[4].msUBO.model, glm::radians(-190.0f),glm::vec3(0.0f, 0.0f, 1.0f));
 
-	//light
-	//objects[4].msUBO.model = glm::translate(glm::mat4(1.0f), lightSource);	
-	objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f));	
+	////light
+	////objects[4].msUBO.model = glm::translate(glm::mat4(1.0f), lightSource);	
+	//objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f));	
 
-	
-	//objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    objects[2].msUBO.model = glm::rotate(objects[2].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	
+	//
+	////objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+ //   objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+ //   objects[2].msUBO.model = glm::rotate(objects[2].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//
 
-	for (auto& object : objects)
+	for (auto& object : mScene.getObjects())
 	{
-		object.msUBO.lightSource = lightSource;
+		object.msUBO.lightSource = mScene.getLights().at(0).lightPos;		//THIS IS TEMPORARY, MAKE THE UBO TAKE A LIST OF LIGHTS OR USE PUSHCONSTANTS
+
 		object.msUBO.eyePos = glm::vec3(20.0f, 20.0f, 30.0f);
 		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
 		object.msUBO.screenHeight = (float)mSwapChainExtent.height;
