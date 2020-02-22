@@ -1966,14 +1966,37 @@ void DemoApplication::initGUIWindow()
 
 }
 
+void DemoApplication::initScene()
+{
+	sourced3D obj1;
+	sourced3D obj2;
+	sourced3D obj3;
+
+	obj1.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0, 0.0, 1.0));
+	obj2.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(10.0, 0.0, 1.0));
+	obj3.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 10.0, 1.0));
+
+	light3D light1;
+
+	light1.lightPos = glm::vec3(2.0, 12.0, 7.0);
+	light1.lightColor = glm::vec4(1.0, 1.0, 1.0, 1.0);
+	light1.lightIntensity = 4.0;
+	light1.lightSize = 20.0;
+
+
+	mScene.storeObject(obj1);
+	mScene.storeObject(obj2);
+	mScene.storeObject(obj3);
+
+	mScene.storeLight(light1);
+}
+
 void DemoApplication::initVulkan()
 {
 	createInstance();
 	setupDebugMessenger();
 	createSurface();
 	selectDevice();
-	//pickPhysicalDevice();
-	//createLogicalDevice();
 	mpDevSel->initDevice();
 	createSwapChain();
 	createImageViews();

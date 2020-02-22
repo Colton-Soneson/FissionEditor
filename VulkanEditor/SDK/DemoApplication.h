@@ -7,6 +7,7 @@ class DemoApplication {
 public:
 	void run() {
 		initWindow();
+		initScene();
 		initVulkan();	//preparation
 		initGUIWindow();
 		mainLoop();
@@ -24,7 +25,7 @@ public:
 		std::vector<uint32_t> msIndices;
 	} models;
 
-	std::array<sourced3D, 5> objects;
+	//std::array<sourced3D, 5> objects;
 
 private:
 	
@@ -32,6 +33,8 @@ private:
 	//we need initWindow because GLFW stock is OpenGL and we need to tell
 	//it not to do that
 	void initWindow();
+
+	void initScene();		//initial Scene, not that big of a deal just make it 3 rotating cubes
 
 	void initGUIWindow();
 
@@ -304,5 +307,6 @@ private:
 	//VkPhysicalDevice mPhysicalDevice;
 	DeviceSelection* mpDevSel;
 
-	//Query
+	//Scene
+	Scene mScene;
 };

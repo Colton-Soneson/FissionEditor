@@ -63,7 +63,5 @@ struct UniformBufferObject
 	glm::vec3 lightSource;
 	glm::vec3 eyePos;
 
-	//lighting
-
-
 };
+

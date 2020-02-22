@@ -95,14 +95,21 @@ struct sourced3D
 	VkImageView msTextureImageView;
 	VkSampler msTextureSampler;
 
-	//std::string msModelPath = "../models/chalet2.obj";
-	//std::string msModelPath = "../models/cube.obj";
-	//std::string msTexturePath = "../textures/chalet.jpg";
-	std::string msTexturePath = "../textures/grey.jpg";
+	std::string msTexturePath;
+	std::string msModelPath;
 
 	std::string msVertShaderPath = "../shaders/vert.spv";
 	std::string msFragShaderPath = "../shaders/frag.spv";
 	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
+};
+
+
+struct light3D
+{
+	glm::vec3 lightPos;
+	glm::vec4 lightColor;
+	glm::float32 lightIntensity; 
+	glm::float32 lightSize;
 };
 
 
