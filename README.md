@@ -20,6 +20,9 @@ https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#synchronizati
 https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPipelineStageFlagBits.html
 http://web.engr.oregonstate.edu/~mjb/vulkan/Handouts/MultiPass.4pp.pdf
 https://www.cs.oberlin.edu/~bob/cs357/Splines/OpenGL%20and%20Splines.pdf
+https://forum.processing.org/one/topic/2-0xx-how-to-set-multiple-render-targets-for-a-fragment-shader.html
+https://stackoverflow.com/questions/50956414/what-is-a-push-constant-in-vulkan
+
 
 3D models and about them
 https://sketchfab.com/3d-models?date=week&features=downloadable&sort_by=-likeCount
@@ -52,6 +55,12 @@ https://www.lighthouse3d.com/tutorials/glsl-tutorial/texture-coordinates/
 https://relativity.net.au/gaming/glsl/Functions.html
 https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FragCoord.xhtml
 https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php
+http://ogldev.atspace.co.uk/www/tutorial30/tutorial30.html
+https://whatis.techtarget.com/definition/spline
+https://vicrucann.github.io/tutorials/bezier-shader/
+https://stackoverflow.com/questions/13867219/opengl-renders-texture-all-white
+https://vicrucann.github.io/tutorials/bezier-shader/
+https://www.reddit.com/r/opengl/comments/4du56u/trying_to_understand_skeletal_animation/
 
 
 GLSL basic shapes (with RayMarching)

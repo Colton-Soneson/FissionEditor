@@ -1,9 +1,0 @@
-﻿  HelloTriangleApplication.cpp
-C:\Users\Account\Desktop\GIT Repos (CSI-EGP)\Personal\Vulkan Testing\VulkanEditor\VulkanTest\HelloTriangleApplication.cpp(2617,41): warning C4305: '=': truncation from 'double' to 'glm::float32'
-C:\Users\Account\Desktop\GIT Repos (CSI-EGP)\Personal\Vulkan Testing\VulkanEditor\VulkanTest\HelloTriangleApplication.cpp(2622,41): warning C4305: '=': truncation from 'double' to 'glm::float32'
-  Generating code
-  6 of 2882 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
-    3 functions were new in current compilation
-    14 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  VulkanTest.vcxproj -> C:\Users\Account\Desktop\GIT Repos (CSI-EGP)\Personal\Vulkan Testing\VulkanEditor\VulkanTest\x64\Release\VulkanTest.exe
