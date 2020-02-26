@@ -710,15 +710,18 @@ void DemoApplication::createGraphicsPipeline()
 {
 	VkShaderModule vertShaderModule;
 	VkShaderModule fragShaderModule;
+	VkShaderModule geomShaderModule;
 
 	system("Resource/shaders/compile.bat");	//convert  shader
 
 	auto vertShaderCode = readFile(mScene.getObjects().at(0).msVertShaderPath);
 	auto fragShaderCode = readFile(mScene.getObjects().at(0).msFragShaderPath);
+	auto geomShaderCode = readFile(mScene.getObjects().at(0).msGeomShaderPath);
 
 	//create the modules (same way for both vetex and frag)
 	vertShaderModule = createShaderModule(vertShaderCode);
 	fragShaderModule = createShaderModule(fragShaderCode);
+	geomShaderModule = createShaderModule(geomShaderCode);
 	
 
 	//vertex shader graphics pipeline object fill
@@ -739,8 +742,15 @@ void DemoApplication::createGraphicsPipeline()
 	fragShaderStageInfo.module = fragShaderModule;
 	fragShaderStageInfo.pName = "main";
 
+	//geometry shader
+	VkPipelineShaderStageCreateInfo geomShaderStageInfo = {};
+	geomShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	geomShaderStageInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+	geomShaderStageInfo.module = geomShaderModule;
+	geomShaderStageInfo.pName = "main";
+
 	//array to contain them
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo, geomShaderStageInfo };
 
 
 	//formatting the vertex data

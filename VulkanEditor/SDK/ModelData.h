@@ -114,6 +114,7 @@ struct sourced3D
 
 	std::string msVertShaderPath = "Resource/shaders/vert.spv";
 	std::string msFragShaderPath = "Resource/shaders/frag.spv";
+	std::string msGeomShaderPath = "Resource/shaders/geometry.spv";
 	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
 };
 
