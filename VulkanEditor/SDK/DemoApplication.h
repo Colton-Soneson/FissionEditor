@@ -14,22 +14,6 @@ public:
 		cleanup();
 	}
 
-
-	/*struct modelDatas
-	{
-		VkBuffer msVertexBuffer;
-		VkDeviceMemory msVertexBufferMemory;
-		VkBuffer msIndexBuffer;
-		VkDeviceMemory msIndexBufferMemory;
-		std::vector<Vertex> msVertices;
-		std::vector<uint32_t> msIndices;
-	};*/
-	//} models;
-
-	//std::vector<modelDatas> models;
-
-	//std::array<sourced3D, 5> objects;
-
 private:
 	
 
@@ -219,13 +203,6 @@ private:
 	//consts
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 	
-	//model paths
-	//const std::string MODEL_PATH = "../models/lulamerga.OBJ";
-	//const std::string TEXTURE_PATH = "../textures/internal_ground_ao_texture.jpeg";
-	//const std::string MODEL_PATH = "../models/chalet2.obj";
-	//const std::string MODEL_PATH = "../models/cube.obj";
-	//const std::string TEXTURE_PATH = "../textures/chalet.jpg";
-	//const std::string TEXTURE_PATH = "../textures/grey.jpg";
 
 	//AUTOMATED VERTICES AND INDICES
 	std::vector<Vertex> mVertices;
@@ -284,7 +261,10 @@ private:
 	size_t mCurrentFrame = 0;	//to keep track of when to use right semaphore
 	bool mFrameBufferResized = false;	//flags when resize of window happens
 
-
+	VkQueue mGraphicsQueue;
+	VkPhysicalDevice mPhysicalDevice;
+	VkQueue mPresentQueue;
+	VkDevice mDevice;
 
 	VkDescriptorPool mDescriptorPool;
 
@@ -312,4 +292,5 @@ private:
 
 	//Scene
 	Scene mScene;
+
 };

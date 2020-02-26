@@ -34,6 +34,15 @@
     <Filter Include="Source Files\GUI">
       <UniqueIdentifier>{0cc2f33f-ff24-4876-af33-851fd6a49062}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\objects">
+      <UniqueIdentifier>{5e81d69b-3362-49d7-adba-349cd80898e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\models">
+      <UniqueIdentifier>{b338478f-323d-4f5e-af28-547e1b0c976b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\shaders">
+      <UniqueIdentifier>{af737ead-78b3-4fc5-96b7-facacf87e1f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -80,5 +89,13 @@
     <ClInclude Include="UBOs.h">
       <Filter>Header Files\Core\SceneData</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resource\shaders\Fshader.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="Resource\shaders\Vshader.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

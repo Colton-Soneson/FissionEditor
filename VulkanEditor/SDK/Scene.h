@@ -14,6 +14,7 @@ struct SceneContentFile
 
 class Scene
 {
+	friend class DemoApplication;
 public:
 	Scene(std::string filename)
 	{
@@ -24,8 +25,8 @@ public:
 
 	~Scene() {};
 
-	std::vector<sourced3D> getObjects() { return mSceneContent; };
-	std::vector<light3D> getLights() { return mLightSources; };
+	std::vector<sourced3D> &getObjects() { return mSceneContent; };
+	std::vector<light3D> &getLights() { return mLightSources; };
 
 	void storeObject(sourced3D obj);
 	void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation);	//call this when creating new object in GUI

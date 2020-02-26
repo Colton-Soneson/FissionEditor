@@ -1,6 +1,15 @@
 #pragma once
 #include "Engine.h"
 
+
+//struct VulkDeviceProps
+//{
+//	VkQueue mGraphicsQueue;
+//	VkPhysicalDevice mPhysicalDevice;
+//	VkQueue mPresentQueue;
+//	VkDevice mDevice;
+//} vulkDev;
+
 class DeviceSelection
 {
 public:
@@ -13,12 +22,14 @@ public:
 	
 	~DeviceSelection() {};
 
+
 	void initDevice();
 
 	VkDevice& selectedDevice() { return mDevice; };
 	VkPhysicalDevice& selectedPhysicalDevice() { return mPhysicalDevice; };
 	VkQueue& graphicsQueue() { return mGraphicsQueue; };
 	VkQueue& presentQueue() { return mPresentQueue; };
+	
 	QueueFamilyIndices fQueFam() { return findQueueFamilies(mPhysicalDevice, mSurface); };
 	SwapChainSupportDetails swapSupDet() { return querySwapChainSupport(mPhysicalDevice, mSurface); };
 
@@ -53,14 +64,14 @@ private:
 	VkPhysicalDeviceFeatures mDeviceFeatures;	//when we first use this place the {} somewhere else
 													//this allows us to get the shit like geometry shaders
 	VkDeviceCreateInfo mDeviceCreateInfo;
-	VkQueue mGraphicsQueue;
 
+	VkQueue mGraphicsQueue;
 	VkPhysicalDevice mPhysicalDevice;
 	VkQueue mPresentQueue;
+	VkDevice mDevice;
 
 	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-	VkDevice mDevice;
 
 	//from outside
 	GLFWwindow* mpWindow;

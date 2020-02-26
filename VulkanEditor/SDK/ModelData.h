@@ -92,6 +92,9 @@ struct modelDatas
 
 struct sourced3D
 {
+	void setMipLevel(uint32_t size) { msMipLevels = size; };
+	void setTextureImage();
+
 	UniformBufferObject msUBO = {};
 
 	std::vector<VkDescriptorSet> msDescriptorSets;
@@ -109,8 +112,8 @@ struct sourced3D
 
 	modelDatas mModel;
 
-	std::string msVertShaderPath = "../shaders/vert.spv";
-	std::string msFragShaderPath = "../shaders/frag.spv";
+	std::string msVertShaderPath = "Resource/shaders/vert.spv";
+	std::string msFragShaderPath = "Resource/shaders/frag.spv";
 	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
 };
 
@@ -122,5 +125,6 @@ struct light3D
 	glm::float32 lightIntensity; 
 	glm::float32 lightSize;
 };
+
 
 
