@@ -97,5 +97,8 @@
     <None Include="Resource\shaders\Vshader.vert">
       <Filter>Resource Files\shaders</Filter>
     </None>
+    <None Include="Resource\shaders\Gshader.geom">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

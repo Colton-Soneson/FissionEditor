@@ -34,26 +34,6 @@ layout(location = 9) out vec4 vMV_pos;
 
 void main() 
 {	
-
-//	fragTextureCoord = inTextureCoord;	
-//
-//	fragPos = vec3((ubo.view * ubo.model) * vec4(inPosition, 1.0));	//actual fragments position
-//	
-//	fragPosLightSpace = ubo.lightSpaceMatrix * vec4(fragPos, 1.0);
-//
-//	//normal matrix ( to go from model space to world space)
-//	//mat3 normalMatrix = mat3(transpose(inverse(ubo.model))); 
-//	mat3 normalMatrix = mat3(ubo.view * ubo.model); 
-//	outNormal = normalMatrix * inNormal;
-//	//outNormal = inNormal;
-//	//light pos
-//	outLightSource = ubo.lightSource;
-//	//outLightSource = ubo.lightSource;
-//
-//	//view pos
-//	outEyePos = ubo.eyePos;
-//	
-
 	mat4 MV_nrm = inverse(transpose((ubo.view * ubo.model)));
 
 	vMV_nrm_by_inNorm = MV_nrm * vec4(inNormal, 1.0);
