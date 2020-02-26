@@ -1,8 +1,8 @@
 # VulkanEditor
-Graphics Editor that uses the Vulkan API (1.1.106.0)
+Graphics Editor that uses the Vulkan API
 
-the "\1.1.106.0" folder should be right outside the VulkanEditor Folder, otherwise a 
-retarget is required
+The developement SDKS are required, download them here: https://github.com/Colton-Soneson/SonesonSDK-MEGAPACK
+
 
 # Resource List:
 https://vulkan-tutorial.com/
@@ -70,4 +70,6 @@ Vulkan to GLSL help
 https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s05.html
 https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s04.html
 https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch14s06.html
+
+
 
