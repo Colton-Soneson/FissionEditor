@@ -60,6 +60,10 @@ struct UniformBufferObject
 	glm::float32 screenHeight;
 	glm::float32 screenWidth;
 	glm::float32 time;
+	glm::float32 ambientMod;
+	glm::float32 diffuseMod;
+	glm::float32 specularMod;
+	glm::float32 lightIntensity;
 	glm::vec3 lightSource;
 	glm::vec3 eyePos;
 

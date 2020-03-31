@@ -70,6 +70,7 @@ QueueFamilyIndices DeviceSelection::findQueueFamilies(VkPhysicalDevice device, V
 
 		if (indices.isComplete())
 		{
+			mQueueFamGraphicsIndices = i;
 			break;
 		}
 
@@ -77,6 +78,19 @@ QueueFamilyIndices DeviceSelection::findQueueFamilies(VkPhysicalDevice device, V
 	}
 
 	return indices;
+}
+
+uint32_t DeviceSelection::getQueueFamGraphicsIndices()
+{
+	if (mPhysicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("physical device null, set physical device before calling");
+	}
+
+	findQueueFamilies(mPhysicalDevice, mSurface);
+
+	return mQueueFamGraphicsIndices;
+
 }
 
 

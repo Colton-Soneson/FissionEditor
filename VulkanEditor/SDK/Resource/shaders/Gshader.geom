@@ -4,40 +4,55 @@
 // this is dan's, but i need to look into this more, could probably just set it really high 
 #define MAX_VERTICES 32
 
+//layout(binding = 0) uniform UniformBufferObject {
+//	mat4 model;
+//	mat4 view;
+//	mat4 proj;
+//	float aspectRatio;
+//	float screenHeight;
+//	float screenWidth;
+//	float time;
+//	float ambientMod;
+//	float diffuseMod;
+//	float specularMod;
+//	float lightIntensity;
+//	vec3 lightSource;
+//	vec3 eyePos;
+//} ubo;
+
 layout (triangles) in;
+//layout (points) in;
 
-layout (line_strip, max_vertices = MAX_VERTICES) out;
+layout (line_strip, max_vertices = 6) out;
+//layout (line_strip, max_vertices = 2) out;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 resolution;
-layout(location = 2) out vec2 fragTextureCoord;
-layout(location = 3) out float time;
 
-layout(location = 4) out vec3 vNormal;
-layout(location = 5) out vec3 vLightSource;
-layout(location = 6) out vec3 vLightVector;
-layout(location = 7) out vec3 vEyePos;
-
-layout(location = 8) out vec4 vMV_nrm_by_inNorm;
-layout(location = 9) out vec4 vMV_pos;
-
+//layout(location = 0) out vec4 vColor;
 
 void drawWireframe()
 {
-	fragColor = vec3(1.0, 0.5, 0.0);
-	gl_Position = gl_in[0].gl_Position;
-	EmitVertex();
-	gl_Position = gl_in[1].gl_Position;
-	EmitVertex();
-	gl_Position = gl_in[2].gl_Position;
-	EmitVertex();
-	gl_Position = gl_in[0].gl_Position;
-	EmitVertex();
-
-	EndPrimitive();
+	//vColor = vec4(1.0, 0.5, 0.0, 1.0);
+//	gl_Position = gl_in[0].gl_Position;
+//	EmitVertex();
+//	gl_Position = gl_in[1].gl_Position;
+//	EmitVertex();
+//	gl_Position = gl_in[2].gl_Position;
+//	EmitVertex();
+//	gl_Position = gl_in[0].gl_Position;
+//	EmitVertex();
+//
+//	EndPrimitive();
+//
+//	gl_Position = gl_in[0].gl_Position + vec4(-0.1, 0.0, 0.0, 0.0);
+//	EmitVertex();
+//
+//	gl_Position = gl_in[0].gl_Position + vec4(0.1, 0.0, 0.0, 0.0);
+//	EmitVertex();
+//
+//	EndPrimitive();
 }
 
 void main()
 {
-    drawWireframe();
+   drawWireframe();
 }

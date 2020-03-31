@@ -14,10 +14,11 @@ class DeviceSelection
 {
 public:
 
-	DeviceSelection(GLFWwindow* w, VkSurfaceKHR& s, VkInstance& i)
+
+	DeviceSelection(VkSurfaceKHR& s, VkInstance& i)
 		: mSurface(s), mInstance(i)
 	{
-		mpWindow = w;
+		//reff vars above
 	}
 	
 	~DeviceSelection() {};
@@ -29,7 +30,8 @@ public:
 	VkPhysicalDevice& selectedPhysicalDevice() { return mPhysicalDevice; };
 	VkQueue& graphicsQueue() { return mGraphicsQueue; };
 	VkQueue& presentQueue() { return mPresentQueue; };
-	
+	uint32_t getQueueFamGraphicsIndices();
+
 	QueueFamilyIndices fQueFam() { return findQueueFamilies(mPhysicalDevice, mSurface); };
 	SwapChainSupportDetails swapSupDet() { return querySwapChainSupport(mPhysicalDevice, mSurface); };
 
@@ -69,12 +71,12 @@ private:
 	VkPhysicalDevice mPhysicalDevice;
 	VkQueue mPresentQueue;
 	VkDevice mDevice;
+	uint32_t mQueueFamGraphicsIndices;
 
 	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 
 	//from outside
-	GLFWwindow* mpWindow;
 	VkSurfaceKHR& mSurface;
 	VkInstance& mInstance;
 		

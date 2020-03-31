@@ -1,7 +1,8 @@
 #pragma once
-#include "DeviceSelection.h"
-#include "Scene.h"
+//#include "DeviceSelection.h"
 
+#include "Scene.h"
+#include "OptionsWindow.h"
 
 class DemoApplication {
 public:
@@ -212,11 +213,8 @@ private:
 	GLFWwindow* mpWindow;
 
 	//ImGUI Vulkan
-	//ImGui_ImplVulkanH_Window* mpIGWindow;
-	//VkSurfaceKHR mIGSurface;
+	OptionsWindow* mpOpWindow;
 
-	//ImGUI OpenGL
-	GLFWwindow* mpIGWindow;
 
 	//Instance creation
 	VkInstance mInstance;

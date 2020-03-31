@@ -1,9 +1,32 @@
 #pragma once
 
 //ImGUI running on vulkan and glfw
-#include <ImGUI/imgui.h>
-#include <ImGUI/imgui_impl_glfw.h>
-#include <ImGUI//imgui_impl_vulkan.h>
+
+#include "Source/ImGUI/imgui.h"
+#include "Source/ImGUI/imgui_impl_glfw.h"
+#include "Source/ImGUI/imgui_impl_vulkan.h"
+
+
+//#include <ImGUI/imgui.h>
+//#include <ImGUI/imgui.cpp>
+//#include <ImGUI/imconfig.h>
+//#include <ImGUI/imgui_internal.h>
+//#include <ImGUI/imgui_demo.cpp>
+//#include <ImGUI/imgui_draw.cpp>
+//#include <ImGUI/imgui_widgets.cpp>
+
+
+//#include <ImGUI/imstb_rectpack.h>
+//#include <ImGUI/imstb_textedit.h>
+//#include <ImGUI/imstb_truetype.h>
+
+//#include <ImGUI/examples/imgui_impl_glfw.h>
+//#include <ImGUI/examples/imgui_impl_glfw.cpp>
+//#include <ImGUI/examples/imgui_impl_vulkan.h>
+//#include <ImGUI/examples/imgui_impl_vulkan.cpp>
+//#include <ImGUI/examples/imgui_impl_win32.h>
+//#include <ImGUI/examples/imgui_impl_win32.cpp>
+
 
 
 //manual glfw, will automatically load the vulkan.h alongside it
@@ -55,6 +78,7 @@ const int WINDOW_HEIGHT = 600;
 //validation layers set up
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
+	//"VK_LAYER_NV_nsight"
 	//"VK_LAYER_KHRONOS_validation"  //this is the one the tutorial has, i found the other one works, 
 									 //all it is is a standard set of layers to pull from, may give troubles down the line
 									 //this comes from here:
@@ -68,10 +92,10 @@ const std::vector<const char*> deviceExtensions = {
 
 
 
-#ifdef NDEBUG	//C++ way of saying not in debug mode
-const bool enableValidationLayers = false;
-#else
+#ifdef _DEBUG	//C++ way of saying not in debug mode
 const bool enableValidationLayers = true;
+#else
+const bool enableValidationLayers = false;
 #endif
 
 

@@ -43,6 +43,12 @@
     <Filter Include="Resource Files\shaders">
       <UniqueIdentifier>{af737ead-78b3-4fc5-96b7-facacf87e1f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ImGUI">
+      <UniqueIdentifier>{ea708b1f-cf41-4d48-8e3e-299db31684b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ImGUI">
+      <UniqueIdentifier>{295a761c-0fed-4bbc-993a-c56e3330457a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -62,6 +68,30 @@
     </ClCompile>
     <ClCompile Include="DemoApplication.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionsWindow.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_demo.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_draw.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_impl_glfw.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_impl_vulkan.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_impl_win32.cpp">
+      <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGUI\imgui_widgets.cpp">
+      <Filter>Source Files\ImGUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -88,6 +118,36 @@
     </ClInclude>
     <ClInclude Include="UBOs.h">
       <Filter>Header Files\Core\SceneData</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionsWindow.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imconfig.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imgui.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imgui_impl_glfw.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imgui_impl_vulkan.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imgui_impl_win32.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imgui_internal.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imstb_rectpack.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imstb_textedit.h">
+      <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGUI\imstb_truetype.h">
+      <Filter>Header Files\ImGUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

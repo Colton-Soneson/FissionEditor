@@ -203,54 +203,6 @@ void DemoApplication::cleanup()
 	//cleanup call for glfw
 	glfwTerminate();
 
-	/*
-	//	THIS WAS FOR WITHOUT SWAPCHAIN RECREATION
-
-	//framebuffer list destruction
-	for (auto framebuffer : mSwapChainFrameBuffers)
-	{
-		vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
-	}
-
-	//destroy the graphics pipeline
-	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-	
-	//pipeline destruction
-	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
-
-	//renderpass destruction
-	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-
-	//we need to destroy images via loop through
-	for (auto imageView : mSwapChainImageViews)
-	{
-		vkDestroyImageView(mDevice, imageView, nullptr);
-	}
-
-	//destroy swapchain
-	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
-
-	//device destruction
-	vkDestroyDevice(mDevice, nullptr);
-
-	//debug util destruction
-	if (enableValidationLayers)
-	{
-		DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
-	}
-
-	//destroy the surface abstraction
-	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
-
-	//clean up the instance right before program exit
-	vkDestroyInstance(mInstance, nullptr);
-
-	//remove the window
-	glfwDestroyWindow(mpWindow);
-
-	//cleanup call for glfw
-	glfwTerminate();
-	*/
 }
 
 
@@ -581,7 +533,7 @@ void DemoApplication::createDescriptorSetLayout()
 	uboLayoutBinding.descriptorCount = 1;	//you can have an array		!!!!!CAN BE USED TO SPECIFY TRANSFORMATIONS FOR EACH OF THE BBONES IN A SKELETON FOR SKELETAL ANIMATION
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.pImmutableSamplers = nullptr;	//for image sampling realted to descriptors
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;	//can combine with VkShaderStageFlagBits
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT;	//can combine with VkShaderStageFlagBits
 
 	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
 	samplerLayoutBinding.binding = 1;
@@ -712,16 +664,16 @@ void DemoApplication::createGraphicsPipeline()
 	VkShaderModule fragShaderModule;
 	VkShaderModule geomShaderModule;
 
-	system("Resource/shaders/compile.bat");	//convert  shader
+	//system("Resource/shaders/compile.bat");	//convert  shader
 
 	auto vertShaderCode = readFile(mScene.getObjects().at(0).msVertShaderPath);
-	auto fragShaderCode = readFile(mScene.getObjects().at(0).msFragShaderPath);
 	auto geomShaderCode = readFile(mScene.getObjects().at(0).msGeomShaderPath);
+	auto fragShaderCode = readFile(mScene.getObjects().at(0).msFragShaderPath);
 
 	//create the modules (same way for both vetex and frag)
 	vertShaderModule = createShaderModule(vertShaderCode);
-	fragShaderModule = createShaderModule(fragShaderCode);
 	geomShaderModule = createShaderModule(geomShaderCode);
+	fragShaderModule = createShaderModule(fragShaderCode);
 	
 
 	//vertex shader graphics pipeline object fill
@@ -735,13 +687,6 @@ void DemoApplication::createGraphicsPipeline()
 	vertShaderStageInfo.module = vertShaderModule;
 	vertShaderStageInfo.pName = "main";
 
-	//frag shader
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = fragShaderModule;
-	fragShaderStageInfo.pName = "main";
-
 	//geometry shader
 	VkPipelineShaderStageCreateInfo geomShaderStageInfo = {};
 	geomShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -749,8 +694,16 @@ void DemoApplication::createGraphicsPipeline()
 	geomShaderStageInfo.module = geomShaderModule;
 	geomShaderStageInfo.pName = "main";
 
+	//frag shader
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = fragShaderModule;
+	fragShaderStageInfo.pName = "main";
+
+
 	//array to contain them
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo, geomShaderStageInfo };
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo,  fragShaderStageInfo, geomShaderStageInfo };
 
 
 	//formatting the vertex data
@@ -880,7 +833,7 @@ void DemoApplication::createGraphicsPipeline()
 	//now we have all the components to define a graphics pipeline we can finally start creating it
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;			//vertShaderStageInfo and fragShaderStageInfo
+	pipelineInfo.stageCount = 2;			//vertShaderStageInfo, geometry Shader and fragShaderStageInfo
 	pipelineInfo.pStages = shaderStages;
 
 	//go further into connecting shaderstages with pipeline
@@ -1925,8 +1878,6 @@ void DemoApplication::generateMipmaps(VkImage image, VkFormat imageFormat, int32
 }
 
 
-
-
 std::vector<const char*> DemoApplication::getRequiredExtensions()
 {
 	//agnostic API (extensions to interface with OS required)
@@ -1957,34 +1908,8 @@ bool DemoApplication::hasStencilComponent(VkFormat format)
 
 void DemoApplication::initGUIWindow()
 {
-//	mpIGWindow->Surface = mIGSurface;
-//	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(mPhysicalDevice);
-//	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-//	const VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-//
-//	const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-//	const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-//	mpIGWindow->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(mPhysicalDevice, mpIGWindow->Surface, requestSurfaceImageFormat, (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
-//
-//	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
-//	mpIGWindow->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(mPhysicalDevice, mpIGWindow->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
-//
-//	//IM_ASSERT(g_MinImageCount >= 2);
-//	ImGui_ImplVulkanH_CreateWindow(mInstance, mPhysicalDevice, mDevice, mpIGWindow, (uint32_t) - 1, nullptr, WINDOW_WIDTH, WINDOW_HEIGHT, 2);
-//
-
-	//we resize shit later, so turn that off
-	//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-	////create the window
-	////	fourth param is for opening on a specific monitor, fifth is only for OpenGL stuff
-	//mpIGWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan3D Options", nullptr, nullptr);
-
-	//glfwSetWindowUserPointer(mpIGWindow, this);
-
-	////this will autofill the arguements for us based on the window passed alongside it
-	//glfwSetFramebufferSizeCallback(mpIGWindow, framebufferResizeCallback);
-
+	mpOpWindow = new OptionsWindow(400, 400, 1);
+	mpOpWindow->prerun();
 }
 
 
@@ -1995,33 +1920,52 @@ void DemoApplication::initScene()
 	sourced3D obj2;
 	sourced3D obj3;
 
-	obj1.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0, 0.0, 1.0));
-	obj2.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(10.0, 0.0, 1.0));
-	obj3.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 10.0, 1.0));
+	sourced3D skybox;
+
+
+	obj1.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 1.0f));
+	obj2.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 1.0f));
+	obj3.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 1.0f));
+	//obj3.msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(7.0f, 7.0f, 7.0f));
+
 
 	obj1.msModelPath = "Resource/models/cube.obj";
 	obj2.msModelPath = "Resource/models/cube.obj";
-	obj3.msModelPath = "Resource/models/chalet2.obj";
+	//obj3.msModelPath = "Resource/models/chalet2.obj";
 
 	obj1.msTexturePath = "Resource/textures/grey.jpg";
 	obj2.msTexturePath = "Resource/textures/grey.jpg";
-	obj3.msTexturePath = "Resource/textures/chalet.jpg";
+	//obj3.msTexturePath = "Resource/textures/chalet.jpg";
+
+	obj1.msUBO.ambientMod = 0.015f;
+	obj2.msUBO.ambientMod = 0.015f;
+	//obj3.msUBO.ambientMod = 0.015;
+
+
+	skybox.msModelPath = "Resource/models/cube.obj";
+	skybox.msTexturePath = "Resource/textures/grey.jpg";
+	skybox.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 1.0f));
+	skybox.msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(30.0f, 30.0f, 30.0f));
+	skybox.msUBO.ambientMod = 0.5f;
+
 
 	light3D light1;
 
-	light1.lightPos = glm::vec3(2.0, 12.0, 7.0);
-	light1.lightColor = glm::vec4(1.0, 1.0, 1.0, 1.0);
-	light1.lightIntensity = 4.0;
-	light1.lightSize = 20.0;
+	light1.lightPos = glm::vec3(2.0f, 12.0f, 7.0f);
+	light1.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	light1.lightIntensity = 10.0f;
+	light1.lightSize = 20.0f;
 
 
 	mScene.storeObject(obj1);
 	mScene.storeObject(obj2);
-	mScene.storeObject(obj3);
+	//mScene.storeObject(obj3);
 
+	//mScene.storeSkybox(skybox);
 
 	mScene.storeLight(light1);
 }
+
 
 void DemoApplication::initVulkan()
 {
@@ -2061,9 +2005,6 @@ void DemoApplication::initWindow()
 	//for non opengl 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	//we resize shit later, so turn that off
-	//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 	//create the window
 	//	fourth param is for opening on a specific monitor, fifth is only for OpenGL stuff
 	mpWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan3D Render", nullptr, nullptr);
@@ -2073,7 +2014,6 @@ void DemoApplication::initWindow()
 	//this will autofill the arguements for us based on the window passed alongside it
 	glfwSetFramebufferSizeCallback(mpWindow, framebufferResizeCallback);
 }
-
 
 
 void DemoApplication::loadModel()
@@ -2148,11 +2088,11 @@ void DemoApplication::mainLoop()
 		glfwPollEvents(); //the min rec for this, keep it running till we get polled for an error
 		drawFrame();	  //draw the frame 
 
+		mpOpWindow->run();
 	}
 
 	vkDeviceWaitIdle(mDevice);
 } 
-
 
 
 void DemoApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo)
@@ -2173,13 +2113,14 @@ void DemoApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCrea
 	debugCreateInfo.pfnUserCallback = debugCallback;
 }
 
+
 void DemoApplication::selectDevice()
 {
 	//DeviceSelection devSel(mpWindow, mSurface, mInstance);
 
 	//mDevice = devSel.selectedDevice();
 	//mPhysicalDevice = devSel.selectedPhysicalDevice();
-	mpDevSel = new DeviceSelection(mpWindow, mSurface, mInstance);
+	mpDevSel = new DeviceSelection(mSurface, mInstance);
 
 	mpDevSel->initDevice();
 
@@ -2189,7 +2130,6 @@ void DemoApplication::selectDevice()
 	mPhysicalDevice = mpDevSel->selectedPhysicalDevice();
 	mPresentQueue = mpDevSel->presentQueue();
 }
-
 
 
 std::vector<char> DemoApplication::readFile(const std::string& filename)
@@ -2337,31 +2277,11 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
-	//glm::vec3 lightSource(2.0f, 12.0f, 7.0f);
-
-	//objects[0].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 1.0, 1.0));	
-	//objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f, 0.0f, 0.0f));	
-	//objects[2].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -20.0f, 0.0f));	
-	//objects[3].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 20.0f, 0.0f));
-
-	////floor
-	//objects[4].msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 1.0f));
-	//objects[4].msUBO.model = glm::translate(objects[4].msUBO.model, glm::vec3(0.0f, 0.0f, -4.0f));
-	//objects[4].msUBO.model = glm::rotate(objects[4].msUBO.model, glm::radians(-190.0f),glm::vec3(0.0f, 0.0f, 1.0f));
-
-	////light
-	////objects[4].msUBO.model = glm::translate(glm::mat4(1.0f), lightSource);	
-	//objects[1].msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f));	
-
-	//
-	////objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
- //   objects[1].msUBO.model = glm::rotate(objects[1].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
- //   objects[2].msUBO.model = glm::rotate(objects[2].msUBO.model, time * glm::radians(-10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//
 
 	for (auto& object : mScene.getObjects())
 	{
 		object.msUBO.lightSource = mScene.getLights().at(0).lightPos;		//THIS IS TEMPORARY, MAKE THE UBO TAKE A LIST OF LIGHTS OR USE PUSHCONSTANTS
+		object.msUBO.lightIntensity = mScene.getLights().at(0).lightIntensity;
 
 		object.msUBO.eyePos = glm::vec3(20.0f, 20.0f, 30.0f);
 		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;
