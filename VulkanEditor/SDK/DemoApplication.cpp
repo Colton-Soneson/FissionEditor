@@ -142,7 +142,7 @@ void DemoApplication::cleanup()
 {
 	cleanupSwapChain();
 
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		//sampler destruction
 		vkDestroySampler(mDevice, object.msTextureSampler, nullptr);
@@ -237,7 +237,7 @@ void DemoApplication::cleanupSwapChain()
 
 	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
 	
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
 		{
@@ -395,7 +395,7 @@ void DemoApplication::createCommandBuffers()
 			vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 
 			//custom input from vertex buffers into vertex count
-			for (auto object : mScene.getObjects())
+			for (auto object : mScene->getObjects())
 			{
 				VkBuffer vertexBuffers[] = { object.mModel.msVertexBuffer };
 				VkDeviceSize offsets[1] = { 0 };
@@ -506,16 +506,16 @@ void DemoApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
 
 	//allocate one descriptor every frame
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * mScene.getObjects().size());
+	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
 	
 	if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{
@@ -559,7 +559,7 @@ void DemoApplication::createDescriptorSetLayout()
 
 void DemoApplication::createDescriptorSets()
 {
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		std::vector<VkDescriptorSetLayout> layouts(mSwapChainImages.size(), mDescriptorSetLayout);
 		VkDescriptorSetAllocateInfo allocInfo = {};
@@ -666,9 +666,9 @@ void DemoApplication::createGraphicsPipeline()
 
 	//system("Resource/shaders/compile.bat");	//convert  shader
 
-	auto vertShaderCode = readFile(mScene.getObjects().at(0).msVertShaderPath);
-	auto geomShaderCode = readFile(mScene.getObjects().at(0).msGeomShaderPath);
-	auto fragShaderCode = readFile(mScene.getObjects().at(0).msFragShaderPath);
+	auto vertShaderCode = readFile(mScene->getObjects().at(0).msVertShaderPath);
+	auto geomShaderCode = readFile(mScene->getObjects().at(0).msGeomShaderPath);
+	auto fragShaderCode = readFile(mScene->getObjects().at(0).msFragShaderPath);
 
 	//create the modules (same way for both vetex and frag)
 	vertShaderModule = createShaderModule(vertShaderCode);
@@ -988,7 +988,7 @@ void DemoApplication::createImageViews()
 
 void DemoApplication::createIndexBuffer()
 {
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		VkDeviceSize bufferSize = sizeof(object.mModel.msIndices[0]) * object.mModel.msIndices.size();
 
@@ -1370,7 +1370,7 @@ void DemoApplication::createSwapChain()
 
 void DemoApplication::createTextureImage()
 {
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		int textureWidth, textureHeight, textureChannels;
 
@@ -1430,7 +1430,7 @@ void DemoApplication::createTextureImage()
 
 void DemoApplication::createTextureImageView()
 {
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		object.msTextureImageView = createImageView(object.msTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, object.msMipLevels);
 	}
@@ -1467,7 +1467,7 @@ void DemoApplication::createTextureSampler()
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	//MIP MAPS ADJUST HERE
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.minLod = 0.0f;				//change values here with static_cast<float>(mipLevels / k); where k is a real number
@@ -1486,7 +1486,7 @@ void DemoApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 	//uniform buffers with a new transformation every frame
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		object.msUniformBuffers.resize(mSwapChainImages.size());
 		object.msUniformBuffersMemory.resize(mSwapChainImages.size());
@@ -1504,7 +1504,7 @@ void DemoApplication::createUniformBuffers()
 
 void DemoApplication::createVertexBuffer() {
 
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		VkDeviceSize bufferSize = sizeof(object.mModel.msVertices[0]) * object.mModel.msVertices.size();
 
@@ -1908,13 +1908,14 @@ bool DemoApplication::hasStencilComponent(VkFormat format)
 
 void DemoApplication::initGUIWindow()
 {
-	mpOpWindow = new OptionsWindow(400, 400, 1);
+	mpOpWindow = new OptionsWindow(OPTIONS_WINDOW_WIDTH, OPTIONS_WINDOW_HEIGHT, 1, mScene);
 	mpOpWindow->prerun();
 }
 
 
 void DemoApplication::initScene()
 {
+	mScene = new Scene();
 
 	sourced3D obj1;
 	sourced3D obj2;
@@ -1957,13 +1958,13 @@ void DemoApplication::initScene()
 	light1.lightSize = 20.0f;
 
 
-	mScene.storeObject(obj1);
-	mScene.storeObject(obj2);
-	//mScene.storeObject(obj3);
+	mScene->storeObject(obj1, "Object1");
+	mScene->storeObject(obj2, "Object2");
+	//mScene->storeObject(obj3);
 
-	//mScene.storeSkybox(skybox);
+	//mScene->storeSkybox(skybox);
 
-	mScene.storeLight(light1);
+	mScene->storeLight(light1, "Light");
 }
 
 
@@ -2018,7 +2019,7 @@ void DemoApplication::initWindow()
 
 void DemoApplication::loadModel()
 {
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
 		tinyobj::attrib_t attrib;	//this holds vertices, normals, and texcoord vectors
 		std::vector<tinyobj::shape_t> shapes;
@@ -2278,10 +2279,10 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
 
-	for (auto& object : mScene.getObjects())
+	for (auto& object : mScene->getObjects())
 	{
-		object.msUBO.lightSource = mScene.getLights().at(0).lightPos;		//THIS IS TEMPORARY, MAKE THE UBO TAKE A LIST OF LIGHTS OR USE PUSHCONSTANTS
-		object.msUBO.lightIntensity = mScene.getLights().at(0).lightIntensity;
+		object.msUBO.lightSource = mScene->getLights().at(0).lightPos;		//THIS IS TEMPORARY, MAKE THE UBO TAKE A LIST OF LIGHTS OR USE PUSHCONSTANTS
+		object.msUBO.lightIntensity = mScene->getLights().at(0).lightIntensity;
 
 		object.msUBO.eyePos = glm::vec3(20.0f, 20.0f, 30.0f);
 		object.msUBO.aspectRatio = mSwapChainExtent.width / (float)mSwapChainExtent.height;

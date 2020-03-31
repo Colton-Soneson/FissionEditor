@@ -21,7 +21,7 @@ public:
 		mFilename = filename;	//optional file save name
 	};
 
-	Scene() {};
+	Scene() { mFilename = ""; };
 
 	~Scene() {};
 
@@ -30,12 +30,12 @@ public:
 	sourced3D& getSkybox() { return mSkyBoxObject; };
 
 	//objects
-	void storeObject(sourced3D obj);
-	void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation);	//call this when creating new object in GUI
+	void storeObject(sourced3D obj, std::string name);
+	void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
 	//lighting
-	void storeLight(light3D light);
-	void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize);
+	void storeLight(light3D light, std::string name);
+	void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
 
 	//misc
 	void storeSkybox(sourced3D skybox) { mSkyBoxObject = skybox; };

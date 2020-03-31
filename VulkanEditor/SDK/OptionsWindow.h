@@ -1,20 +1,27 @@
 #pragma once
 
 #include "DeviceSelection.h"
+#include "Scene.h"
+
 
 
 class OptionsWindow
 {
 public:
 	
-	OptionsWindow(const int w_size, const int h_size, const int mode)
+	OptionsWindow(const int w_size, const int h_size, const int mode, Scene* scene)
 	{
 		mWindowHeight = h_size;
 		mWindowWidth = w_size;
 		mMode = mode;
+		mShowDemoMenu = false;
+		mShowLightMenu = false;
+		mShowObjectMenu = false;
+		mScene = scene;
 	}
 
 	~OptionsWindow() {};
+
 
 	void prerun();
 
@@ -39,11 +46,8 @@ private:
 
 	void presentFrame();
 
-	//not initialized yet
+
 	VkInstance mInstance;
-
-
-	//initialized
 	VkSurfaceKHR mSurface;
 	ImGui_ImplVulkanH_Window* mpWindow;
 	GLFWwindow* mpGLFWWindow;
@@ -61,4 +65,11 @@ private:
 	ImGui_ImplVulkanH_Window mMainWindowData;
 
 	
+
+	//object manipulation
+
+	Scene* mScene;
+	bool mShowObjectMenu;
+	bool mShowLightMenu;
+	bool mShowDemoMenu;
 };

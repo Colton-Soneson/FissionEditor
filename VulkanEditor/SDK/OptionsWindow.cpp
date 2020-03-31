@@ -317,16 +317,12 @@ void OptionsWindow::glfw_resize_callback(GLFWwindow*, int w, int h)
 	mSwapChainResizeHeight = h;
 }
 
-
 void OptionsWindow::prerun()
 {
 	
 	selectDevice();
 
-	
 	initDescriptorPool();
-
-	
 
 
 	// Create Framebuffers
@@ -431,8 +427,7 @@ void OptionsWindow::run()
 {
 	
 	// Our state
-	bool show_demo_window = true;
-	bool show_another_window = false;
+
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	if (!glfwWindowShouldClose(mpGLFWWindow))
@@ -444,7 +439,7 @@ void OptionsWindow::run()
 		// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 		glfwPollEvents();
 
-		
+
 		if (mSwapChainRebuild)
 		{
 			mSwapChainRebuild = false;
@@ -459,41 +454,239 @@ void OptionsWindow::run()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-		if (show_demo_window)
-			ImGui::ShowDemoWindow(&show_demo_window);
 
 		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 		{
 			static float f = 0.0f;
 			static int counter = 0;
+		
 
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+			ImGui::Begin("FusionEngine Editor Main Menu");                        
+			ImGui::SetWindowFontScale(1.7);
+			ImVec2 winSize(600.0, 450.0);
+			ImGui::SetWindowSize(winSize);
 
 			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-			ImGui::Checkbox("Another Window", &show_another_window);
+			ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
+			ImGui::Checkbox("Object Menu", &mShowObjectMenu);
+			ImGui::Checkbox("Light Menu", &mShowLightMenu);
 
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+			//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
-			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
+			//ImGui::SameLine();
+			//ImGui::Text("counter = %d", counter);
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
 		}
 
+		static bool readyToCreate = false;
+		static bool readyToEdit = false;
+		static float posX = 0;
+		static float posY = 0;
+		static float posZ = 0;
+		static float scaleX = 0;
+		static float scaleY = 0;
+		static float scaleZ = 0;
+		static float rotX = 0;
+		static float rotY = 0;
+		static float rotZ = 0;
+		static float ambMod = 0.015f;
+		static bool CoH = false;
+
+		static int objectSelection = 0;
+		
+
 		// 3. Show another simple window.
-		if (show_another_window)
+		if (mShowLightMenu)
 		{
-			ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			ImGui::Text("Hello from another window!");
-			if (ImGui::Button("Close Me"))
-				show_another_window = false;
+			ImGui::Begin("Light Menu", &mShowLightMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+			ImGui::SetWindowFontScale(1.5);
+			ImGui::Text("This menu currently is able to add or delete light objects to the scene");
+
+			if (ImGui::Button("Add Light (WIP, multiple light support not available)"))
+			{
+
+			}
+
+			ImGui::Text("");
+			ImGui::Text("Current Lights in scene: ");
+			for (auto& light : mScene->getLights())
+			{
+				ImGui::BulletText(light.msName.c_str());
+			}
+
+
+
+			if (ImGui::Button("Close"))
+				mShowLightMenu = false;
 			ImGui::End();
+		}
+
+
+		if (mShowObjectMenu)
+		{
+			ImGui::Begin("Object Menu", &mShowObjectMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+			ImGui::SetWindowFontScale(1.5);
+			ImGui::Text("This menu currently is able to add or delete scene objects");
+
+			ImGui::Checkbox("ADD OBJECT MODE", &readyToCreate);
+
+			if (readyToCreate)
+			{
+				ImGui::Text("SETTINGS:");
+				ImGui::SliderFloat("ScaleX", &scaleX, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				ImGui::SliderFloat("ScaleY", &scaleY, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				ImGui::SliderFloat("ScaleZ", &scaleZ, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+
+				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+
+				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+
+				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+
+
+				ImGui::Checkbox("Cube Model(F) or House Model(T)?", &CoH);
+
+				if (ImGui::Button("ADD THE OBJECT"))
+				{
+					if (CoH == false)
+					{
+						sourced3D obj;
+						obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
+
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+
+						obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+
+						obj.msModelPath = "Resource/models/cube.obj";
+						obj.msTexturePath = "Resource/textures/grey.jpg";
+						obj.msUBO.ambientMod = ambMod;
+						mScene->storeObject(obj, "UserCubeObject");
+					}
+					else
+					{
+						sourced3D obj;
+						obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
+
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+
+						obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+
+						obj.msModelPath = "Resource/models/chalet2.obj";
+						obj.msTexturePath = "Resource/textures/chalet.jpg";
+						obj.msUBO.ambientMod = ambMod;
+						mScene->storeObject(obj, "UserChaletObject");
+					}
+
+					CoH = false;
+					posX = 0;
+					posY = 0;
+					posZ = 0;
+					scaleX = 0;
+					scaleY = 0;
+					scaleZ = 0;
+					rotX = 0;
+					rotY = 0;
+					rotZ = 0;
+					ambMod = 0.015f;
+					readyToCreate = false;
+				}
+			}
+
+			ImGui::Checkbox("EDIT OBJECT MODE", &readyToEdit);
+
+			if (readyToEdit)
+			{
+				ImGui::Text("CHOOSE OBJECT:");
+				
+				if (ImGui::Button("Next"))
+				{
+					if (objectSelection <= mScene->getObjects().size())
+					{
+						objectSelection++;
+					}
+					else
+					{
+						objectSelection = 0;
+					}
+
+					CoH = false;
+					posX = 0;
+					posY = 0;
+					posZ = 0;
+					scaleX = 0;
+					scaleY = 0;
+					scaleZ = 0;
+					rotX = 0;
+					rotY = 0;
+					rotZ = 0;
+					ambMod = 0.015f;					
+				}
+
+				ImGui::Text("Chosen Object: %d", mScene->getObjects().at(objectSelection).msName.c_str());
+
+				ImGui::SliderFloat("ScaleX", &scaleX, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				ImGui::SliderFloat("ScaleY", &scaleY, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				ImGui::SliderFloat("ScaleZ", &scaleZ, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(posX, posY, posZ));
+
+				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+
+				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+
+				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+
+				
+				if (readyToEdit == false)
+				{
+					CoH = false;
+					posX = 0;
+					posY = 0;
+					posZ = 0;
+					scaleX = 0;
+					scaleY = 0;
+					scaleZ = 0;
+					rotX = 0;
+					rotY = 0;
+					rotZ = 0;
+					ambMod = 0.015f;
+				}
+			}
+
+			ImGui::Text("");
+			ImGui::Text("Current objects in scene: ");
+			for (auto& object : mScene->getObjects())
+			{
+				ImGui::BulletText(object.msName.c_str());
+			}
+
+			if (ImGui::Button("Close"))
+				mShowObjectMenu = false;
+			ImGui::End();
+		}
+
+		if (mShowDemoMenu)
+		{
+			ImGui::ShowDemoWindow(&mShowDemoMenu);
 		}
 
 		// Rendering

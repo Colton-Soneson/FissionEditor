@@ -7,28 +7,6 @@
 #include "Source/ImGUI/imgui_impl_vulkan.h"
 
 
-//#include <ImGUI/imgui.h>
-//#include <ImGUI/imgui.cpp>
-//#include <ImGUI/imconfig.h>
-//#include <ImGUI/imgui_internal.h>
-//#include <ImGUI/imgui_demo.cpp>
-//#include <ImGUI/imgui_draw.cpp>
-//#include <ImGUI/imgui_widgets.cpp>
-
-
-//#include <ImGUI/imstb_rectpack.h>
-//#include <ImGUI/imstb_textedit.h>
-//#include <ImGUI/imstb_truetype.h>
-
-//#include <ImGUI/examples/imgui_impl_glfw.h>
-//#include <ImGUI/examples/imgui_impl_glfw.cpp>
-//#include <ImGUI/examples/imgui_impl_vulkan.h>
-//#include <ImGUI/examples/imgui_impl_vulkan.cpp>
-//#include <ImGUI/examples/imgui_impl_win32.h>
-//#include <ImGUI/examples/imgui_impl_win32.cpp>
-
-
-
 //manual glfw, will automatically load the vulkan.h alongside it
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -73,6 +51,9 @@
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
+
+const int OPTIONS_WINDOW_WIDTH = 1400;
+const int OPTIONS_WINDOW_HEIGHT = 1400;
 
 
 //validation layers set up

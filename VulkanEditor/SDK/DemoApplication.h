@@ -1,11 +1,13 @@
 #pragma once
 //#include "DeviceSelection.h"
 
-#include "Scene.h"
 #include "OptionsWindow.h"
 
 class DemoApplication {
 public:
+
+	friend class OptionsWindow;
+
 	void run() {
 		initWindow();
 		initScene();
@@ -14,6 +16,10 @@ public:
 		mainLoop();
 		cleanup();
 	}
+
+
+	//Scene
+	Scene* mScene;
 
 private:
 	
@@ -197,6 +203,14 @@ private:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 
+	//apply user interaction from the options menu
+
+
+
+
+	//getters
+	//Scene& getScene() { return mScene; };
+
 	//*********************//
 	//     Member Data     //
 	//*********************//
@@ -288,7 +302,5 @@ private:
 	//VkPhysicalDevice mPhysicalDevice;
 	DeviceSelection* mpDevSel;
 
-	//Scene
-	Scene mScene;
 
 };

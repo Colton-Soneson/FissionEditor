@@ -93,6 +93,7 @@ struct modelDatas
 struct sourced3D
 {
 	void setMipLevel(uint32_t size) { msMipLevels = size; };
+	void setName(std::string name) { msName = name; };
 	void setTextureImage();
 
 	UniformBufferObject msUBO = {};
@@ -110,6 +111,8 @@ struct sourced3D
 	std::string msTexturePath;
 	std::string msModelPath;
 
+	std::string msName;
+
 	modelDatas mModel;
 
 	std::string msVertShaderPath = "Resource/shaders/vert.spv";
@@ -121,6 +124,9 @@ struct sourced3D
 
 struct light3D
 {
+	void setName(std::string name) { msName = name; };
+
+	std::string msName;
 	glm::vec3 lightPos;
 	glm::vec4 lightColor;
 	glm::float32 lightIntensity; 
