@@ -38,7 +38,8 @@ public:
 	void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
 
 	//misc
-	void storeSkybox(sourced3D skybox) { mSkyBoxObject = skybox; };
+	void storeSkyboxFromCube(sourced3D skybox) { mSkyBoxObject = skybox; };		//WE NEED TO LOAD THIS WITH THE NORMALS SET AS NEGATIVE
+	void storeSkyboxFromCubemap(sourced3D skybox) { mSkyBoxObject = skybox; };		//This is the 6 seperate planes
 	
 	//file reading
 	void loadScene();
