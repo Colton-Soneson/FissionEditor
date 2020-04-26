@@ -18,6 +18,8 @@ layout(location = 8) in float vAmbientMod;
 layout(location = 9) in float vDiffuseMod;
 layout(location = 10) in float vSpeculartMod;
 
+layout(location = 11) in float vActiveLight;
+
 
 layout(location = 0) out vec4 outColor;
 
@@ -26,28 +28,39 @@ void main()
 
 	vec4 t_final_dm = texture(texSampler, fragTextureCoord);
 	vec4 t_final_sm = texture(texSampler, fragTextureCoord);
-	int shine = 4;
-	
-	vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0) * vLightIntensity;
+	vec4 temp;
 
-	
-	vec4 L = normalize(vec4(vLightSource, 1.0) - vMV_pos);
-	vec4 N = normalize(vMV_nrm_by_inNorm);
-	vec4 V = normalize(vMV_pos);					//view vector from eye to the point we are looking at
-	vec4 R = reflect(-L, N);						//lD is negative because its pointing FROM light source, in current state it points towards it
-
-	vec4 amb = vec4(vAmbientMod * lightColor);	//0.015
-
-	float diff = max(0.0, dot(N, L));
-	vec4 diffuse = vec4((diff * t_final_dm) * lightColor);
-
-	float spec = max(0.0, dot(V, R));
-	for(int i = 0; i < shine; i++)
+	if(vActiveLight != 0)
 	{
-		spec *= spec;
+		int shine = 4;
+	
+		vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0) * vLightIntensity;
+
+	
+		vec4 L = normalize(vec4(vLightSource, 1.0) - vMV_pos);
+		vec4 N = normalize(vMV_nrm_by_inNorm);
+		vec4 V = normalize(vMV_pos);					//view vector from eye to the point we are looking at
+		vec4 R = reflect(-L, N);						//lD is negative because its pointing FROM light source, in current state it points towards it
+
+		vec4 amb = vec4(vAmbientMod * lightColor);	//0.015
+
+		float diff = max(0.0, dot(N, L));
+		vec4 diffuse = vec4((diff * t_final_dm) * lightColor);
+
+		float spec = max(0.0, dot(V, R));
+		for(int i = 0; i < shine; i++)
+		{
+			spec *= spec;
+		}
+		vec4 specular = vec4((spec * t_final_sm) * lightColor);
+		temp = (amb + diffuse + specular) * t_final_dm;
 	}
-	vec4 specular = vec4((spec * t_final_sm) * lightColor);
-	vec4 temp = (amb + diffuse + specular) * t_final_dm;
+	else
+	{
+		vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0) * vLightIntensity;
+		vec4 amb = vec4(vAmbientMod * lightColor);
+		temp = amb * t_final_dm;
+	}
 
 	outColor = temp;
 }

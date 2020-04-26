@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
 	float screenHeight;
 	float screenWidth;
 	float time;
+	float activeLight;
 	float ambientMod;
 	float diffuseMod;
 	float specularMod;
@@ -36,6 +37,8 @@ layout(location = 8) out float vAmbientMod;
 layout(location = 9) out float vDiffuseMod;
 layout(location = 10) out float vSpeculartMod;
 
+layout(location = 11) out float vActiveLight;
+
 
 void main() 
 {	
@@ -51,6 +54,8 @@ void main()
 	vLightIntensity = ubo.lightIntensity;
 
 	vAmbientMod = ubo.ambientMod;
+
+	vActiveLight = ubo.activeLight;
 
 	gl_Position = ubo.proj * vMV_pos;
 }
