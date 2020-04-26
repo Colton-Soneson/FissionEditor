@@ -288,7 +288,7 @@ private:
 	VkSampler mDepthImageSampler;
 
 	//msaa
-	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_2_BIT;		//changed from _1_BIT to _2_BIT
 	VkImage mColorImage;		//this is to store desired samples per pixel
 	VkDeviceMemory mColorImageMemory;
 	VkImageView mColorImageView;
