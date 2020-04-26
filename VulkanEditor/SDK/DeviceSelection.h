@@ -73,7 +73,7 @@ private:
 	VkDevice mDevice;
 	uint32_t mQueueFamGraphicsIndices;
 
-	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_2_BIT;
 
 
 	//from outside

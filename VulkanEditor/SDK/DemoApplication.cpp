@@ -1992,12 +1992,14 @@ void DemoApplication::initVulkan()
 	createDepthResource();
 	createFramebuffers();
 	createCommandPool();
+
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();
 	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
+
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
@@ -2098,7 +2100,7 @@ void DemoApplication::mainLoop()
 		glfwPollEvents(); //the min rec for this, keep it running till we get polled for an error
 		drawFrame();	  //draw the frame 
 
-		mpOpWindow->run();
+		//mpOpWindow->run();
 	}
 
 	vkDeviceWaitIdle(mDevice);
@@ -2286,6 +2288,8 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	static auto startTime = std::chrono::high_resolution_clock::now();	//our continuous time from first use
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
+
+	mpOpWindow->run();
 
 
 	for (auto& object : mScene->getObjects())

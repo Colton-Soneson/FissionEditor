@@ -466,7 +466,6 @@ void OptionsWindow::run()
 			ImVec2 winSize(600.0, 450.0);
 			ImGui::SetWindowSize(winSize);
 
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 			ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Object Menu", &mShowObjectMenu);
 			ImGui::Checkbox("Light Menu", &mShowLightMenu);

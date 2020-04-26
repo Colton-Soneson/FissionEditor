@@ -133,5 +133,12 @@ struct light3D
 	glm::float32 lightSize;
 };
 
-
+enum ShapeData
+{
+	PLANE,
+	CUBE,
+	INV_NORM_CUBE,
+	ICOSPHERE,
+	UVSPHERE
+};
 

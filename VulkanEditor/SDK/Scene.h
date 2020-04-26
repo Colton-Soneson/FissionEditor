@@ -1,5 +1,5 @@
 #pragma once
-#include "ModelData.h"
+#include "UniversalObjectStorage.h"
 
 #include <fstream>
 #include <vector>
@@ -16,18 +16,28 @@ class Scene
 {
 	friend class DemoApplication;
 public:
-	Scene(std::string filename)
+	Scene(std::string filepath)
 	{
-		mFilename = filename;	//optional file save name
+		mFilePath = filepath;	//optional file save name
+		mUOS = new UniversalObjectStorage(mFilePath);
+		runDirectoryLoad();
 	};
 
-	Scene() { mFilename = ""; };
+	Scene() 
+	{
+		mFilePath = "Resource/models/"; 
+		mUOS = new UniversalObjectStorage(mFilePath);
+		runDirectoryLoad();
+	};
 
 	~Scene() {};
 
 	std::vector<sourced3D> &getObjects() { return mSceneContent; };
 	std::vector<light3D> &getLights() { return mLightSources; };
 	sourced3D& getSkybox() { return mSkyBoxObject; };
+	
+	//inital full directory load
+	void runDirectoryLoad() { mUOS->runInitialObjectStorage(); };
 
 	//objects
 	void storeObject(sourced3D obj, std::string name);
@@ -46,8 +56,10 @@ public:
 	
 private:
 
+	UniversalObjectStorage* mUOS;
+
 	std::vector<sourced3D> mSceneContent;
-	std::string mFilename;
+	std::string mFilePath;
 
 	std::vector<light3D> mLightSources;
 

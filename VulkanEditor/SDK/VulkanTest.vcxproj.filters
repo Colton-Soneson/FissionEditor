@@ -49,6 +49,12 @@
     <Filter Include="Header Files\ImGUI">
       <UniqueIdentifier>{295a761c-0fed-4bbc-993a-c56e3330457a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\ModelLoading">
+      <UniqueIdentifier>{8b3e9302-47a3-49cb-a8fa-855737f49986}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\ModelLoading">
+      <UniqueIdentifier>{d2d42bf0-c96e-4695-8e9d-33e37b2bf0ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -92,6 +98,15 @@
     </ClCompile>
     <ClCompile Include="Source\ImGUI\imgui_widgets.cpp">
       <Filter>Source Files\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="UniversalObjectStorage.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="WavefrontFileLoader.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceduralLoader.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +163,15 @@
     </ClInclude>
     <ClInclude Include="Source\ImGUI\imstb_truetype.h">
       <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="UniversalObjectStorage.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="WavefrontFileLoader.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="ProceduralLoader.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

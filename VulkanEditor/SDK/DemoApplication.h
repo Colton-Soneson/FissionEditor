@@ -302,5 +302,4 @@ private:
 	//VkPhysicalDevice mPhysicalDevice;
 	DeviceSelection* mpDevSel;
 
-
 };
