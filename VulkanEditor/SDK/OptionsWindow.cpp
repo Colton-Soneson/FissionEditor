@@ -462,7 +462,7 @@ void OptionsWindow::run()
 		
 
 			ImGui::Begin("FusionEngine Editor Main Menu");                        
-			ImGui::SetWindowFontScale(1.7);
+			ImGui::SetWindowFontScale(1.7f);
 			ImVec2 winSize(600.0, 450.0);
 			ImGui::SetWindowSize(winSize);
 
@@ -568,7 +568,7 @@ void OptionsWindow::run()
 						obj.msModelPath = "Resource/models/cube.obj";
 						obj.msTexturePath = "Resource/textures/grey.jpg";
 						obj.msUBO.ambientMod = ambMod;
-						mScene->storeObject(obj, "UserCubeObject");
+						//mScene->storeObject(obj, "UserCubeObject");
 					}
 					else
 					{
@@ -584,7 +584,7 @@ void OptionsWindow::run()
 						obj.msModelPath = "Resource/models/chalet2.obj";
 						obj.msTexturePath = "Resource/textures/chalet.jpg";
 						obj.msUBO.ambientMod = ambMod;
-						mScene->storeObject(obj, "UserChaletObject");
+						//mScene->storeObject(obj, "UserChaletObject");
 					}
 
 					CoH = false;

@@ -21,15 +21,14 @@ std::vector<sourced3D> UniversalObjectStorage::getTotalLoadedObjects()
 	{
 		std::cout << "\nWARNING:  (UniversalObjectStorage) OriginalsList is empty" << "\n";
 	}
-	else
-	{
-		return mTotalOriginals;
-	}
+	
+	return mTotalOriginals;
 }
 
 
 void UniversalObjectStorage::createProceduralModel(ShapeData type, float params[])
 {
+	/*
 	switch (type)
 	{
 	case PLANE:
@@ -80,7 +79,7 @@ void UniversalObjectStorage::createProceduralModel(ShapeData type, float params[
 		throw std::runtime_error("UniversalObjectStorage) ShapeData type unavailable");
 		break;
 	}
-	
+	*/
 }
 
 

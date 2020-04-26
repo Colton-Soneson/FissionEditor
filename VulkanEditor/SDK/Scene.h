@@ -16,18 +16,10 @@ class Scene
 {
 	friend class DemoApplication;
 public:
-	Scene(std::string filepath)
+	Scene(std::string filepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
 	{
 		mFilePath = filepath;	//optional file save name
-		mUOS = new UniversalObjectStorage(mFilePath);
-		runDirectoryLoad();
-	};
-
-	Scene() 
-	{
-		mFilePath = "Resource/models/"; 
-		mUOS = new UniversalObjectStorage(mFilePath);
-		runDirectoryLoad();
+		mUOS = new UniversalObjectStorage(mFilePath, device, physicalDevice, graphicsQueue, commandPool);
 	};
 
 	~Scene() {};
@@ -39,20 +31,20 @@ public:
 	//inital full directory load
 	void runDirectoryLoad() { mUOS->runInitialObjectStorage(); };
 
-	//objects
-	void storeObject(sourced3D obj, std::string name);
-	void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
+	////objects
+	//void storeObject(sourced3D obj, std::string name);
+	//void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
-	//lighting
-	void storeLight(light3D light, std::string name);
-	void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
+	////lighting
+	//void storeLight(light3D light, std::string name);
+	//void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
 
-	//misc
-	void storeSkyboxFromCube(sourced3D skybox) { mSkyBoxObject = skybox; };		//WE NEED TO LOAD THIS WITH THE NORMALS SET AS NEGATIVE
-	void storeSkyboxFromCubemap(sourced3D skybox) { mSkyBoxObject = skybox; };		//This is the 6 seperate planes
-	
-	//file reading
-	void loadScene();
+	////misc
+	//void storeSkyboxFromCube(sourced3D skybox) { mSkyBoxObject = skybox; };		//WE NEED TO LOAD THIS WITH THE NORMALS SET AS NEGATIVE
+	//void storeSkyboxFromCubemap(sourced3D skybox) { mSkyBoxObject = skybox; };		//This is the 6 seperate planes
+	//
+	////file reading
+	//void loadScene();
 	
 private:
 

@@ -1,17 +1,17 @@
 #pragma once
 
 #include "WavefrontFileLoader.h"
-#include "ProceduralLoader.h"
+//#include "ProceduralLoader.h"
 
 class UniversalObjectStorage
 {
 public:
 
-	UniversalObjectStorage(std::string filepath) 
+	UniversalObjectStorage(std::string filepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
 	{
 		mFilePath = filepath;
-		mWFL = new WavefrontFileLoader(mFilePath);
-		mPL = new ProceduralLoader();
+		mWFL = new WavefrontFileLoader(mFilePath, device, physicalDevice, graphicsQueue, commandPool);
+		//mPL = new ProceduralLoader();
 	};
 
 	~UniversalObjectStorage() {};
@@ -32,6 +32,6 @@ private:
 	std::string mFilePath;
 
 	WavefrontFileLoader* mWFL;
-	ProceduralLoader* mPL;
+	//ProceduralLoader* mPL;
 
 };
