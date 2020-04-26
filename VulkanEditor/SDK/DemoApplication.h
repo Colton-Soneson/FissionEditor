@@ -220,8 +220,8 @@ private:
 	
 
 	//AUTOMATED VERTICES AND INDICES
-	std::vector<Vertex> mVertices;
-	std::vector<uint32_t> mIndices;
+	//std::vector<Vertex> mVertices;
+	//std::vector<uint32_t> mIndices;
 
 	//GLFW
 	GLFWwindow* mpWindow;
