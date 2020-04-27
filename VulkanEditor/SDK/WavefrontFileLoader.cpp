@@ -298,7 +298,7 @@ std::vector<sourced3D> WavefrontFileLoader::getLoadedObjects()
 	
 	if (mOriginals.empty())
 	{
-		std::cout << "\nWARNING: (WavefrontFileLoader) no obj files present in the directory: " << mFilePath << "\n";
+		std::cout << "\nWARNING: (WavefrontFileLoader) no obj files present in the directory OR failure to load obj files: " << mModelFilePath << "\n";
 	}
 	return mOriginals;
 	
@@ -312,27 +312,113 @@ void WavefrontFileLoader::startLoadingFromFile()
 
 	namespace stdfs = std::filesystem;
 
-	std::vector<std::string> filenames;
+	std::vector<std::string> modelFilenames;
 	const stdfs::directory_iterator end{};
 
-	for (stdfs::directory_iterator iter{ (stdfs::path)mFilePath }; iter != end; ++iter)
+	for (stdfs::directory_iterator iter{ (stdfs::path)mModelFilePath }; iter != end; ++iter)
 	{
 		if (stdfs::is_regular_file(*iter)) // comment out if all names (names of directories tc.) are required
-			filenames.push_back(iter->path().string());
+			modelFilenames.push_back(iter->path().string());
 	}
 
-	for (const auto& object : filenames)
+	std::vector<std::string> textureFilenames;
+	const stdfs::directory_iterator end1{};
+
+	for (stdfs::directory_iterator iter1{ (stdfs::path)mTextureFilePath }; iter1 != end1; ++iter1)
 	{
-		sourced3D temp;
+		if (stdfs::is_regular_file(*iter1)) // comment out if all names (names of directories tc.) are required
+			textureFilenames.push_back(iter1->path().string());
+	}
 
-		temp.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		temp.msUBO.activeLight = 0;
-		temp.msUBO.ambientMod = 0.05f;
 
-		std::cout << "filename input: " << object << "/n";
+	for (const auto& objectDir : modelFilenames)
+	{
+		std::cout << "model filename input: " << objectDir << "\n";
+	}
 
+	for (const auto& textureDir : textureFilenames)
+	{
+		std::cout << "texture filename input: " << textureDir << "\n";
 
 	}
+
+	for (const auto& objectDir : modelFilenames)
+	{		
+		std::string tempModelName;
+		std::string tempTextureName;
+		
+		if (objectDir.substr(objectDir.length() - 4) == ".obj")
+		{
+
+			//get the name of the object after the file path
+			tempModelName = objectDir.substr(objectDir.find(mModelFilePath) + mModelFilePath.size());
+
+			std::cout << "(WFL) Applicable model: " << tempModelName << "\n";
+
+			sourced3D temp;
+
+			temp.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+			temp.msUBO.activeLight = 0;
+			temp.msUBO.ambientMod = 0.05f;
+
+			temp.msModelPath = objectDir;	//we can use objectDir because only .objs make it to this point
+
+			bool textureFound = false;
+			int count = 0;
+
+			for (const auto& textureDir : textureFilenames)
+			{
+				count++;	//for statement of default
+
+				if ((textureDir.substr(textureDir.length() - 4) == ".png" || textureDir.substr(textureDir.length() - 4) == ".jpg") && textureFound == false) //|| textureDir.substr(textureDir.length() - 5) == ".jpeg")
+				{
+					tempTextureName = textureDir.substr(textureDir.find(mTextureFilePath) + mTextureFilePath.size());
+
+					std::string::size_type i = tempModelName.find(".");
+					std::string::size_type j = tempTextureName.find(".");
+
+					std::string officialModelName;
+					std::string officialTextureName;
+					
+					if (i != std::string::npos)
+					{
+						officialModelName = tempModelName;
+						officialModelName.erase(i, 4);			//.obj is 4 char long
+					}
+					if (j != std::string::npos)
+					{
+						officialTextureName = tempTextureName;
+						officialTextureName.erase(j, 4);			//.png and .jpg is 4 char long
+					}
+
+					if (officialModelName.compare(officialTextureName) == 0)
+					{
+						std::cout << "(WFL) Applicable texture: " << tempTextureName << "\n";
+
+						temp.msTexturePath = textureDir;
+
+						textureFound = true;
+					}
+					else
+					{
+						//otherwise we use the texture labeled as "default"
+						std::stringstream defaultTextureDir;
+						defaultTextureDir << mTextureFilePath << "default.jpg";
+
+						if (count == textureFilenames.size())
+						{
+							std::cout << "(WFL) No applicable texture, using default: " << defaultTextureDir.str() << "\n";
+						}
+
+						temp.msTexturePath = defaultTextureDir.str();
+					}
+				}
+
+			}
+
+		}
+	}
+
 
 
 	//do the rest

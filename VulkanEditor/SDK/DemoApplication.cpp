@@ -1684,9 +1684,15 @@ void DemoApplication::initGUIWindow()
 
 void DemoApplication::initScene()
 {
-	mScene = new Scene("Resource/models/", mDevice, mPhysicalDevice, mGraphicsQueue, mCommandPool);
+	mScene = new Scene("Resource/models/", "Resource/textures/", mDevice, mPhysicalDevice, mGraphicsQueue, mCommandPool);
 	mScene->runDirectoryLoad();
 
+	light3D light1;
+	light1.lightPos = glm::vec3(2.0f, 12.0f, 7.0f);
+	light1.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	light1.lightIntensity = 10.0f;
+	light1.lightSize = 20.0f;
+	mScene->storeLight(light1, "Light");
 
 	/*
 	sourced3D obj1;

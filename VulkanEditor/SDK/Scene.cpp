@@ -24,6 +24,7 @@ void Scene::storeObject(std::string texturePath, std::string modelPath, glm::vec
 {
 
 }
+*/
 
 void Scene::storeLight(light3D light, std::string name)
 {
@@ -52,4 +53,3 @@ void Scene::storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 li
 
 	mLightSources.push_back(light);
 }
-*/

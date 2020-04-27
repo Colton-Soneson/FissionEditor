@@ -16,10 +16,11 @@ class Scene
 {
 	friend class DemoApplication;
 public:
-	Scene(std::string filepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
+	Scene(std::string modelFilepath, std::string textureFilepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
 	{
-		mFilePath = filepath;	//optional file save name
-		mUOS = new UniversalObjectStorage(mFilePath, device, physicalDevice, graphicsQueue, commandPool);
+		mModelFilePath = modelFilepath;	
+		mTextureFilePath = textureFilepath;	
+		mUOS = new UniversalObjectStorage(mModelFilePath, mTextureFilePath, device, physicalDevice, graphicsQueue, commandPool);
 	};
 
 	~Scene() {};
@@ -35,9 +36,9 @@ public:
 	//void storeObject(sourced3D obj, std::string name);
 	//void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
-	////lighting
-	//void storeLight(light3D light, std::string name);
-	//void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
+	//lighting
+	void storeLight(light3D light, std::string name);
+	void storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name);
 
 	////misc
 	//void storeSkyboxFromCube(sourced3D skybox) { mSkyBoxObject = skybox; };		//WE NEED TO LOAD THIS WITH THE NORMALS SET AS NEGATIVE
@@ -51,7 +52,8 @@ private:
 	UniversalObjectStorage* mUOS;
 
 	std::vector<sourced3D> mSceneContent;
-	std::string mFilePath;
+	std::string mModelFilePath;
+	std::string mTextureFilePath;
 
 	std::vector<light3D> mLightSources;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <sstream>
 
 #include "ModelData.h"
 
@@ -9,9 +10,10 @@ class WavefrontFileLoader
 {
 public:
 
-	WavefrontFileLoader(std::string filepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
+	WavefrontFileLoader(std::string modelFilepath, std::string textureFilepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
 	{
-		mFilePath = filepath;
+		mModelFilePath = modelFilepath;
+		mTextureFilePath = textureFilepath;
 		mDevice = device;
 		mPhysicalDevice = physicalDevice;
 		mCommandPool = commandPool;
@@ -90,7 +92,8 @@ private:
 
 	std::vector<sourced3D> mOriginals;
 
-	std::string mFilePath;
+	std::string mModelFilePath;
+	std::string mTextureFilePath;
 
 	VkDevice mDevice;
 	VkPhysicalDevice mPhysicalDevice;

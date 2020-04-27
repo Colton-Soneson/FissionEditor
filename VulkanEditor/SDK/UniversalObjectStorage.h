@@ -7,10 +7,11 @@ class UniversalObjectStorage
 {
 public:
 
-	UniversalObjectStorage(std::string filepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
+	UniversalObjectStorage(std::string modelFilepath, std::string textureFilepath, VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool)
 	{
-		mFilePath = filepath;
-		mWFL = new WavefrontFileLoader(mFilePath, device, physicalDevice, graphicsQueue, commandPool);
+		mModelFilePath = modelFilepath;
+		mTextureFilePath = textureFilepath;
+		mWFL = new WavefrontFileLoader(mModelFilePath, mTextureFilePath, device, physicalDevice, graphicsQueue, commandPool);
 		//mPL = new ProceduralLoader();
 	};
 
@@ -29,7 +30,8 @@ private:
 
 	std::vector<sourced3D> mTotalOriginals;
 
-	std::string mFilePath;
+	std::string mModelFilePath;
+	std::string mTextureFilePath;
 
 	WavefrontFileLoader* mWFL;
 	//ProceduralLoader* mPL;

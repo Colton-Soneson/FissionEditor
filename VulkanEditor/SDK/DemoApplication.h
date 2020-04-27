@@ -102,10 +102,6 @@ private:
 	void cleanupSwapChain();
 
 
-	//gets the type of memory used by GPU
-	//uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-
 	//general copy command used in place of vkMapMemory (we can use device local mem types)
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -124,30 +120,6 @@ private:
 
 	//allocate descriptor sets
 	void createDescriptorSets();
-
-
-
-	//loading buffer into image objects
-	//void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-	//						VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-
-	////record and execute command buffer again
-	//VkCommandBuffer beginSingleTimeCommands();
-
-	////end cb
-	//void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-
-	//layout transitions to finish the vkCmdCopyBufferToImage command
-	/*void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
-	*/
-	////called before finishing createTextureImage
-	//void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
-	//
-
-	////generalized createImageView function (imageViews/ textureImageViews)
-	//VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
-
 
 
 	//basically we set stuff up with image, memory, and image view
