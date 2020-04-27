@@ -494,7 +494,8 @@ void OptionsWindow::run()
 		static float rotY = 0;
 		static float rotZ = 0;
 		static float ambMod = 0.015f;
-		static bool CoH = false;
+		static bool activatelighting = false;
+	
 
 		static int objectSelection = 0;
 		
@@ -553,6 +554,7 @@ void OptionsWindow::run()
 				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 
+				ImGui::Checkbox("Activate Lighting", &activatelighting);
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
@@ -560,53 +562,11 @@ void OptionsWindow::run()
 				{
 					mObjectHasBeenAdded = true;
 
-					mScene->instantiateObject(objectIndex);
+					//mScene->instantiateObject(objectIndex);
+					mScene->instantiateObject(objectIndex, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting );
 						
-						
-						//obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
+				
 
-						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
-
-						//obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
-						//obj.msUBO.ambientMod = ambMod;
-
-						//mScene->storeObject(obj, "UserCubeObject");
-
-
-					//if (CoH == false)
-					//{
-					//	sourced3D obj;
-					//	obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
-
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
-
-					//	obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
-
-					//	obj.msModelPath = "Resource/models/cube.obj";
-					//	obj.msTexturePath = "Resource/textures/grey.jpg";
-					//	obj.msUBO.ambientMod = ambMod;
-					//	//mScene->storeObject(obj, "UserCubeObject");
-					//}
-					//else
-					//{
-					//	sourced3D obj;
-					//	obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
-
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
-
-					//	obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
-
-					//	obj.msModelPath = "Resource/models/chalet2.obj";
-					//	obj.msTexturePath = "Resource/textures/chalet.jpg";
-					//	obj.msUBO.ambientMod = ambMod;
-					//	//mScene->storeObject(obj, "UserChaletObject");
-					//}
 
 					posX = 0;
 					posY = 0;

@@ -33,13 +33,42 @@ void Scene::instantiateObject(int objectListIndex)
 	mSceneContent.push_back(mUOS->getTotalLoadedObjects().at(objectListIndex));
 
 	//the point of this to have unique names on objects
-	static int count = 0;
 	std::stringstream temp;
-	temp << mSceneContent.back().msName << count;
+	temp << mSceneContent.back().msName << mCount;
 	mSceneContent.back().msName = temp.str();
-	count++;
+	mCount++;
 }
 
+void Scene::instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting)
+{
+	sourced3D temp3D = mUOS->getTotalLoadedObjects().at(objectListIndex);
+
+	temp3D.msUBO.model = glm::translate(glm::mat4(1.0f), position);
+
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+
+	temp3D.msUBO.model = glm::scale(temp3D.msUBO.model, scale);
+	temp3D.msUBO.ambientMod = ambientMod;
+
+	if (activateLighting == true)
+	{
+		temp3D.msUBO.activeLight = 1;
+	}
+	else
+	{
+		temp3D.msUBO.activeLight = 0;
+	}
+	
+	mSceneContent.push_back(temp3D);
+
+	std::stringstream temp;
+	temp << mSceneContent.back().msName << mCount;
+	mSceneContent.back().msName = temp.str();
+	mCount++;
+
+}
 
 void Scene::storeLight(light3D light, std::string name)
 {
