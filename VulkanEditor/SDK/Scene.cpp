@@ -70,6 +70,56 @@ void Scene::instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3
 
 }
 
+
+void Scene::adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting)
+{
+	/*sourced3D temp3D = mSceneContent.at(sceneContentIndex);
+	
+	temp3D.msUBO.model = glm::translate(glm::mat4(1.0f), position);
+
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+
+	temp3D.msUBO.model = glm::scale(temp3D.msUBO.model, scale);
+	temp3D.msUBO.ambientMod = ambientMod;
+
+	if (activateLighting == true)
+	{
+		temp3D.msUBO.activeLight = 1;
+	}
+	else
+	{
+		temp3D.msUBO.activeLight = 0;
+	}
+
+
+	mSceneContent.erase(mSceneContent.begin() + (sceneContentIndex));
+	mSceneContent.push_back(temp3D);*/
+
+	
+	
+	mSceneContent.at(sceneContentIndex).msUBO.model = glm::scale(mSceneContent.at(sceneContentIndex).msUBO.model, scale);
+
+	mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+	mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+
+	mSceneContent.at(sceneContentIndex).msUBO.model = glm::scale(mSceneContent.at(sceneContentIndex).msUBO.model, scale);
+
+	mSceneContent.at(sceneContentIndex).msUBO.ambientMod = ambientMod;
+
+	if (activateLighting == true)
+	{
+		mSceneContent.at(sceneContentIndex).msUBO.activeLight = 1;
+	}
+	else
+	{
+		mSceneContent.at(sceneContentIndex).msUBO.activeLight = 0;
+	}
+	
+}
+
 void Scene::storeLight(light3D light, std::string name)
 {
 	//mLightSources.mLightPositions.push_back(light.lightPos);

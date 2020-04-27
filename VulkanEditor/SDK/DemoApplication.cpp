@@ -485,7 +485,7 @@ void DemoApplication::cleanupSwapChain()
 	
 	
 
-	if (mpOpWindow->getObjectAddedStatus() == true)
+	if (mpOpWindow->getObjectAddedStatus() == true || mpOpWindow->getObjectChangedStatus() == true)
 	{
 		for (int itr = 0; itr < mScene->getObjects().size() - 1; ++itr)	//we dont count the object we JUST added
 		{
@@ -497,6 +497,7 @@ void DemoApplication::cleanupSwapChain()
 		}
 
 		mpOpWindow->setObjectAddedStatus(false);
+		mpOpWindow->setObjectChangedStatus(false);
 	}
 	else
 	{
@@ -1555,7 +1556,7 @@ void DemoApplication::drawFrame()
 
 	if (mpOpWindow->getObjectAddedStatus() || mpOpWindow->getObjectChangedStatus())
 	{
-		mpOpWindow->setObjectChangedStatus(false);
+		//mpOpWindow->setObjectChangedStatus(false);
 		recreateSwapChain();
 		return;
 	}

@@ -479,8 +479,6 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 
-		static std::string objectName;
-
 		static bool readyToCreate = false;
 		static bool readyToEdit = false;
 		static int objectIndex = 0;
@@ -537,14 +535,14 @@ void OptionsWindow::run()
 
 			if (readyToCreate)
 			{
-				objectName = mScene->getUOS()->getNameAtIndex(objectIndex);
-				ImGui::Text("CHOSEN OBJECT: %d", &objectName);
+				ImGui::Text("CHOSEN OBJECT:");
+				ImGui::Text(mScene->getUOSNameByIndex(objectIndex).c_str());
 				ImGui::SliderInt("OBJECT INDEX: ", &objectIndex, 0, mScene->getUOSTotalStorageNumber() - 1);
 
 				ImGui::Text("SETTINGS:");
-				ImGui::SliderFloat("ScaleX", &scaleX, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
-				ImGui::SliderFloat("ScaleY", &scaleY, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
-				ImGui::SliderFloat("ScaleZ", &scaleZ, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
+				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 
 				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
@@ -564,8 +562,6 @@ void OptionsWindow::run()
 
 					//mScene->instantiateObject(objectIndex);
 					mScene->instantiateObject(objectIndex, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting );
-						
-				
 
 
 					posX = 0;
@@ -586,7 +582,7 @@ void OptionsWindow::run()
 
 			if (readyToEdit)
 			{
-				mObjectHasBeenChanged = true;
+				
 
 				ImGui::Text("CHOOSE OBJECT:");
 				
@@ -599,47 +595,41 @@ void OptionsWindow::run()
 					else
 					{
 						objectSelection = 0;
-					}
-
-					posX = 0;
-					posY = 0;
-					posZ = 0;
-					scaleX = 0;
-					scaleY = 0;
-					scaleZ = 0;
-					rotX = 0;
-					rotY = 0;
-					rotZ = 0;
-					ambMod = 0.015f;					
+					}				
 				}
 
-				ImGui::Text("Chosen Object: %d", mScene->getObjects().at(objectSelection).msName.c_str());
+				ImGui::Text("Chosen Object:");
+				ImGui::Text(mScene->getObjects().at(objectSelection).msName.c_str());
 
-				ImGui::SliderFloat("ScaleX", &scaleX, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
-				ImGui::SliderFloat("ScaleY", &scaleY, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
-				ImGui::SliderFloat("ScaleZ", &scaleZ, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
-				mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(posX, posY, posZ));
+				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+				//mScene->getObjects().at(objectSelection).msUBO.model = glm::translate(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(posX, posY, posZ));
 
 				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-				mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
 
 				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+				//mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
 
+				ImGui::Checkbox("Activate Lighting", &activatelighting);
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
-				mObjectHasBeenChanged = true;
-
 				
-				if (readyToEdit == false)
+				if (ImGui::Button("EDIT THE OBJECT"))
 				{
+					mObjectHasBeenChanged = true;
+
+					mScene->adjustObject(objectSelection, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+
+
 					posX = 0;
 					posY = 0;
 					posZ = 0;

@@ -33,11 +33,14 @@ public:
 	//inital full directory load
 	void runDirectoryLoad() { mUOS->runInitialObjectStorage(); };
 	int getUOSTotalStorageNumber() { return mUOS->getTotalLoadedObjects().size(); };		//total number of objects stored
+	std::string getUOSNameByIndex(int index) { return mUOS->getNameAtIndex(index); };
 	UniversalObjectStorage* getUOS() { return mUOS; };
 
 	////objects
 	void instantiateObject(int objectListIndex);
 	void instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting);
+
+	void adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting);
 	//void storeObject(sourced3D obj, std::string name);
 	//void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
