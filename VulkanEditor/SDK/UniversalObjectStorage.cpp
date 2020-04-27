@@ -14,6 +14,10 @@ void UniversalObjectStorage::runInitialObjectStorage()
 
 }
 
+//std::vector<std::string> UniversalObjectStorage::getTotalLoadedObjectsNames()
+//{
+//
+//}
 
 std::vector<sourced3D> UniversalObjectStorage::getTotalLoadedObjects()
 {

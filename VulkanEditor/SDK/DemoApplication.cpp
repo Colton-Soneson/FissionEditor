@@ -483,14 +483,33 @@ void DemoApplication::cleanupSwapChain()
 
 	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
 	
-	for (auto& object : mScene->getObjects())
+	
+
+	if (mpOpWindow->getObjectAddedStatus() == true)
 	{
-		for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+		for (int itr = 0; itr < mScene->getObjects().size() - 1; ++itr)	//we dont count the object we JUST added
 		{
-			vkDestroyBuffer(mDevice, object.msUniformBuffers[i], nullptr);
-			vkFreeMemory(mDevice, object.msUniformBuffersMemory[i], nullptr);
+			for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+			{
+				vkDestroyBuffer(mDevice, mScene->getObjects().at(itr).msUniformBuffers[i], nullptr);
+				vkFreeMemory(mDevice, mScene->getObjects().at(itr).msUniformBuffersMemory[i], nullptr);
+			}
+		}
+
+		mpOpWindow->setObjectAddedStatus(false);
+	}
+	else
+	{
+		for (auto& object : mScene->getObjects())
+		{
+			for (size_t i = 0; i < mSwapChainImages.size(); ++i)
+			{
+				vkDestroyBuffer(mDevice, object.msUniformBuffers[i], nullptr);
+				vkFreeMemory(mDevice, object.msUniformBuffersMemory[i], nullptr);
+			}
 		}
 	}
+		
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 }
@@ -677,16 +696,33 @@ void DemoApplication::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
+	
+	if (mScene->getObjects().size() != 0)
+	{
+		poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
+		poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
+	}
+	else
+	{
+		poolSizes[0].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+		poolSizes[1].descriptorCount = static_cast<uint32_t>(mSwapChainImages.size());
+	}
 
 	//allocate one descriptor every frame
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
+
+	if (mScene->getObjects().size() != 0)
+	{
+		poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size() * mScene->getObjects().size());
+	}
+	else
+	{
+		poolInfo.maxSets = static_cast<uint32_t>(mSwapChainImages.size());
+	}
 	
 	if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{
@@ -1508,15 +1544,21 @@ void DemoApplication::drawFrame()
 	//the semaphores are for at what point in time we present the image
 	//	(modded for multiple semaphore use)
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
+	
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to aquire next image, line 1531 DA");
+	}
 
 	//options window changes apply
 	mpOpWindow->run();
 
-	/*if (objects changed)
+	if (mpOpWindow->getObjectAddedStatus() || mpOpWindow->getObjectChangedStatus())
 	{
+		mpOpWindow->setObjectChangedStatus(false);
 		recreateSwapChain();
 		return;
-	}*/
+	}
 
 	//if its out of date we have to check
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -1686,6 +1728,11 @@ void DemoApplication::initScene()
 {
 	mScene = new Scene("Resource/models/", "Resource/textures/", mDevice, mPhysicalDevice, mGraphicsQueue, mCommandPool);
 	mScene->runDirectoryLoad();
+
+	mScene->instantiateObject(0);
+	//mScene->instantiateObject(0);
+	//mScene->instantiateObject(0);
+	//mScene->instantiateObject(0);
 
 	light3D light1;
 	light1.lightPos = glm::vec3(2.0f, 12.0f, 7.0f);

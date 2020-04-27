@@ -479,8 +479,11 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 
+		static std::string objectName;
+
 		static bool readyToCreate = false;
 		static bool readyToEdit = false;
+		static int objectIndex = 0;
 		static float posX = 0;
 		static float posY = 0;
 		static float posZ = 0;
@@ -533,6 +536,10 @@ void OptionsWindow::run()
 
 			if (readyToCreate)
 			{
+				objectName = mScene->getUOS()->getNameAtIndex(objectIndex);
+				ImGui::Text("CHOSEN OBJECT: %d", &objectName);
+				ImGui::SliderInt("OBJECT INDEX: ", &objectIndex, 0, mScene->getUOSTotalStorageNumber() - 1);
+
 				ImGui::Text("SETTINGS:");
 				ImGui::SliderFloat("ScaleX", &scaleX, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
 				ImGui::SliderFloat("ScaleY", &scaleY, -20.0f, 20.0f);            // Edit 1 float using a slider from -20.0f to 20.0f
@@ -549,45 +556,58 @@ void OptionsWindow::run()
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
-
-				ImGui::Checkbox("Cube Model(F) or House Model(T)?", &CoH);
-
 				if (ImGui::Button("ADD THE OBJECT"))
 				{
-					if (CoH == false)
-					{
-						sourced3D obj;
-						obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
+					mObjectHasBeenAdded = true;
 
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+					mScene->instantiateObject(objectIndex);
+						
+						
+						//obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
 
-						obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+						//obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
 
-						obj.msModelPath = "Resource/models/cube.obj";
-						obj.msTexturePath = "Resource/textures/grey.jpg";
-						obj.msUBO.ambientMod = ambMod;
+						//obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+						//obj.msUBO.ambientMod = ambMod;
+
 						//mScene->storeObject(obj, "UserCubeObject");
-					}
-					else
-					{
-						sourced3D obj;
-						obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
 
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-						obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
 
-						obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+					//if (CoH == false)
+					//{
+					//	sourced3D obj;
+					//	obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
 
-						obj.msModelPath = "Resource/models/chalet2.obj";
-						obj.msTexturePath = "Resource/textures/chalet.jpg";
-						obj.msUBO.ambientMod = ambMod;
-						//mScene->storeObject(obj, "UserChaletObject");
-					}
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
 
-					CoH = false;
+					//	obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+
+					//	obj.msModelPath = "Resource/models/cube.obj";
+					//	obj.msTexturePath = "Resource/textures/grey.jpg";
+					//	obj.msUBO.ambientMod = ambMod;
+					//	//mScene->storeObject(obj, "UserCubeObject");
+					//}
+					//else
+					//{
+					//	sourced3D obj;
+					//	obj.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(posX, posY, posZ));
+
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
+					//	obj.msUBO.model = glm::rotate(obj.msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
+
+					//	obj.msUBO.model = glm::scale(obj.msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
+
+					//	obj.msModelPath = "Resource/models/chalet2.obj";
+					//	obj.msTexturePath = "Resource/textures/chalet.jpg";
+					//	obj.msUBO.ambientMod = ambMod;
+					//	//mScene->storeObject(obj, "UserChaletObject");
+					//}
+
 					posX = 0;
 					posY = 0;
 					posZ = 0;
@@ -606,6 +626,8 @@ void OptionsWindow::run()
 
 			if (readyToEdit)
 			{
+				mObjectHasBeenChanged = true;
+
 				ImGui::Text("CHOOSE OBJECT:");
 				
 				if (ImGui::Button("Next"))
@@ -619,7 +641,6 @@ void OptionsWindow::run()
 						objectSelection = 0;
 					}
 
-					CoH = false;
 					posX = 0;
 					posY = 0;
 					posZ = 0;
@@ -654,10 +675,11 @@ void OptionsWindow::run()
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
+				mObjectHasBeenChanged = true;
+
 				
 				if (readyToEdit == false)
 				{
-					CoH = false;
 					posX = 0;
 					posY = 0;
 					posZ = 0;

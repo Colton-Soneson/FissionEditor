@@ -115,6 +115,7 @@ struct sourced3D
 
 	modelDatas mModel;
 
+	//int modelNumber = 0;
 
 	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
 };

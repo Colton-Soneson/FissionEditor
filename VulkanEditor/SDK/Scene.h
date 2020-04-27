@@ -31,8 +31,11 @@ public:
 	
 	//inital full directory load
 	void runDirectoryLoad() { mUOS->runInitialObjectStorage(); };
+	int getUOSTotalStorageNumber() { return mUOS->getTotalLoadedObjects().size(); };		//total number of objects stored
+	UniversalObjectStorage* getUOS() { return mUOS; };
 
 	////objects
+	void instantiateObject(int objectListIndex);
 	//void storeObject(sourced3D obj, std::string name);
 	//void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
@@ -52,6 +55,7 @@ private:
 	UniversalObjectStorage* mUOS;
 
 	std::vector<sourced3D> mSceneContent;
+
 	std::string mModelFilePath;
 	std::string mTextureFilePath;
 

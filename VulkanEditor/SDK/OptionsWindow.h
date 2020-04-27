@@ -17,6 +17,8 @@ public:
 		mShowLightMenu = false;
 		mShowObjectMenu = false;
 		mScene = scene;
+		mObjectHasBeenChanged = false;
+		mObjectHasBeenAdded = false;
 	}
 
 	~OptionsWindow() {};
@@ -25,6 +27,12 @@ public:
 	void prerun();
 
 	void run();	//this has to be put inside the while loop of the main program, or make a seperate thread for it later
+
+	bool getObjectAddedStatus() { return mObjectHasBeenAdded; };
+	void setObjectAddedStatus(bool tmp) { mObjectHasBeenAdded = tmp; };
+
+	bool getObjectChangedStatus() { return mObjectHasBeenChanged; };
+	void setObjectChangedStatus(bool tmp) { mObjectHasBeenChanged = tmp; };
 
 private:
 
@@ -71,4 +79,7 @@ private:
 	bool mShowObjectMenu;
 	bool mShowLightMenu;
 	bool mShowDemoMenu;
+
+	bool mObjectHasBeenAdded;
+	bool mObjectHasBeenChanged;
 };

@@ -24,6 +24,7 @@ public:
 	//ProceduralLoader* getProceduralLoader() { return mPL; };
 
 	//std::vector<std::string> getTotalLoadedObjectsNames();
+	std::string getNameAtIndex(int index) { return mTotalOriginals.at(index).msName; };
 	std::vector<sourced3D> getTotalLoadedObjects();
 
 private:

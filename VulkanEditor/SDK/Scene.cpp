@@ -26,6 +26,21 @@ void Scene::storeObject(std::string texturePath, std::string modelPath, glm::vec
 }
 */
 
+
+void Scene::instantiateObject(int objectListIndex)
+{
+	//make sure to reset the following calls in DemoApp to the sceneContent after this has been called
+	mSceneContent.push_back(mUOS->getTotalLoadedObjects().at(objectListIndex));
+
+	//the point of this to have unique names on objects
+	static int count = 0;
+	std::stringstream temp;
+	temp << mSceneContent.back().msName << count;
+	mSceneContent.back().msName = temp.str();
+	count++;
+}
+
+
 void Scene::storeLight(light3D light, std::string name)
 {
 	//mLightSources.mLightPositions.push_back(light.lightPos);
@@ -36,6 +51,7 @@ void Scene::storeLight(light3D light, std::string name)
 	light.setName(name);
 	mLightSources.push_back(light);
 }
+
 
 void Scene::storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name)
 {

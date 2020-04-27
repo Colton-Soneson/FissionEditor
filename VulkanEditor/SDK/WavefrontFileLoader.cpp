@@ -300,9 +300,10 @@ std::vector<sourced3D> WavefrontFileLoader::getLoadedObjects()
 	{
 		std::cout << "\nWARNING: (WavefrontFileLoader) no obj files present in the directory OR failure to load obj files: " << mModelFilePath << "\n";
 	}
+
 	return mOriginals;
-	
 }
+
 
 void WavefrontFileLoader::startLoadingFromFile()
 {
@@ -391,6 +392,8 @@ void WavefrontFileLoader::startLoadingFromFile()
 						officialTextureName.erase(j, 4);			//.png and .jpg is 4 char long
 					}
 
+					temp.msName = officialModelName;	//set the name
+
 					if (officialModelName.compare(officialTextureName) == 0)
 					{
 						std::cout << "(WFL) Applicable texture: " << tempTextureName << "\n";
@@ -416,10 +419,13 @@ void WavefrontFileLoader::startLoadingFromFile()
 
 			}
 
+			//finally put the finished object into the scene
+			mOriginals.push_back(temp);
+
 		}
 	}
 
-
+	std::cout << "\n\n";
 
 	//do the rest
 	createTextureImage();
@@ -429,6 +435,7 @@ void WavefrontFileLoader::startLoadingFromFile()
 	createVertexBuffer();
 	createIndexBuffer();
 }
+
 
 void WavefrontFileLoader::createTextureImage()
 {
