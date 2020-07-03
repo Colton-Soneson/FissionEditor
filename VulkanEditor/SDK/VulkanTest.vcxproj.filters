@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Core\Math">
       <UniqueIdentifier>{348e3133-3060-474c-baaa-3554bbad2328}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\NeuralNetworking">
+      <UniqueIdentifier>{8018c887-9ec2-42a1-ab55-8986d3cbd709}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -172,6 +175,9 @@
     </ClInclude>
     <ClInclude Include="MatrixMath.h">
       <Filter>Header Files\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralBase.h">
+      <Filter>Header Files\Core\NeuralNetworking</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -184,6 +184,7 @@
     <ClInclude Include="DemoApplication.h" />
     <ClInclude Include="MatrixMath.h" />
     <ClInclude Include="ModelData.h" />
+    <ClInclude Include="NeuralBase.h" />
     <ClInclude Include="OptionsWindow.h" />
     <ClInclude Include="ProceduralLoader.h" />
     <ClInclude Include="Scene.h" />
