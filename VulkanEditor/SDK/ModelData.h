@@ -97,7 +97,7 @@ struct sourced3D
 	void setTextureImage();
 
 	UniformBufferObject msUBO = {};
-
+	
 	std::vector<VkDescriptorSet> msDescriptorSets;
 
 	std::vector<VkBuffer> msUniformBuffers;

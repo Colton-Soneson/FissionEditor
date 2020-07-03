@@ -1,4 +1,5 @@
 #include "OptionsWindow.h"
+#include "MatrixMath.h"
 
 static bool mSwapChainRebuild = false;
 static int mSwapChainResizeWidth = 0;
@@ -462,7 +463,7 @@ void OptionsWindow::run()
 		
 
 			ImGui::Begin("FusionEngine Editor Main Menu");                        
-			ImGui::SetWindowFontScale(1.7f);
+			ImGui::SetWindowFontScale(1.2f);
 			ImVec2 winSize(600.0, 450.0);
 			ImGui::SetWindowSize(winSize);
 
@@ -485,9 +486,9 @@ void OptionsWindow::run()
 		static float posX = 0;
 		static float posY = 0;
 		static float posZ = 0;
-		static float scaleX = 0;
-		static float scaleY = 0;
-		static float scaleZ = 0;
+		static float scaleX = 1;
+		static float scaleY = 1;
+		static float scaleZ = 1;
 		static float rotX = 0;
 		static float rotY = 0;
 		static float rotZ = 0;
@@ -528,7 +529,7 @@ void OptionsWindow::run()
 		if (mShowObjectMenu)
 		{
 			ImGui::Begin("Object Menu", &mShowObjectMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			ImGui::SetWindowFontScale(1.5);
+			ImGui::SetWindowFontScale(1.2);
 			ImGui::Text("This menu currently is able to add or delete scene objects");
 
 			ImGui::Checkbox("ADD OBJECT MODE", &readyToCreate);
@@ -567,9 +568,9 @@ void OptionsWindow::run()
 					posX = 0;
 					posY = 0;
 					posZ = 0;
-					scaleX = 0;
-					scaleY = 0;
-					scaleZ = 0;
+					scaleX = 1;
+					scaleY = 1;
+					scaleZ = 1;
 					rotX = 0;
 					rotY = 0;
 					rotZ = 0;
@@ -588,36 +589,51 @@ void OptionsWindow::run()
 				
 				if (ImGui::Button("Next"))
 				{
-					if (objectSelection <= mScene->getObjects().size())
-					{
-						objectSelection++;
-					}
-					else
+
+					objectSelection++;
+
+					if (objectSelection >= mScene->getObjects().size())
 					{
 						objectSelection = 0;
-					}				
+					}
+
+					glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+					MatrixMath mMath;
+					glm::vec3 tempPos = mMath.extractTranslation(temp);
+					glm::vec3 tempScale = mMath.extractScale(temp);
+					glm::vec3 tempRot = mMath.extractEulerRotation(temp);
+
+					posX = tempPos.x;
+					posY = tempPos.y;
+					posZ = tempPos.z;
+					scaleX = tempScale.x;
+					scaleY = tempScale.y;
+					scaleZ = tempScale.z;
+					rotX = tempRot.x;
+					rotY = tempRot.y;
+					rotZ = tempRot.z;
+					activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
+					ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
 				}
+
+				
 
 				ImGui::Text("Chosen Object:");
 				ImGui::Text(mScene->getObjects().at(objectSelection).msName.c_str());
 
+				
 				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				//mScene->getObjects().at(objectSelection).msUBO.model = glm::translate(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(posX, posY, posZ));
-
+			 
 				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotX), glm::vec3(1, 0, 0));
-				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotY), glm::vec3(0, 1, 0));
-				//mScene->getObjects().at(objectSelection).msUBO.model = glm::rotate(mScene->getObjects().at(objectSelection).msUBO.model, glm::radians(rotZ), glm::vec3(0, 0, 1));
-
+				
 				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				//mScene->getObjects().at(objectSelection).msUBO.model = glm::scale(mScene->getObjects().at(objectSelection).msUBO.model, glm::vec3(scaleX, scaleY, scaleZ));
-
+				
 				ImGui::Checkbox("Activate Lighting", &activatelighting);
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
@@ -633,9 +649,9 @@ void OptionsWindow::run()
 					posX = 0;
 					posY = 0;
 					posZ = 0;
-					scaleX = 0;
-					scaleY = 0;
-					scaleZ = 0;
+					scaleX = 1;
+					scaleY = 1;
+					scaleZ = 1;
 					rotX = 0;
 					rotY = 0;
 					rotZ = 0;

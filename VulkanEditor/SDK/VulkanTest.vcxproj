@@ -163,9 +163,9 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="DemoApplication.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MatrixMath.cpp" />
     <ClCompile Include="OptionsWindow.cpp" />
     <ClCompile Include="ProceduralLoader.cpp" />
-    <ClCompile Include="Ray.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Source\ImGUI\imgui.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_demo.cpp" />
@@ -182,10 +182,10 @@
     <ClInclude Include="DeviceSelection.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="DemoApplication.h" />
+    <ClInclude Include="MatrixMath.h" />
     <ClInclude Include="ModelData.h" />
     <ClInclude Include="OptionsWindow.h" />
     <ClInclude Include="ProceduralLoader.h" />
-    <ClInclude Include="Ray.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Source\ImGUI\imconfig.h" />
     <ClInclude Include="Source\ImGUI\imgui.h" />
