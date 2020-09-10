@@ -470,6 +470,7 @@ void OptionsWindow::run()
 			ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Object Menu", &mShowObjectMenu);
 			ImGui::Checkbox("Light Menu", &mShowLightMenu);
+			ImGui::Checkbox("Animation Menu", &mShowAnimationMenu);
 
 			//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
@@ -498,6 +499,16 @@ void OptionsWindow::run()
 
 		static int objectSelection = 0;
 		
+		//animation stuff
+		static const char* channels[]{ "x axis", "y axis", "z axis" };
+		static int channelSelection = 0;
+		static int keyframeCount = 0;
+		static int clipControllerCount = 0;
+		static float justDataX = 0.0;
+		static float justDataY = 0.0;
+		static float justDataZ = 0.0;
+		static std::vector<std::string> clipControllerNames;
+		
 
 		// 3. Show another simple window.
 		if (mShowLightMenu)
@@ -524,7 +535,6 @@ void OptionsWindow::run()
 				mShowLightMenu = false;
 			ImGui::End();
 		}
-
 
 		if (mShowObjectMenu)
 		{
@@ -646,16 +656,16 @@ void OptionsWindow::run()
 					mScene->adjustObject(objectSelection, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
 
 
-					posX = 0;
-					posY = 0;
-					posZ = 0;
-					scaleX = 1;
-					scaleY = 1;
-					scaleZ = 1;
-					rotX = 0;
-					rotY = 0;
-					rotZ = 0;
-					ambMod = 0.015f;
+					//posX = 0;
+					//posY = 0;
+					//posZ = 0;
+					//scaleX = 1;
+					//scaleY = 1;
+					//scaleZ = 1;
+					//rotX = 0;
+					//rotY = 0;
+					//rotZ = 0;
+					//ambMod = 0.015f;
 				}
 			}
 
@@ -674,6 +684,62 @@ void OptionsWindow::run()
 		if (mShowDemoMenu)
 		{
 			ImGui::ShowDemoWindow(&mShowDemoMenu);
+		}
+
+		if (mShowAnimationMenu)
+		{
+			ImGui::Begin("Animation Menu", &mShowAnimationMenu);   
+			ImGui::SetWindowFontScale(1.5);
+			ImGui::Text("Keyframe & Clip Controller");
+
+			//ADD CONTROLLER
+			if (ImGui::Button("Add Clip Controller"))
+			{
+				std::string defaultName = "default #";
+				defaultName += std::to_string(clipControllerCount);
+				++clipControllerCount;
+			}
+
+			//ADD KEYFRAME
+			if (ImGui::Button("add keyframe"))
+			{
+				++keyframeCount;
+			}
+			/*
+			if (keyframeCount > 0)
+			{
+				for (int i = 0; i < keyframeCount; ++i)
+				{
+
+				}
+			}
+			
+
+
+
+			ImGui::InputFloat("x axis keyframe:", &justDataX);
+			ImGui::InputFloat("y axis keyframe:", &justDataY);
+			ImGui::InputFloat("z axis keyframe:", &justDataZ);
+
+			ImGui::Combo("Channel Selection", &channelSelection, channels, IM_ARRAYSIZE(channels), 2);
+
+			if (channelSelection == 0)
+			{
+
+			}
+			else if (channelSelection == 1)
+			{
+
+			}
+			else
+			{
+
+			}*/
+			
+
+			if (ImGui::Button("Close"))
+				mShowAnimationMenu = false;
+			ImGui::End();
 		}
 
 		// Rendering

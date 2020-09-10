@@ -2,31 +2,6 @@
 
 
 
-
-//LEGACY CRAP
-/*
-void Scene::loadScene()
-{
-
-}
-
-void Scene::storeObject(sourced3D obj, std::string name)
-{
-	obj.setName(name);
-	mSceneContent.push_back(obj);
-
-	mSCF.mSceneModelsModel.push_back(obj.msModelPath);
-	mSCF.mSceneModelsTexture.push_back(obj.msTexturePath);
-	mSCF.mSceneModelsMat.push_back(obj.msUBO.model);
-}
-
-void Scene::storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name)
-{
-
-}
-*/
-
-
 void Scene::instantiateObject(int objectListIndex)
 {
 	//make sure to reset the following calls in DemoApp to the sceneContent after this has been called
@@ -45,9 +20,9 @@ void Scene::instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3
 
 	temp3D.msUBO.model = glm::translate(glm::mat4(1.0f), position);
 
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.x), glm::vec3(1, 0, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.y), glm::vec3(0, 1, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.z), glm::vec3(0, 0, 1));
 
 	temp3D.msUBO.model = glm::scale(temp3D.msUBO.model, scale);
 	temp3D.msUBO.ambientMod = ambientMod;
@@ -70,16 +45,15 @@ void Scene::instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3
 
 }
 
-
 void Scene::adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting)
 {
 	sourced3D temp3D = mSceneContent.at(sceneContentIndex);
 	
 	temp3D.msUBO.model = glm::translate(glm::mat4(1.0f), position);
 
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.x), glm::vec3(1, 0, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.y), glm::vec3(0, 1, 0));
+	temp3D.msUBO.model = glm::rotate(temp3D.msUBO.model, glm::degrees(rotation.z), glm::vec3(0, 0, 1));
 
 	temp3D.msUBO.model = glm::scale(temp3D.msUBO.model, scale);
 	temp3D.msUBO.ambientMod = ambientMod;
@@ -131,7 +105,6 @@ void Scene::storeLight(light3D light, std::string name)
 	mLightSources.push_back(light);
 }
 
-
 void Scene::storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 lightIntensity, glm::float32 lightSize, std::string name)
 {
 	//mLightSources.mLightPositions.push_back(lightPos);
@@ -147,4 +120,23 @@ void Scene::storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 li
 	light.lightSize = lightSize;
 
 	mLightSources.push_back(light);
+}
+
+void Scene::addClipController(std::string name)
+{
+	ClipController* temp = new ClipController(name, mpClipPool);
+	mClipControllers.push_back(temp);
+}
+
+ClipController* Scene::getClipControllerByName(std::string name)
+{
+	for (ClipController* CC : mClipControllers)
+	{
+		if (CC->getName().compare(name) == 0)
+		{
+			return CC;
+		}
+	}
+
+	return nullptr;
 }

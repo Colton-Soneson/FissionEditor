@@ -1,5 +1,6 @@
 #pragma once
 #include "UniversalObjectStorage.h"
+#include "ClipController.h"
 
 #include <fstream>
 #include <vector>
@@ -54,6 +55,13 @@ public:
 	//
 	////file reading
 	//void loadScene();
+
+
+	//animation
+	void addClipController(std::string name);
+	std::vector<ClipController*> getClipControllers() { return mClipControllers; };
+	ClipController* getClipControllerByName(std::string name);
+
 	
 private:
 
@@ -71,4 +79,9 @@ private:
 	SceneContentFile mSCF;
 
 	int mCount;
+
+	//animation
+	std::vector<ClipController*> mClipControllers;
+	ClipPool* mpClipPool;
+
 };

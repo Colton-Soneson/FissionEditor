@@ -58,6 +58,12 @@
     <Filter Include="Header Files\Core\NeuralNetworking">
       <UniqueIdentifier>{8018c887-9ec2-42a1-ab55-8986d3cbd709}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\Animation">
+      <UniqueIdentifier>{cff90a3c-6914-4f27-8deb-0c900048da80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Animation">
+      <UniqueIdentifier>{7937376c-7239-40f2-b7a3-dc33904c33b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -110,6 +116,12 @@
     </ClCompile>
     <ClCompile Include="MatrixMath.cpp">
       <Filter>Source Files\Core\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyframePool.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="ClipController.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +190,12 @@
     </ClInclude>
     <ClInclude Include="NeuralBase.h">
       <Filter>Header Files\Core\NeuralNetworking</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyframePool.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="ClipController.h">
+      <Filter>Header Files\Core\Animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

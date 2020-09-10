@@ -16,6 +16,7 @@ public:
 		mShowDemoMenu = false;
 		mShowLightMenu = false;
 		mShowObjectMenu = false;
+		mShowAnimationMenu = false;
 		mScene = scene;
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
@@ -71,15 +72,20 @@ private:
 	VkDescriptorPool mDescriptorPool;	//This is essentially the set limits given by demo
 	ImGui_ImplVulkanH_Window mMainWindowData;
 
-	
+
 
 	//object manipulation
 
 	Scene* mScene;
 	bool mShowObjectMenu;
 	bool mShowLightMenu;
+	bool mShowAnimationMenu;
 	bool mShowDemoMenu;
 
 	bool mObjectHasBeenAdded;
 	bool mObjectHasBeenChanged;
+
+
+	//animation
+
 };
