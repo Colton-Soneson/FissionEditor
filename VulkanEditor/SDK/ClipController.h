@@ -132,7 +132,7 @@ public:
 	void setClipToUseByIndex(int cpIndex) { mClipIndex = cpIndex; }
 	void setStartToLastKeyframe() { mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mLastKeyframeIndex; }
 	void setStartToFirstKeyframe() {mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mFirstKeyframeIndex; }
-	
+
 	float& getSlowMoMultiplier() { return mSlowMoMultiplier; }
 
 	int getCurrentKeyframeIndex() { return mKeyframeIndex; }

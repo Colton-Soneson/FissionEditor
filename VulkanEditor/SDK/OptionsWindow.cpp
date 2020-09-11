@@ -811,6 +811,8 @@ void OptionsWindow::run()
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(4, false)));
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(5, false)));
 
+				
+
 				++clipControllerCount;
 			}
 
@@ -842,6 +844,7 @@ void OptionsWindow::run()
 									if (ImGui::Button(clipName.c_str()))
 									{
 										mScene->getClipControllers().at(i)->setClipToUseByIndex(j);
+										mScene->getClipControllers().at(i)->setStartToFirstKeyframe();
 										++clipControllerMenus.at(i).second;								//This is for multiclip control????
 										break;
 									}
