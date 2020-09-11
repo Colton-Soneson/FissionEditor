@@ -120,10 +120,13 @@ public:
 		mName = name;
 		mpClipPool = pool;
 		mClipIndex = -1;	//if -1 then we dont have to clip to control yet so skip in the update
+		mKeyframeIndex = -1;
 		mSlowMoMultiplier = 1;
+		mClipTime = 0.0;
+		mKeyframeTime = 0.0;
 	}
 
-	void update();
+	void update(float dt);
 
 	void setClipPool(ClipPool* pool) { mpClipPool = pool; }
 	void setClipToUseByIndex(int cpIndex) { mClipIndex = cpIndex; }
@@ -132,6 +135,7 @@ public:
 	
 	float& getSlowMoMultiplier() { return mSlowMoMultiplier; }
 
+	int getCurrentKeyframeIndex() { return mKeyframeIndex; }
 	int getClipIndexInPool() { return mClipIndex; }	//returns -1 when empty
 
 	int& getPlaybackDirection() { return mPlaybackDirection; } //can be adjusted from ImGUI interface this way

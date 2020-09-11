@@ -1986,6 +1986,9 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();	//time since rendering
 
+	static float frameCount;
+	++frameCount;
+	mScene->setEngineTimeStep(frameCount / time);
 
 
 	for (auto& object : mScene->getObjects())

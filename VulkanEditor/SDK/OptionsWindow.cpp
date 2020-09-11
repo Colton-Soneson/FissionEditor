@@ -928,6 +928,23 @@ void OptionsWindow::run()
 													}
 												}
 
+												//get the keyframes in clip
+												std::string kfc = "Clip #";
+												int clipNum = mScene->getClipControllers().at(i)->getClipIndexInPool();
+												kfc += std::to_string(clipNum);
+												kfc += " Keyframes: ";
+												ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), kfc.c_str());
+
+												std::string clipKf = " ";
+
+												for (int m = mScene->getClipPool()->getClips().at(clipNum).mFirstKeyframeIndex; m <= mScene->getClipPool()->getClips().at(clipNum).mLastKeyframeIndex; ++m)
+												{
+													clipKf += std::to_string(mScene->getKeyframePool()->getKeyframe(m).mData);
+													clipKf += ", ";
+												}
+
+												ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), clipKf.c_str());
+
 												ImGui::Indent(-32.0f);
 											}
 											ImGui::Indent(-8.0f);
@@ -985,12 +1002,20 @@ void OptionsWindow::run()
 								
 								
 
-
+								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), "OUTPUTS");
 								
+								std::string time = "Engine Time: ";
+								time += std::to_string(mScene->getEngineTimeStep());
+								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), time.c_str());
+								
+								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), "Current Keyframe (Data |  Index): ");
+								std::string currentKeyframe = " ( ";
+								currentKeyframe += std::to_string(mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData);
+								currentKeyframe += " | ";
+								currentKeyframe += std::to_string(mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mIndex);
+								currentKeyframe += " )";
+								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), currentKeyframe.c_str());
 
-								//OUTPUT TEXT DATA
-								//what clip this CC controls
-								//
 
 							}
 						}
@@ -1037,6 +1062,15 @@ void OptionsWindow::run()
 			}*/
 
 			ImGui::Text("_________________________");
+
+
+			for (int i = 0; i < clipControllerCount; ++i)
+			{
+				if (mScene->getClipControllers().at(i)->getClipIndexInPool() != -1)	//if we have clips to go through on this controller
+				{
+					mScene->getClipControllers().at(i)->update( 1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
+				}
+			}
 
 
 			if (ImGui::Button("Close"))
