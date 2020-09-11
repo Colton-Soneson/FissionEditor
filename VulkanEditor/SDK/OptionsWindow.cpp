@@ -519,6 +519,7 @@ void OptionsWindow::run()
 		static bool clipMenu = false;
 		static std::vector<std::string> clipControllerNames;
 		static std::vector<std::pair<bool, int>> clipControllerMenus;
+		static std::vector<std::pair<int, std::pair<int, bool>>> clipControllerOptions;		//int, int, bool = clip controller number, the option selected, the options state
 
 		// 3. Show another simple window.
 		if (mShowLightMenu)
@@ -777,9 +778,6 @@ void OptionsWindow::run()
 							clipMenu = false;
 						}
 					}
-					
-
-					
 				}
 			}
 			
@@ -798,6 +796,21 @@ void OptionsWindow::run()
 
 				//clipControllerMenus.push_back(false);
 				clipControllerMenus.push_back(std::pair<bool, int>(false,-1));
+
+				//options menu (.at(clip controller number). the option selected. the options state)
+							// play/ pause
+								//play / pause options
+							// set to (start playing at) first / last keyframe
+							// change control clip
+							// flip playback direction
+							// slow mo (multiply time step by a factor of less than one)
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(0, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(1, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(2, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(3, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(4, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(5, false)));
+
 				++clipControllerCount;
 			}
 
@@ -812,24 +825,191 @@ void OptionsWindow::run()
 						clipControllerMenus.at(i).first = !clipControllerMenus.at(i).first;
 					}
 
-					if (clipControllerMenus.at(i).first)
+					if (clipCount >= 0)	//do we have clips to add
 					{
-						//ADD clip to clip controller
-						if (ImGui::Button("add clip to clip controller"))
+						if (clipControllerMenus.at(i).first)
 						{
-							
-						}
-					}
+							if (mScene->getClipControllers().at(i)->getClipIndexInPool() == -1)	//if we dont have a clip to control yet
+							{
+								ImGui::TextColored(ImVec4(0.2, 1.0, 1.0, 1.0), "Choose a Clip To Control");
 
-					if (clipControllerMenus.at(i).second != -1)
+								//go through all available clips
+								for (int j = 0; j <= clipCount; ++j)
+								{
+									std::string clipName = "Clip #";
+									clipName += std::to_string(j);
+
+									if (ImGui::Button(clipName.c_str()))
+									{
+										mScene->getClipControllers().at(i)->setClipToUseByIndex(j);
+										++clipControllerMenus.at(i).second;								//This is for multiclip control????
+										break;
+									}
+								}
+							}
+							else
+							{
+								std::string CtoC = "Using Clip #";
+								CtoC += std::to_string(mScene->getClipControllers().at(i)->getClipIndexInPool());
+								ImGui::TextColored(ImVec4(0.7, 0.7, 0.0, 1.0), CtoC.c_str());
+
+								//CLIP CONTROLS
+								for (int j = 0; j < clipControllerOptions.size(); ++j)
+								{
+									if (clipControllerOptions.at(j).first == i)	//if our clip controller number is right
+									{
+										// play/ pause
+										if (clipControllerOptions.at(j).second.first == 0)
+										{
+											ImGui::Indent(8.0f);
+											ImGui::Checkbox("\tPlay / Pause Menu", &clipControllerOptions.at(j).second.second);
+											if (clipControllerOptions.at(j).second.second == true)
+											{
+												ImGui::Indent(32.0f);
+												ImGui::Checkbox("\tPause the Clip", &clipControllerOptions.at(j + 1).second.second);	//j+1 is to get those play pause options
+												if (clipControllerOptions.at(j + 1).second.second == true)
+												{
+													//set the timestep to 0 (or just set playback direction to pause mode)
+													mScene->getClipControllers().at(i)->getPlaybackDirection() = 1;
+
+												}
+												ImGui::Indent(-32.0f);
+											}
+											ImGui::Indent(-8.0f);
+
+										}
+
+										// set to (start playing at) first / last keyframe
+										if (clipControllerOptions.at(j).second.first == 2)
+										{
+											ImGui::Indent(8.0f);
+											ImGui::Checkbox("\tstart at first / last keyframe", &clipControllerOptions.at(j).second.second);
+											if (clipControllerOptions.at(j).second.second == true)
+											{
+												ImGui::Indent(32.0f);
+
+												if (ImGui::Button("Start Playing at First Frame"))
+												{
+													mScene->getClipControllers().at(i)->setStartToFirstKeyframe();
+												}
+
+												if (ImGui::Button("Start Playing at Last Frame"))
+												{
+													mScene->getClipControllers().at(i)->setStartToLastKeyframe();
+												}
+
+												ImGui::Indent(-32.0f);
+											}
+											ImGui::Indent(-8.0f);
+										}
+
+										// change control clip
+										if (clipControllerOptions.at(j).second.first == 3)
+										{
+											ImGui::Indent(8.0f);
+											ImGui::Checkbox("\tChange Clip", &clipControllerOptions.at(j).second.second);
+											if (clipControllerOptions.at(j).second.second == true)
+											{
+												ImGui::Indent(32.0f);
+
+												ImGui::TextColored(ImVec4(0.2, 1.0, 1.0, 1.0), "Choose a Clip To Control");
+
+												//go through all available clips
+												for (int m = 0; m <= clipCount; ++m)
+												{
+													std::string clipName = "Clip #";
+													clipName += std::to_string(m);
+
+													if (ImGui::Button(clipName.c_str()))
+													{
+														mScene->getClipControllers().at(i)->setClipToUseByIndex(m);
+														++clipControllerMenus.at(i).second;								//This is for multiclip control????
+														break;
+													}
+												}
+
+												ImGui::Indent(-32.0f);
+											}
+											ImGui::Indent(-8.0f);
+										}
+
+										// flip playback direction
+										if (clipControllerOptions.at(j).second.first == 4)
+										{
+											ImGui::Indent(8.0f);
+											ImGui::Checkbox("\tFlip playback direction", &clipControllerOptions.at(j).second.second);
+											if (clipControllerOptions.at(j).second.second == true)
+											{
+												ImGui::Indent(32.0f);
+
+												if (clipControllerOptions.at(0).second.second == true)
+												{
+													ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "WARNING: This will override the play / pause option");
+												}
+
+												ImGui::Text("-1 / 0 / 1  :  backwards / pause / fowards");
+												ImGui::SliderInt("Direction: ", &mScene->getClipControllers().at(i)->getPlaybackDirection(), -1, 1);
+												std::string temp = "RETRIEVED: ";
+												temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
+												ImGui::BulletText(temp.c_str());
+
+												ImGui::Indent(-32.0f);
+											}
+											ImGui::Indent(-8.0f);
+										}
+
+										// slow mo (multiply time step by a factor of less than one)
+										if (clipControllerOptions.at(j).second.first == 5)
+										{
+											ImGui::Indent(8.0f);
+											ImGui::Checkbox("\tslow mo", &clipControllerOptions.at(j).second.second);
+											if (clipControllerOptions.at(j).second.second == true)
+											{
+												ImGui::Indent(32.0f);
+												ImGui::InputFloat("SlowMo Multiplier ( >= 0): ", &mScene->getClipControllers().at(i)->getSlowMoMultiplier());
+
+												if (mScene->getClipControllers().at(i)->getSlowMoMultiplier() < 0)
+												{
+													ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "WARNING: SloMo has to be above 0");
+													mScene->getClipControllers().at(i)->getSlowMoMultiplier() = 1;
+												}
+
+												ImGui::Indent(-32.0f);
+											}
+											ImGui::Indent(-8.0f);
+										}
+									
+									}
+								}
+								
+								
+								
+
+
+								
+
+								//OUTPUT TEXT DATA
+								//what clip this CC controls
+								//
+
+							}
+						}
+
+						////MULTICLIP CONTROLLING
+						//if (clipControllerMenus.at(i).second != -1)
+						//{
+						//	for (int j = 0; j <= clipControllerMenus.at(i).second; ++j)	//rolls through all the clips that this CC controls
+						//	{
+						//		ImGui::Text("Clips To Control");
+						//	}
+						//}
+					}
+					else
 					{
-						for (int j = 0; j <= clipControllerMenus.at(i).second; ++j)
-						{
-							ImGui::Text("Clips To Control");
-						}
+						ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "No Clips in Clip Pool to Add to Controller");
 					}
+					
 
-					ImGui::Text("_________________________");
 				}
 			}
 
@@ -855,7 +1035,9 @@ void OptionsWindow::run()
 			{
 
 			}*/
-			
+
+			ImGui::Text("_________________________");
+
 
 			if (ImGui::Button("Close"))
 				mShowAnimationMenu = false;

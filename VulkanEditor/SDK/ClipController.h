@@ -87,7 +87,7 @@ struct ClipPool
 		mClips.push_back(c);
 	}
 
-	int getClip(std::string name)		//search for the clip by name, return its index
+	int getClipByName(std::string name)		//search for the clip by name, return its index
 	{
 		for (Clip& itr : mClips)
 		{
@@ -98,6 +98,9 @@ struct ClipPool
 			}
 		}
 	}
+
+	std::vector<Clip> getClips() { return mClips; }
+	
 
 
 	int mClipCount;
@@ -116,11 +119,24 @@ public:
 	{
 		mName = name;
 		mpClipPool = pool;
+		mClipIndex = -1;	//if -1 then we dont have to clip to control yet so skip in the update
+		mSlowMoMultiplier = 1;
 	}
 
 	void update();
 
 	void setClipPool(ClipPool* pool) { mpClipPool = pool; }
+	void setClipToUseByIndex(int cpIndex) { mClipIndex = cpIndex; }
+	void setStartToLastKeyframe() { mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mLastKeyframeIndex; }
+	void setStartToFirstKeyframe() {mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mFirstKeyframeIndex; }
+	
+	float& getSlowMoMultiplier() { return mSlowMoMultiplier; }
+
+	int getClipIndexInPool() { return mClipIndex; }	//returns -1 when empty
+
+	int& getPlaybackDirection() { return mPlaybackDirection; } //can be adjusted from ImGUI interface this way
+
+	
 
 	std::string getName() { return mName; }
 
@@ -137,6 +153,8 @@ private:
 	float mKeyframeParameter;	//normalized keyframe time between 0 and 1
 								//		one exception makes it [0, 1)
 	int mPlaybackDirection;		// +1 for forward, 0 for pause, and -1 for reverse
+
+	float mSlowMoMultiplier;	//effect SloMo will have on timestep
 	
 	ClipPool* mpClipPool;			//reference to the pool of clips to control
 

@@ -58,6 +58,7 @@ public:
 	////file reading
 	//void loadScene();
 
+	void setEngineTimeStep(float dt) { mEngineTimeStep = dt; }
 
 	//animation
 	void addClipController(std::string name);
@@ -72,6 +73,8 @@ public:
 	void addClipToClipPool(int firstKeyframe, int lastKeyframe);
 	void addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
 	ClipPool* getClipPool() { return mpClipPool; }
+
+	float getEngineTimeStep() { return mEngineTimeStep; }
 
 	
 private:
@@ -95,5 +98,6 @@ private:
 	std::vector<ClipController*> mClipControllers;
 	ClipPool* mpClipPool;
 	KeyframePool* mpKeyframePool;
+	float mEngineTimeStep;
 
 };
