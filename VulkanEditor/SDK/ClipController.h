@@ -115,12 +115,12 @@ public:
 	ClipController(std::string name, ClipPool* pool)
 	{
 		mName = name;
-		mClipPool = pool;
+		mpClipPool = pool;
 	}
 
 	void update();
 
-	void setClipPool(ClipPool* pool) { mClipPool = pool; }
+	void setClipPool(ClipPool* pool) { mpClipPool = pool; }
 
 	std::string getName() { return mName; }
 
@@ -138,6 +138,6 @@ private:
 								//		one exception makes it [0, 1)
 	int mPlaybackDirection;		// +1 for forward, 0 for pause, and -1 for reverse
 	
-	ClipPool* mClipPool;		//reference to the pool of clips to control
+	ClipPool* mpClipPool;			//reference to the pool of clips to control
 
 };

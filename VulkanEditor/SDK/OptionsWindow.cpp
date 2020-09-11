@@ -502,13 +502,23 @@ void OptionsWindow::run()
 		//animation stuff
 		static const char* channels[]{ "x axis", "y axis", "z axis" };
 		static int channelSelection = 0;
-		static int keyframeCount = 0;
+		static int keyframeCount = -1;
+		static int clipCount = -1;
 		static int clipControllerCount = 0;
+		
 		static float justDataX = 0.0;
 		static float justDataY = 0.0;
 		static float justDataZ = 0.0;
+		static float justDataDuration = 1.0;		//CANT BE ZERO
+		static float justDataFixedDuration = 1.0;	//CANT BE ZERO
+		static bool fixedDurationMenu = false;
+		static int justDataFirstClipKeyframe = 0;
+		static int justDataLastClipKeyframe = 0;
+
+		static bool keyframeMenu = false;
+		static bool clipMenu = false;
 		static std::vector<std::string> clipControllerNames;
-		
+		static std::vector<std::pair<bool, int>> clipControllerMenus;
 
 		// 3. Show another simple window.
 		if (mShowLightMenu)
@@ -640,33 +650,21 @@ void OptionsWindow::run()
 				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				
-				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				
 				ImGui::Checkbox("Activate Lighting", &activatelighting);
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
-				
-				if (ImGui::Button("EDIT THE OBJECT"))
-				{
-					mObjectHasBeenChanged = true;
+				mScene->adjustObject(objectSelection, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
 
-					mScene->adjustObject(objectSelection, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+				//if (ImGui::Button("EDIT THE OBJECT"))
+				//{
+				//	//mObjectHasBeenChanged = true;
 
-
-					//posX = 0;
-					//posY = 0;
-					//posZ = 0;
-					//scaleX = 1;
-					//scaleY = 1;
-					//scaleZ = 1;
-					//rotX = 0;
-					//rotY = 0;
-					//rotZ = 0;
-					//ambMod = 0.015f;
-				}
+				//}
 			}
 
 			ImGui::Text("");
@@ -692,30 +690,152 @@ void OptionsWindow::run()
 			ImGui::SetWindowFontScale(1.5);
 			ImGui::Text("Keyframe & Clip Controller");
 
-			//ADD CONTROLLER
-			if (ImGui::Button("Add Clip Controller"))
+			//CREATE AND ADD KEYFRAME TO POOL
+			if (ImGui::Button("Create Keyframe"))
 			{
-				std::string defaultName = "default #";
-				defaultName += std::to_string(clipControllerCount);
-				++clipControllerCount;
+				keyframeMenu = true;
 			}
 
-			//ADD KEYFRAME
-			if (ImGui::Button("add keyframe"))
+			if (keyframeMenu)
 			{
-				++keyframeCount;
-			}
-			/*
-			if (keyframeCount > 0)
-			{
-				for (int i = 0; i < keyframeCount; ++i)
+				ImGui::InputFloat("x axis keyframe:", &justDataX);
+				ImGui::InputFloat("duration of keyframe:", &justDataDuration);
+
+				//only set up for one float value axis right now
+				//ImGui::InputFloat("y axis keyframe:", &justDataY);
+				//ImGui::InputFloat("z axis keyframe:", &justDataZ);
+				
+				if (justDataDuration <= 0.0)
 				{
+					ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "Duration Can Not Zero or Negative");
+					justDataDuration = 1.0;
+				}
+				else
+				{
+					if (ImGui::Button("Add Keyframe to Pool"))
+					{
 
+						mScene->addKeyframeToKeyframePool(keyframeCount, justDataDuration, justDataX);
+						++keyframeCount;	//MAKE SURE THIS IS AFTER ADDKEYFRAME
+
+						justDataDuration = 1.0;
+						justDataX = 0;
+						keyframeMenu = false;
+					}
+				}
+			}
+
+			ImGui::Text("_______________________\n");
+
+			//CREATE AND ADD CLIP
+			if (keyframeCount < 0)
+			{
+				ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "No Keyframes to Make Clip From");
+			}
+			else 
+			{
+				if (ImGui::Button("Create Clip"))
+				{
+					clipMenu = true;
+				}
+
+				if (clipMenu)
+				{
+					ImGui::SliderInt("First Clip Keyframe:", &justDataFirstClipKeyframe, 0, justDataLastClipKeyframe);
+					ImGui::SliderInt("Last Clip Keyframe:", &justDataLastClipKeyframe, justDataFirstClipKeyframe, (mScene->getKeyframePool()->size() - 1));
+
+					ImGui::Checkbox("Fixed Duration", &fixedDurationMenu);
+
+					if (fixedDurationMenu)
+					{
+						ImGui::InputFloat("Fixed Duration [opt]:", &justDataFixedDuration);
+					}
+
+					if (justDataFixedDuration <= 0.0 && fixedDurationMenu)
+					{
+						ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "Fixed Duration Can Not Zero or Negative");
+						justDataDuration = 1.0;
+					}
+					else
+					{
+						if (ImGui::Button("Add Clip to Pool"))
+						{
+							if (fixedDurationMenu == false)
+							{
+								mScene->addClipToClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe);
+							}
+							else
+							{
+								mScene->addClipToClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe, justDataFixedDuration);
+							}
+
+							++clipCount;
+
+							justDataFirstClipKeyframe = 0;
+							justDataLastClipKeyframe = 0;
+							justDataFixedDuration = 0.0;
+							clipMenu = false;
+						}
+					}
+					
+
+					
 				}
 			}
 			
 
+			ImGui::Text("_______________________\n");
 
+			//ADD CONTROLLER
+			if (ImGui::Button("Add Clip Controller"))
+			{
+
+				std::string defaultName = "default #";
+				defaultName += std::to_string(clipControllerCount);
+				
+				//add the controller
+				mScene->addClipController(defaultName);
+
+				//clipControllerMenus.push_back(false);
+				clipControllerMenus.push_back(std::pair<bool, int>(false,-1));
+				++clipControllerCount;
+			}
+
+			ImGui::Text("____________________________");
+
+			if (clipControllerCount > 0)
+			{
+				for (int i = 0; i < clipControllerCount; ++i)
+				{
+					if (ImGui::Button(mScene->getClipControllers().at(i)->getName().c_str()))
+					{
+						clipControllerMenus.at(i).first = !clipControllerMenus.at(i).first;
+					}
+
+					if (clipControllerMenus.at(i).first)
+					{
+						//ADD clip to clip controller
+						if (ImGui::Button("add clip to clip controller"))
+						{
+							
+						}
+					}
+
+					if (clipControllerMenus.at(i).second != -1)
+					{
+						for (int j = 0; j <= clipControllerMenus.at(i).second; ++j)
+						{
+							ImGui::Text("Clips To Control");
+						}
+					}
+
+					ImGui::Text("_________________________");
+				}
+			}
+
+			
+			/*
+			
 
 			ImGui::InputFloat("x axis keyframe:", &justDataX);
 			ImGui::InputFloat("y axis keyframe:", &justDataY);

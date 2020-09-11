@@ -140,3 +140,33 @@ ClipController* Scene::getClipControllerByName(std::string name)
 
 	return nullptr;
 }
+
+void Scene::addKeyframeToKeyframePool(Keyframe kf)
+{
+	mpKeyframePool->addKeyframe(kf);
+}
+
+void Scene::addKeyframeToKeyframePool(int index, float duration, float data)
+{
+	Keyframe temp(index, duration, data);
+	mpKeyframePool->addKeyframe(temp);
+}
+
+void Scene::addClipToClipPool(Clip c)
+{
+	mpClipPool->addClip(c);
+}
+
+void Scene::addClipToClipPool(int firstKeyframe, int lastKeyframe)
+{
+	Clip temp(mpKeyframePool, firstKeyframe, lastKeyframe);
+	mpClipPool->addClip(temp);
+}
+
+void Scene::addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration)
+{
+	Clip temp(mpKeyframePool, firstKeyframe, lastKeyframe, fixedDuration);
+	mpClipPool->addClip(temp);
+}
+
+

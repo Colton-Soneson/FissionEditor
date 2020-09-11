@@ -23,6 +23,8 @@ public:
 		mTextureFilePath = textureFilepath;	
 		mCount = 0;
 		mUOS = new UniversalObjectStorage(mModelFilePath, mTextureFilePath, device, physicalDevice, graphicsQueue, commandPool);
+		mpKeyframePool = new KeyframePool();
+		mpClipPool = new ClipPool();
 	};
 
 	~Scene() {};
@@ -62,6 +64,15 @@ public:
 	std::vector<ClipController*> getClipControllers() { return mClipControllers; };
 	ClipController* getClipControllerByName(std::string name);
 
+	void addKeyframeToKeyframePool(Keyframe kf);
+	void addKeyframeToKeyframePool(int index, float duration, float data);
+	KeyframePool* getKeyframePool() { return mpKeyframePool; }
+
+	void addClipToClipPool(Clip c);
+	void addClipToClipPool(int firstKeyframe, int lastKeyframe);
+	void addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
+	ClipPool* getClipPool() { return mpClipPool; }
+
 	
 private:
 
@@ -83,5 +94,6 @@ private:
 	//animation
 	std::vector<ClipController*> mClipControllers;
 	ClipPool* mpClipPool;
+	KeyframePool* mpKeyframePool;
 
 };

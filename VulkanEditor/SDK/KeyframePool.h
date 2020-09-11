@@ -61,6 +61,8 @@ public:
 
 	Keyframe getKeyframe(int index) { return mPool.at(index); }
 
+	int size() { return mKeyframeCount; }
+
 	void addKeyframe(Keyframe kf) 
 	{ 
 		++mKeyframeCount;
