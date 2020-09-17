@@ -1,5 +1,6 @@
 #include "ClipController.h"
 
+
 void ClipController::update(float dt)
 {
 	float timeStep = dt;
@@ -27,6 +28,7 @@ void ClipController::update(float dt)
 //				2) Forward / next kf (you have to RESOLVE)		5) Reverse / prior kf (RESOLVE)
 //				3) Forward / end of Clip						6) Reverse / end of Clip
 
+	
 	if (mPlaybackDirection == 1)	//1, 2, 3
 	{
 		if (mKeyframeTime > tempKeyframe.mDuration)
@@ -34,10 +36,24 @@ void ClipController::update(float dt)
 			mKeyframeIndex++;	//next frame
 			mKeyframeTime -= tempKeyframe.mDuration;
 
-			if (mKeyframeIndex > tempClip.mLastKeyframeIndex)
+			if (mKeyframeIndex > tempClip.mLastKeyframeIndex)	//if we are greater than the last keyframe going forward
 			{
-				mKeyframeIndex = tempClip.mFirstKeyframeIndex;	//this is the loop
-				mClipTime = mKeyframeTime;
+				tempClip.mTransitionalForward = true;
+
+				if (mTransitionalClipMode)
+				{
+					mTransitionalManager->replaceClip(mClipIndex, mKeyframeIndex, mPlaybackDirection);
+					//mTransitionalManager->replaceClip(mClipIndex, mKeyframeIndex);
+				}
+				else
+				{
+					mKeyframeIndex = tempClip.mFirstKeyframeIndex;	//this is the loop
+					mClipTime = mKeyframeTime;
+				}
+			}
+			else
+			{
+				tempClip.mTransitionalForward = false;
 			}
 		}
 	}
@@ -50,8 +66,22 @@ void ClipController::update(float dt)
 
 			if (mKeyframeIndex < tempClip.mFirstKeyframeIndex)
 			{
-				mKeyframeIndex = tempClip.mLastKeyframeIndex;	//set to the end
-				mClipTime = tempClip.mDuration + mKeyframeParameter;
+				tempClip.mTransitionalBackward = true;
+
+				if (mTransitionalClipMode)
+				{
+					//mTransitionalManager->replaceClip(mClipIndex, mKeyframeIndex);
+					mTransitionalManager->replaceClip(mClipIndex, mKeyframeIndex, mPlaybackDirection);
+				}
+				else
+				{
+					mKeyframeIndex = tempClip.mLastKeyframeIndex;	//set to the end
+					mClipTime = tempClip.mDuration + mKeyframeParameter;
+				}
+			}
+			else
+			{
+				tempClip.mTransitionalBackward = false;
 			}
 
 			mKeyframeTime = tempKeyframe.mDuration + mKeyframeParameter;

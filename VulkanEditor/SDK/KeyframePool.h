@@ -10,6 +10,52 @@
 #include <math.h>
 #include <vector>
 
+struct KeyframeData
+{
+public:
+	KeyframeData(float Px, float Py, float Pz, float Rx, float Ry, float Rz, float Sx, float Sy, float Sz)
+	{
+		mPosX = Px;
+		mPosY = Py;
+		mPosZ = Pz;
+
+		mRotX = Rx;
+		mRotY = Ry;
+		mRotZ = Rz;
+
+		mSizeX = Sx;
+		mSizeY = Sy;
+		mSizeZ = Sz;
+	}
+
+	KeyframeData()
+	{
+		mPosX = 0;
+		mPosY = 0;
+		mPosZ = 0;
+
+		mRotX = 0;
+		mRotY = 0;
+		mRotZ = 0;
+
+		mSizeX = 1;
+		mSizeY = 1;
+		mSizeZ = 1;
+	}
+
+	float mPosX;
+	float mPosY;
+	float mPosZ;
+
+	float mRotX;
+	float mRotY;
+	float mRotZ;
+
+	float mSizeX;
+	float mSizeY;
+	float mSizeZ;
+};
+
 struct Keyframe
 {
 

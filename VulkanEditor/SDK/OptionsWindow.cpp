@@ -502,7 +502,7 @@ void OptionsWindow::run()
 		//animation stuff
 		static const char* channels[]{ "x axis", "y axis", "z axis" };
 		static int channelSelection = 0;
-		static int keyframeCount = -1;
+		static int keyframeCount = 0;
 		static int clipCount = -1;
 		static int clipControllerCount = 0;
 		
@@ -803,6 +803,7 @@ void OptionsWindow::run()
 							// set to (start playing at) first / last keyframe
 							// change control clip
 							// flip playback direction
+								//set clip looping or transitional looping
 							// slow mo (multiply time step by a factor of less than one)
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(0, false)));
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(1, false)));
@@ -810,6 +811,7 @@ void OptionsWindow::run()
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(3, false)));
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(4, false)));
 				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(5, false)));
+				clipControllerOptions.push_back(std::pair<int, std::pair<int, bool>>(clipControllerCount, std::pair<int, bool>(6, false)));
 
 				
 
@@ -969,9 +971,23 @@ void OptionsWindow::run()
 
 												ImGui::Text("-1 / 0 / 1  :  backwards / pause / fowards");
 												ImGui::SliderInt("Direction: ", &mScene->getClipControllers().at(i)->getPlaybackDirection(), -1, 1);
-												std::string temp = "RETRIEVED: ";
-												temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
-												ImGui::BulletText(temp.c_str());
+
+												ImGui::Checkbox("\tTransitional Clip Looping", &clipControllerOptions.at(j + 1).second.second);
+												if (clipControllerOptions.at(j + 1).second.second == true)
+												{
+													mScene->getClipControllers().at(i)->setTransitionalMode(true);
+													std::string temp = "RETRIEVED (multi clip loop): ";
+													temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
+													ImGui::BulletText(temp.c_str());
+												}
+												else
+												{
+													mScene->getClipControllers().at(i)->setTransitionalMode(false);
+													std::string temp = "RETRIEVED (single clip loop): ";
+													temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
+													ImGui::BulletText(temp.c_str());
+												}
+												
 
 												ImGui::Indent(-32.0f);
 											}
@@ -979,7 +995,7 @@ void OptionsWindow::run()
 										}
 
 										// slow mo (multiply time step by a factor of less than one)
-										if (clipControllerOptions.at(j).second.first == 5)
+										if (clipControllerOptions.at(j).second.first == 6)
 										{
 											ImGui::Indent(8.0f);
 											ImGui::Checkbox("\tslow mo", &clipControllerOptions.at(j).second.second);

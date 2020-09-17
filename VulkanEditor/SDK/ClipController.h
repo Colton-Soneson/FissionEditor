@@ -3,6 +3,7 @@
 #include <string>
 
 
+
 struct Clip
 {
 	Clip(KeyframePool* kfpool, int firstKeyframe, int lastKeyframe)
@@ -26,6 +27,8 @@ struct Clip
 		mKeyframePool = kfpool;
 		mFirstKeyframeIndex = firstKeyframe;
 		mLastKeyframeIndex = lastKeyframe;
+		mTransitionalForward = false;
+		mTransitionalBackward = false;
 
 		//duration using set fixed duration distributed amount keyframes
 		distributeDuration(fixedDuration);
@@ -54,6 +57,8 @@ struct Clip
 		}
 	}
 
+	float reciprocal(float duration) { return 1.0 / duration; }
+
 	std::string mName;
 	int mIndex;					//clip index inside the clip pool
 	float mDuration;			//can be calculated as sum of all the referenced keyframes or set first and distributed uniformly across keyframes
@@ -65,8 +70,8 @@ struct Clip
 	int mFirstKeyframeIndex;	//index of first keyframe in keyframe pool referenced by clip
 	int mLastKeyframeIndex;		//index of last keyframe in keyframe pool referenced by clip
 
-	float reciprocal(float duration) { return 1.0 / duration; }
-
+	bool mTransitionalForward;
+	bool mTransitionalBackward;
 };
 
 struct ClipPool
@@ -107,23 +112,83 @@ struct ClipPool
 	std::vector<Clip> mClips;
 };
 
+struct Transitionals
+{
+public:
+
+	Transitionals()
+	{
+		mTargetClipIndex = 0;
+		mClipPool = nullptr;
+	}
+
+	Transitionals(ClipPool* cP)
+	{
+		mTargetClipIndex = 0;
+		mClipPool = cP;
+	}
+
+	void replaceClip(int& currentClipIndex, int& currentKeyframeIndex, int direction)
+	{
+
+		//if (mClipPool->getClips().at(currentClipIndex).mTransitionalBackward == true)
+		if (direction == -1)
+		{
+			if ((currentClipIndex - 1) < 0)	//no more clips in pool to go through
+			{
+				currentClipIndex = mClipPool->getClips().size();
+				currentKeyframeIndex = mClipPool->getClips().at(currentClipIndex).mLastKeyframeIndex;
+			}
+			else
+			{
+				--currentClipIndex;
+				currentKeyframeIndex = mClipPool->getClips().at(currentClipIndex).mLastKeyframeIndex;
+			}
+
+		}
+
+		//if (mClipPool->getClips().at(currentClipIndex).mTransitionalForward == true)
+		if (direction == 1)
+		{
+			if ((currentClipIndex + 1) > mClipPool->getClips().size() - 1)
+			{
+				currentClipIndex = 0;
+				currentKeyframeIndex = mClipPool->getClips().at(currentClipIndex).mFirstKeyframeIndex;
+			}
+			else
+			{
+				++currentClipIndex;
+				currentKeyframeIndex = mClipPool->getClips().at(currentClipIndex).mFirstKeyframeIndex;
+			}
+		}
+	}
+
+	void setClipPool(ClipPool* cP) { mClipPool = cP; }
+	void setTargetIndex(int tCI) { mTargetClipIndex = tCI; }
+
+
+	int mTargetClipIndex;	//this will be either fed with a parameter of clipIndex + 1 or -1 depending for
+							//		forward or backward
+	ClipPool* mClipPool;
+};
+
+
+
 class ClipController
 {
 public:
-	/*ClipController(std::string name)
-	{
-		mName = name;
-	}*/
-
+	
 	ClipController(std::string name, ClipPool* pool)
 	{
 		mName = name;
 		mpClipPool = pool;
 		mClipIndex = -1;	//if -1 then we dont have to clip to control yet so skip in the update
-		mKeyframeIndex = -1;
+		mKeyframeIndex = 0;
 		mSlowMoMultiplier = 1;
 		mClipTime = 0.0;
 		mKeyframeTime = 0.0;
+		mTransitionalClipMode = false;
+		mTransitionalManager = new Transitionals(pool);
 	}
 
 	void update(float dt);
@@ -140,7 +205,7 @@ public:
 
 	int& getPlaybackDirection() { return mPlaybackDirection; } //can be adjusted from ImGUI interface this way
 
-	
+	void setTransitionalMode(bool mode) { mTransitionalClipMode = mode; }
 
 	std::string getName() { return mName; }
 
@@ -160,6 +225,8 @@ private:
 
 	float mSlowMoMultiplier;	//effect SloMo will have on timestep
 	
-	ClipPool* mpClipPool;			//reference to the pool of clips to control
+	ClipPool* mpClipPool;					//reference to the pool of clips to control
+	Transitionals* mTransitionalManager;
+	bool mTransitionalClipMode;
 
 };
