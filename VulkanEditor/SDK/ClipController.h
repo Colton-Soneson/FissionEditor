@@ -173,7 +173,6 @@ public:
 };
 
 
-
 class ClipController
 {
 public:
@@ -206,6 +205,9 @@ public:
 	int& getPlaybackDirection() { return mPlaybackDirection; } //can be adjusted from ImGUI interface this way
 
 	void setTransitionalMode(bool mode) { mTransitionalClipMode = mode; }
+
+	void lerpUpdate(float dt, glm::vec3& pos, glm::vec3& rot, glm::vec3& scale);		//lerping for this specific controller
+	
 
 	std::string getName() { return mName; }
 

@@ -521,6 +521,7 @@ void OptionsWindow::run()
 		static int justDataFirstClipKeyframe = 0;
 		static int justDataLastClipKeyframe = 0;
 
+		static bool lerpUpdateMode = false;
 		static bool keyframeMenu = false;
 		static bool clipMenu = false;
 		static std::vector<std::string> clipControllerNames;
@@ -1152,17 +1153,27 @@ void OptionsWindow::run()
 
 			ImGui::Text("_________________________");
 
+			ImGui::Checkbox("Lerp Update Mode [UNSTABLE] ", &lerpUpdateMode);
 
 			for (int i = 0; i < clipControllerCount; ++i)
 			{
 				if (mScene->getClipControllers().at(i)->getClipIndexInPool() != -1)	//if we have clips to go through on this controller
 				{
-					mScene->getClipControllers().at(i)->update( 1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
 
-					
-					mScene->adjustObject(i, mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mPos, 
-							mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mScale, 
-								mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mRot, ambMod, activatelighting);
+					glm::vec3 pos = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mPos;
+					glm::vec3 rot = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mRot;
+					glm::vec3 scale = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mScale;
+
+					if (lerpUpdateMode)
+					{
+						mScene->getClipControllers().at(i)->lerpUpdate(1 / mScene->getEngineTimeStep(), pos, rot, scale);
+					}
+					else
+					{
+						mScene->getClipControllers().at(i)->update( 1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
+					}
+
+					mScene->adjustObject(i, pos, scale, rot, ambMod, activatelighting);
 				}
 			}
 
