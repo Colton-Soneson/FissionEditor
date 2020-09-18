@@ -66,7 +66,8 @@ public:
 	ClipController* getClipControllerByName(std::string name);
 
 	void addKeyframeToKeyframePool(Keyframe kf);
-	void addKeyframeToKeyframePool(int index, float duration, float data);
+	void addKeyframeToKeyframePool(int index, float duration, KeyframeData data);
+	void addKeyframeToKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale);
 	KeyframePool* getKeyframePool() { return mpKeyframePool; }
 
 	void addClipToClipPool(Clip c);

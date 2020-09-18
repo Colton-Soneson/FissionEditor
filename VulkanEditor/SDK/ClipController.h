@@ -136,7 +136,7 @@ public:
 		{
 			if ((currentClipIndex - 1) < 0)	//no more clips in pool to go through
 			{
-				currentClipIndex = mClipPool->getClips().size();
+				currentClipIndex = mClipPool->getClips().size() - 1;
 				currentKeyframeIndex = mClipPool->getClips().at(currentClipIndex).mLastKeyframeIndex;
 			}
 			else

@@ -506,9 +506,15 @@ void OptionsWindow::run()
 		static int clipCount = -1;
 		static int clipControllerCount = 0;
 		
-		static float justDataX = 0.0;
-		static float justDataY = 0.0;
-		static float justDataZ = 0.0;
+		static float justDataPosX = 0.0;
+		static float justDataPosY = 0.0;
+		static float justDataPosZ = 0.0;
+		static float justDataRotX = 0.0;
+		static float justDataRotY = 0.0;
+		static float justDataRotZ = 0.0;
+		static float justDataScaleX = 1.0;
+		static float justDataScaleY = 1.0;
+		static float justDataScaleZ = 1.0;
 		static float justDataDuration = 1.0;		//CANT BE ZERO
 		static float justDataFixedDuration = 1.0;	//CANT BE ZERO
 		static bool fixedDurationMenu = false;
@@ -695,16 +701,69 @@ void OptionsWindow::run()
 			if (ImGui::Button("Create Keyframe"))
 			{
 				keyframeMenu = true;
+
+				//first set
+				glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+				MatrixMath mMath;
+				glm::vec3 tempPos = mMath.extractTranslation(temp);
+				glm::vec3 tempScale = mMath.extractScale(temp);
+				glm::vec3 tempRot = mMath.extractEulerRotation(temp);
+
+				justDataPosX = tempPos.x;
+				justDataPosY = tempPos.y;
+				justDataPosZ = tempPos.z;
+				justDataScaleX = tempScale.x;
+				justDataScaleY = tempScale.y;
+				justDataScaleZ = tempScale.z;
+				justDataRotX = tempRot.x;
+				justDataRotY = tempRot.y;
+				justDataRotZ = tempRot.z;
+				activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
+				ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
 			}
 
 			if (keyframeMenu)
 			{
-				ImGui::InputFloat("x axis keyframe:", &justDataX);
+				int check = objectIndex;
+
+				ImGui::Text("CHOSEN OBJECT:");
+				ImGui::Text(mScene->getObjects().at(objectSelection).msName.c_str());
+				ImGui::SliderInt("OBJECT INDEX: ", &objectIndex, 0, mScene->getObjects().size() - 1);
+
+				if (objectIndex != check)	//update only when we switch to a new object
+				{
+					glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+					MatrixMath mMath;
+					glm::vec3 tempPos = mMath.extractTranslation(temp);
+					glm::vec3 tempScale = mMath.extractScale(temp);
+					glm::vec3 tempRot = mMath.extractEulerRotation(temp);
+
+					justDataPosX = tempPos.x;
+					justDataPosY = tempPos.y;
+					justDataPosZ = tempPos.z;
+					justDataScaleX = tempScale.x;
+					justDataScaleY = tempScale.y;
+					justDataScaleZ = tempScale.z;
+					justDataRotX = tempRot.x;
+					justDataRotY = tempRot.y;
+					justDataRotZ = tempRot.z;
+					activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
+					ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
+				}
+				
+
+
+				ImGui::InputFloat("pos x axis keyframe:", &justDataPosX);
+				ImGui::InputFloat("pos y axis keyframe:", &justDataPosY);
+				ImGui::InputFloat("pos z axis keyframe:", &justDataPosZ);
+				ImGui::InputFloat("rot x axis keyframe:", &justDataRotX);
+				ImGui::InputFloat("rot y axis keyframe:", &justDataRotY);
+				ImGui::InputFloat("rot z axis keyframe:", &justDataRotZ);
+				ImGui::InputFloat("scale x axis keyframe:", &justDataScaleX);
+				ImGui::InputFloat("scale y axis keyframe:", &justDataScaleY);
+				ImGui::InputFloat("scale z axis keyframe:", &justDataScaleZ);
 				ImGui::InputFloat("duration of keyframe:", &justDataDuration);
 
-				//only set up for one float value axis right now
-				//ImGui::InputFloat("y axis keyframe:", &justDataY);
-				//ImGui::InputFloat("z axis keyframe:", &justDataZ);
 				
 				if (justDataDuration <= 0.0)
 				{
@@ -716,11 +775,23 @@ void OptionsWindow::run()
 					if (ImGui::Button("Add Keyframe to Pool"))
 					{
 
-						mScene->addKeyframeToKeyframePool(keyframeCount, justDataDuration, justDataX);
+						mScene->addKeyframeToKeyframePool(keyframeCount, justDataDuration, 
+															glm::vec3(justDataPosX, justDataPosY, justDataPosZ), 
+																glm::vec3(justDataRotX, justDataRotY, justDataRotZ),
+																	glm::vec3(justDataScaleX, justDataScaleY, justDataScaleZ));
+
 						++keyframeCount;	//MAKE SURE THIS IS AFTER ADDKEYFRAME
 
 						justDataDuration = 1.0;
-						justDataX = 0;
+						justDataPosX = 0;
+						justDataPosY = 0;
+						justDataPosZ = 0;
+						justDataRotX = 0;
+						justDataRotY = 0;
+						justDataRotZ = 0;
+						justDataScaleX = 1.0;
+						justDataScaleY = 1.0;
+						justDataScaleZ = 1.0;
 						keyframeMenu = false;
 					}
 				}
@@ -940,15 +1011,12 @@ void OptionsWindow::run()
 												kfc += " Keyframes: ";
 												ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), kfc.c_str());
 
-												std::string clipKf = " ";
-
 												for (int m = mScene->getClipPool()->getClips().at(clipNum).mFirstKeyframeIndex; m <= mScene->getClipPool()->getClips().at(clipNum).mLastKeyframeIndex; ++m)
 												{
-													clipKf += std::to_string(mScene->getKeyframePool()->getKeyframe(m).mData);
-													clipKf += ", ";
+													ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputPositionString().c_str());
+													ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputRotationString().c_str());
+													ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputScaleString().c_str());
 												}
-
-												ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), clipKf.c_str());
 
 												ImGui::Indent(-32.0f);
 											}
@@ -1028,11 +1096,13 @@ void OptionsWindow::run()
 								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), time.c_str());
 								
 								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), "Current Keyframe (Data |  Index): ");
-								std::string currentKeyframe = " ( ";
-								currentKeyframe += std::to_string(mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData);
+
+								ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputPositionString().c_str());
+								ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputRotationString().c_str());
+								ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputScaleString().c_str());
+								std::string currentKeyframe = " ";
 								currentKeyframe += " | ";
 								currentKeyframe += std::to_string(mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mIndex);
-								currentKeyframe += " )";
 								ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), currentKeyframe.c_str());
 
 
@@ -1088,6 +1158,11 @@ void OptionsWindow::run()
 				if (mScene->getClipControllers().at(i)->getClipIndexInPool() != -1)	//if we have clips to go through on this controller
 				{
 					mScene->getClipControllers().at(i)->update( 1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
+
+					
+					mScene->adjustObject(i, mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mPos, 
+							mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mScale, 
+								mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mRot, ambMod, activatelighting);
 				}
 			}
 

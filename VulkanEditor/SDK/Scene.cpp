@@ -146,9 +146,15 @@ void Scene::addKeyframeToKeyframePool(Keyframe kf)
 	mpKeyframePool->addKeyframe(kf);
 }
 
-void Scene::addKeyframeToKeyframePool(int index, float duration, float data)
+void Scene::addKeyframeToKeyframePool(int index, float duration, KeyframeData data)
 {
 	Keyframe temp(index, duration, data);
+	mpKeyframePool->addKeyframe(temp);
+}
+
+void Scene::addKeyframeToKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+{
+	Keyframe temp(index, duration, pos, rot, scale);
 	mpKeyframePool->addKeyframe(temp);
 }
 

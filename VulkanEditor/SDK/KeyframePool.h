@@ -8,52 +8,95 @@
 #include <glm/gtc/constants.hpp>			//pi 
 
 #include <math.h>
+#include <string>
 #include <vector>
 
 struct KeyframeData
 {
 public:
+	KeyframeData(glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+	{
+		mPos = pos;
+		mRot = rot;
+		mScale = scale;
+	}
+
 	KeyframeData(float Px, float Py, float Pz, float Rx, float Ry, float Rz, float Sx, float Sy, float Sz)
 	{
-		mPosX = Px;
-		mPosY = Py;
-		mPosZ = Pz;
+		mPos.x = Px;
+		mPos.y = Py;
+		mPos.z = Pz;
 
-		mRotX = Rx;
-		mRotY = Ry;
-		mRotZ = Rz;
+		mRot.x = Rx;
+		mRot.y = Ry;
+		mRot.z = Rz;
 
-		mSizeX = Sx;
-		mSizeY = Sy;
-		mSizeZ = Sz;
+		mScale.x = Sx;
+		mScale.y = Sy;
+		mScale.z = Sz;
 	}
 
 	KeyframeData()
 	{
-		mPosX = 0;
-		mPosY = 0;
-		mPosZ = 0;
+		mPos.x = 0;
+		mPos.y = 0;
+		mPos.z = 0;
 
-		mRotX = 0;
-		mRotY = 0;
-		mRotZ = 0;
+		mRot.x = 0;
+		mRot.y = 0;
+		mRot.z = 0;
 
-		mSizeX = 1;
-		mSizeY = 1;
-		mSizeZ = 1;
+		mScale.x = 1;
+		mScale.y = 1;
+		mScale.z = 1;
 	}
 
-	float mPosX;
-	float mPosY;
-	float mPosZ;
+	void setData(glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+	{
+		mPos = pos;
+		mRot = rot;
+		mScale = scale;
+	}
 
-	float mRotX;
-	float mRotY;
-	float mRotZ;
+	std::string outputPositionString()
+	{
+		std::string temp = "Position: ";
+		temp += std::to_string(mPos.x);
+		temp += " x, ";
+		temp += std::to_string(mPos.y);
+		temp += " y, ";
+		temp += std::to_string(mPos.z);
+		temp += " z";
+		return temp;
+	}
 
-	float mSizeX;
-	float mSizeY;
-	float mSizeZ;
+	std::string outputRotationString()
+	{
+		std::string temp = "Rotation: ";
+		temp += std::to_string(mRot.x);
+		temp += " x, ";
+		temp += std::to_string(mRot.y);
+		temp += " y, ";
+		temp += std::to_string(mRot.z);
+		temp += " z";
+		return temp;
+	}
+
+	std::string outputScaleString()
+	{
+		std::string temp = "Scale: ";
+		temp += std::to_string(mScale.x);
+		temp += " x, ";
+		temp += std::to_string(mScale.y);
+		temp += " y, ";
+		temp += std::to_string(mScale.z);
+		temp += " z";
+		return temp;
+	}
+
+	glm::vec3 mPos;
+	glm::vec3 mRot;
+	glm::vec3 mScale;
 };
 
 struct Keyframe
@@ -64,10 +107,18 @@ struct Keyframe
 		mIndex = 0;
 		mDuration = 0.0;
 		mInvDuration = 0.0;
-		mData = 0;
+		mData.setData(glm::vec3(0.0), glm::vec3(0.0), glm::vec3(0.0));
 	}
 
-	Keyframe(int index, float duration, float data)
+	Keyframe(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+	{
+		mIndex = index;
+		mDuration = duration;
+		mInvDuration = reciprocal(duration);
+		mData.setData(pos, rot, scale);
+	}
+	
+	Keyframe(int index, float duration, KeyframeData data)
 	{
 		mIndex = index;
 		mDuration = duration;
@@ -83,7 +134,7 @@ struct Keyframe
 		mDuration = duration;
 		mInvDuration = reciprocal(duration);
 	}
-	void setData(float data) { mData = data; }
+	void setData(KeyframeData data) { mData = data; }
 	void setIndex(int index) { mIndex = index; }
 
 	float reciprocal(float duration) { return 1.0 / duration; }
@@ -92,7 +143,7 @@ struct Keyframe
 	float mDuration;	//interval of time for which this keyframe is active
 	float mInvDuration;	//reciprocal of duration;
 
-	float mData;		//data held by keyframe (in this case, the 1D position of a channel of xyz)
+	KeyframeData mData;		//data held by keyframe (in this case, the 1D position of a channel of xyz)
 };
 
 class KeyframePool
