@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimHierarchies.cpp" />
     <ClCompile Include="ClipController.cpp" />
     <ClCompile Include="DeviceSelection.cpp" />
     <ClCompile Include="Engine.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="OptionsWindow.cpp" />
     <ClCompile Include="ProceduralLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SkeletonManager.cpp" />
     <ClCompile Include="Source\ImGUI\imgui.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_demo.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_draw.cpp" />
@@ -180,6 +182,7 @@
     <ClCompile Include="WavefrontFileLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimHierarchies.h" />
     <ClInclude Include="ClipController.h" />
     <ClInclude Include="DebugTools.h" />
     <ClInclude Include="DeviceSelection.h" />
@@ -192,6 +195,7 @@
     <ClInclude Include="OptionsWindow.h" />
     <ClInclude Include="ProceduralLoader.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SkeletonManager.h" />
     <ClInclude Include="Source\ImGUI\imconfig.h" />
     <ClInclude Include="Source\ImGUI\imgui.h" />
     <ClInclude Include="Source\ImGUI\imgui_impl_glfw.h" />

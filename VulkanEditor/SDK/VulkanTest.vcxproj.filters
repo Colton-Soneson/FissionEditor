@@ -123,6 +123,12 @@
     <ClCompile Include="ClipController.cpp">
       <Filter>Source Files\Core\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="AnimHierarchies.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletonManager.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugTools.h">
@@ -195,6 +201,12 @@
       <Filter>Header Files\Core\Animation</Filter>
     </ClInclude>
     <ClInclude Include="ClipController.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimHierarchies.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletonManager.h">
       <Filter>Header Files\Core\Animation</Filter>
     </ClInclude>
   </ItemGroup>
