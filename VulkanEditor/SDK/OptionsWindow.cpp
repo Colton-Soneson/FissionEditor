@@ -505,7 +505,8 @@ void OptionsWindow::run()
 		static int keyframeCount = 0;
 		static int clipCount = -1;
 		static int clipControllerCount = 0;
-		
+		static int skeletonCount = -1;
+
 		static float justDataPosX = 0.0;
 		static float justDataPosY = 0.0;
 		static float justDataPosZ = 0.0;
@@ -526,6 +527,7 @@ void OptionsWindow::run()
 		static bool lerpUpdateMode = false;
 		static bool keyframeMenu = false;
 		static bool clipMenu = false;
+		static bool creatingSkeleton = false;
 		static std::vector<std::string> clipControllerNames;
 		static std::vector<std::pair<bool, int>> clipControllerMenus;
 		static std::vector<std::pair<int, std::pair<int, bool>>> clipControllerOptions;		//int, int, bool = clip controller number, the option selected, the options state
@@ -707,6 +709,42 @@ void OptionsWindow::run()
 				if (ImGui::Button("Create Basic Humanoid Skeleton"))
 				{
 					mScene->getSkeletonManager()->createHumanoidBasic();
+					skeletonCount++;
+					
+					int objIndex = 2;
+					/*for (int i = 0; i < mScene->getUOSTotalStorageNumber(); i++)
+					{
+						if (mScene->getUOSNameByIndex(i).compare("sphere"))
+						{
+							int objIndex = i;
+							break;
+						}
+					}*/
+
+					creatingSkeleton = true;
+					
+				}
+
+				if (creatingSkeleton)
+				{
+					mObjectHasBeenAdded = true;
+					static int i = 0;
+					if (i < mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchy->getNumberOfNodes() - 1)
+					{
+						glm::vec3 tempPos = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mPos;
+						glm::vec3 tempRot = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mRot;
+						glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mScale);
+						
+						mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
+
+						i++;
+					}
+					else
+					{
+						i = 0;
+						creatingSkeleton = false;
+					}
+					
 				}
 
 				if (!mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.empty())
