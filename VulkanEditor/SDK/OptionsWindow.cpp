@@ -774,7 +774,7 @@ void OptionsWindow::run()
 				}
 
 				//update all skeletons
-				mScene->getSkeletonManager()->update();
+				//mScene->getSkeletonManager()->update();
 				
 			}
 

@@ -171,28 +171,30 @@ struct HumanoidBasic
 
 		return temp;
 	}
-
 	
 	void createHierarchicalState()
 	{
 		HierarchicalState* newState = new HierarchicalState(mpHierarchy);
-
 	}
 
 	void calculateGlobalSpacePose()
 	{
+		for (int i = 0; i < mpHierarchicalStates.size() - 1; ++i)
+		{
+			for (int j = 0; j < mpHierarchy->getNumberOfNodes(); ++j)
+			{
+				//interpolation (between deltas/keyposes)
+				//mpHierarchicalStates.at(i)->mAnimatedPose.mHierarchicalJoints.at(j)->lerp();
 
-		//interpolation (between deltas/keyposes)
-		
+				//concatenation (do current delta concat with base pose)
+				//mpHierarchicalStates.at(i)->mAnimatedPose.mHierarchicalJoints.at(j)->concatenate();
 
-		//concatenation (do current delta concat with base pose)
-		
-
-		//conversion (convert base to local)
-		
-
-		//FK equation (goes from local to object space)
-		//mFK.fkAlgorithm(mpHierarchicalState);
+				//conversion (convert base to local)
+				//mpHierarchicalStates.at(i)->mAnimatedPose.mHierarchicalJoints.at(j)->convertToMat();
+			}
+			//FK equation (goes from local to object space)
+			mFK.fkAlgorithm(mpHierarchicalStates.at(i));
+		}
 	}
 
 	int mActiveHierarchicalState;

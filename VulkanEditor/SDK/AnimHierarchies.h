@@ -168,8 +168,6 @@ struct Joint
 		//this seems to also filter our conversion results
 
 		glm::mat4 tempLocal;
-
-
 	}
 
 
