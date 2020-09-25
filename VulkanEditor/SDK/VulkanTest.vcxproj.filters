@@ -13,14 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Features">
-      <UniqueIdentifier>{8cfab80e-9128-4792-8fb3-56aa36cbf383}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{e8c17227-aa38-45bf-a920-0fc8bf7a6a90}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Features">
-      <UniqueIdentifier>{95c7decf-8660-4f3a-a9c0-fa5fc787ce2d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Core">
       <UniqueIdentifier>{dfc8ede9-f8f8-4432-8a1b-56d53fa2ae64}</UniqueIdentifier>
@@ -49,13 +43,31 @@
     <Filter Include="Header Files\ImGUI">
       <UniqueIdentifier>{295a761c-0fed-4bbc-993a-c56e3330457a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\ModelLoading">
+      <UniqueIdentifier>{8b3e9302-47a3-49cb-a8fa-855737f49986}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\ModelLoading">
+      <UniqueIdentifier>{d2d42bf0-c96e-4695-8e9d-33e37b2bf0ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Math">
+      <UniqueIdentifier>{6b6ce62f-3336-4047-b22a-8bc3fe469245}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Math">
+      <UniqueIdentifier>{348e3133-3060-474c-baaa-3554bbad2328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\NeuralNetworking">
+      <UniqueIdentifier>{8018c887-9ec2-42a1-ab55-8986d3cbd709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Animation">
+      <UniqueIdentifier>{cff90a3c-6914-4f27-8deb-0c900048da80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Animation">
+      <UniqueIdentifier>{7937376c-7239-40f2-b7a3-dc33904c33b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Ray.cpp">
-      <Filter>Source Files\Features</Filter>
     </ClCompile>
     <ClCompile Include="DeviceSelection.cpp">
       <Filter>Source Files\Core</Filter>
@@ -93,13 +105,34 @@
     <ClCompile Include="Source\ImGUI\imgui_widgets.cpp">
       <Filter>Source Files\ImGUI</Filter>
     </ClCompile>
+    <ClCompile Include="UniversalObjectStorage.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="WavefrontFileLoader.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceduralLoader.cpp">
+      <Filter>Source Files\Core\ModelLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="MatrixMath.cpp">
+      <Filter>Source Files\Core\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyframePool.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="ClipController.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimHierarchies.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="SkeletonManager.cpp">
+      <Filter>Source Files\Core\Animation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugTools.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Ray.h">
-      <Filter>Header Files\Features</Filter>
     </ClInclude>
     <ClInclude Include="DeviceSelection.h">
       <Filter>Header Files\Core</Filter>
@@ -148,6 +181,33 @@
     </ClInclude>
     <ClInclude Include="Source\ImGUI\imstb_truetype.h">
       <Filter>Header Files\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="UniversalObjectStorage.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="WavefrontFileLoader.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="ProceduralLoader.h">
+      <Filter>Header Files\Core\ModelLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="MatrixMath.h">
+      <Filter>Header Files\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralBase.h">
+      <Filter>Header Files\Core\NeuralNetworking</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyframePool.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="ClipController.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimHierarchies.h">
+      <Filter>Header Files\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="SkeletonManager.h">
+      <Filter>Header Files\Core\Animation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

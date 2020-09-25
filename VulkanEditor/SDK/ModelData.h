@@ -1,5 +1,5 @@
 #pragma once
-
+//#include "DeviceSelection.h"
 #include "UBOs.h"
 
 
@@ -97,7 +97,7 @@ struct sourced3D
 	void setTextureImage();
 
 	UniformBufferObject msUBO = {};
-
+	
 	std::vector<VkDescriptorSet> msDescriptorSets;
 
 	std::vector<VkBuffer> msUniformBuffers;
@@ -115,9 +115,8 @@ struct sourced3D
 
 	modelDatas mModel;
 
-	std::string msVertShaderPath = "Resource/shaders/vert.spv";
-	std::string msFragShaderPath = "Resource/shaders/frag.spv";
-	std::string msGeomShaderPath = "Resource/shaders/geometry.spv";
+	//int modelNumber = 0;
+
 	VkPipelineShaderStageCreateInfo msShaderStages;	//this may need a number in it
 };
 
@@ -133,5 +132,12 @@ struct light3D
 	glm::float32 lightSize;
 };
 
-
+enum ShapeData
+{
+	PLANE,
+	CUBE,
+	INV_NORM_CUBE,
+	ICOSPHERE,
+	UVSPHERE
+};
 

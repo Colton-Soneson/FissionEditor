@@ -1,8 +1,7 @@
 #pragma once
 
-#include "DeviceSelection.h"
 #include "Scene.h"
-
+#include <map>
 
 
 class OptionsWindow
@@ -17,7 +16,10 @@ public:
 		mShowDemoMenu = false;
 		mShowLightMenu = false;
 		mShowObjectMenu = false;
+		mShowAnimationMenu = false;
 		mScene = scene;
+		mObjectHasBeenChanged = false;
+		mObjectHasBeenAdded = false;
 	}
 
 	~OptionsWindow() {};
@@ -26,6 +28,12 @@ public:
 	void prerun();
 
 	void run();	//this has to be put inside the while loop of the main program, or make a seperate thread for it later
+
+	bool getObjectAddedStatus() { return mObjectHasBeenAdded; };
+	void setObjectAddedStatus(bool tmp) { mObjectHasBeenAdded = tmp; };
+
+	bool getObjectChangedStatus() { return mObjectHasBeenChanged; };
+	void setObjectChangedStatus(bool tmp) { mObjectHasBeenChanged = tmp; };
 
 private:
 
@@ -64,12 +72,20 @@ private:
 	VkDescriptorPool mDescriptorPool;	//This is essentially the set limits given by demo
 	ImGui_ImplVulkanH_Window mMainWindowData;
 
-	
+
 
 	//object manipulation
 
 	Scene* mScene;
 	bool mShowObjectMenu;
 	bool mShowLightMenu;
+	bool mShowAnimationMenu;
 	bool mShowDemoMenu;
+
+	bool mObjectHasBeenAdded;
+	bool mObjectHasBeenChanged;
+
+
+	//animation
+
 };

@@ -10,7 +10,6 @@ public:
 
 	void run() {
 		initWindow();
-		initScene();
 		initVulkan();	//preparation
 		initGUIWindow();
 		mainLoop();
@@ -102,21 +101,10 @@ private:
 	//for recreateSC and also cutting into regular cleanup
 	void cleanupSwapChain();
 
-	//vertex buffers
-	void createVertexBuffer();
-
-	//gets the type of memory used by GPU
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-	//general buffer info and memory alloc/ bind creation
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
-						VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
 	//general copy command used in place of vkMapMemory (we can use device local mem types)
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-	//index buffer (very similar to createVertexBuffer)
-	void createIndexBuffer();
 
 	//Descriptor layout for during pipeline creation
 	void createDescriptorSetLayout();
@@ -133,33 +121,6 @@ private:
 	//allocate descriptor sets
 	void createDescriptorSets();
 
-	//image loading into buffers
-	void createTextureImage();
-
-	//loading buffer into image objects
-	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-							VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-
-	//record and execute command buffer again
-	VkCommandBuffer beginSingleTimeCommands();
-
-	//end cb
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-
-	//layout transitions to finish the vkCmdCopyBufferToImage command
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
-	
-	//called before finishing createTextureImage
-	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
-	//access through image views rather than directly
-	void createTextureImageView();
-
-	//generalized createImageView function (imageViews/ textureImageViews)
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
-
-	//sampler stuff
-	void createTextureSampler();
 
 	//basically we set stuff up with image, memory, and image view
 	void createDepthResource();
@@ -173,11 +134,7 @@ private:
 	//if chosen depth has stencil component return true
 	bool hasStencilComponent(VkFormat format);
 
-	//model loading
-	void loadModel();
-
-	//mipmap generation, uses a mem barrier and CB
-	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t textureWidth, int32_t textureHeight, uint32_t mipLevels);
+	
 
 	////be able to check how high we can go on antialiasing/ multisampling
 	//VkSampleCountFlagBits getMaxUsableSampleCount();
@@ -203,7 +160,62 @@ private:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 
-	//apply user interaction from the options menu
+
+
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+	VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool);
+
+
+	void endSingleTimeCommands(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue, VkCommandPool commandPool);
+
+
+	uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	void transitionImageLayout(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+
+	void createImage(VkDevice device, VkPhysicalDevice physicalDevice, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
+		VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+
+	VkImageView createImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+
+
+
+	//general buffer info and memory alloc/ bind creation
+	void createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+
+
+	void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+
+	//called before finishing createTextureImage
+	void copyBufferToImage(VkDevice device, VkQueue graphicsQueue, VkCommandPool commandPool, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
+
+
+
+
+
+
+
+
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 
 
 
@@ -220,8 +232,8 @@ private:
 	
 
 	//AUTOMATED VERTICES AND INDICES
-	std::vector<Vertex> mVertices;
-	std::vector<uint32_t> mIndices;
+	//std::vector<Vertex> mVertices;
+	//std::vector<uint32_t> mIndices;
 
 	//GLFW
 	GLFWwindow* mpWindow;
@@ -288,7 +300,7 @@ private:
 	VkSampler mDepthImageSampler;
 
 	//msaa
-	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	VkSampleCountFlagBits mMSAASamples = VK_SAMPLE_COUNT_2_BIT;
 	VkImage mColorImage;		//this is to store desired samples per pixel
 	VkDeviceMemory mColorImageMemory;
 	VkImageView mColorImageView;
@@ -301,6 +313,5 @@ private:
 
 	//VkPhysicalDevice mPhysicalDevice;
 	DeviceSelection* mpDevSel;
-
 
 };

@@ -23,7 +23,7 @@
     <ProjectGuid>{13196455-BF36-4915-98BD-911CA03D4E75}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>VulkanTest</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -159,13 +159,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimHierarchies.cpp" />
+    <ClCompile Include="ClipController.cpp" />
     <ClCompile Include="DeviceSelection.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="DemoApplication.cpp" />
+    <ClCompile Include="KeyframePool.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MatrixMath.cpp" />
     <ClCompile Include="OptionsWindow.cpp" />
-    <ClCompile Include="Ray.cpp" />
+    <ClCompile Include="ProceduralLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SkeletonManager.cpp" />
     <ClCompile Include="Source\ImGUI\imgui.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_demo.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_draw.cpp" />
@@ -173,16 +178,24 @@
     <ClCompile Include="Source\ImGUI\imgui_impl_vulkan.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_impl_win32.cpp" />
     <ClCompile Include="Source\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="UniversalObjectStorage.cpp" />
+    <ClCompile Include="WavefrontFileLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimHierarchies.h" />
+    <ClInclude Include="ClipController.h" />
     <ClInclude Include="DebugTools.h" />
     <ClInclude Include="DeviceSelection.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="DemoApplication.h" />
+    <ClInclude Include="KeyframePool.h" />
+    <ClInclude Include="MatrixMath.h" />
     <ClInclude Include="ModelData.h" />
+    <ClInclude Include="NeuralBase.h" />
     <ClInclude Include="OptionsWindow.h" />
-    <ClInclude Include="Ray.h" />
+    <ClInclude Include="ProceduralLoader.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SkeletonManager.h" />
     <ClInclude Include="Source\ImGUI\imconfig.h" />
     <ClInclude Include="Source\ImGUI\imgui.h" />
     <ClInclude Include="Source\ImGUI\imgui_impl_glfw.h" />
@@ -193,6 +206,8 @@
     <ClInclude Include="Source\ImGUI\imstb_textedit.h" />
     <ClInclude Include="Source\ImGUI\imstb_truetype.h" />
     <ClInclude Include="UBOs.h" />
+    <ClInclude Include="UniversalObjectStorage.h" />
+    <ClInclude Include="WavefrontFileLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resource\shaders\Fshader.frag" />
