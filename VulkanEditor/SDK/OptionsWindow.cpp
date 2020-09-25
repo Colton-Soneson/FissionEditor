@@ -529,6 +529,7 @@ void OptionsWindow::run()
 		static std::vector<std::string> clipControllerNames;
 		static std::vector<std::pair<bool, int>> clipControllerMenus;
 		static std::vector<std::pair<int, std::pair<int, bool>>> clipControllerOptions;		//int, int, bool = clip controller number, the option selected, the options state
+		
 
 		// 3. Show another simple window.
 		if (mShowLightMenu)
@@ -713,8 +714,24 @@ void OptionsWindow::run()
 					//go through list of basic humanoids
 					for (int i = 0; i < mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.size(); ++i)
 					{
-						ImGui::TextColored(ImVec4(0.0, 0.5, 0.0, 0.0), "Sammy The Skeleton");
+						ImGui::TextColored(ImVec4(0.0, 0.5, 0.0, 1.0), "Sammy The Skeleton");
 						ImGui::Text(mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(i).getNodeNameList().c_str());
+
+						if (ImGui::Button("Add Base Hierarchical State"))
+						{
+							mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(i).createHierarchicalState();
+						}
+
+						if (ImGui::Button("Add Manual Flip Hierarchical State"))
+						{
+							mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(i).createHierarchicalState();
+						}
+
+						if (ImGui::Button("Add Base Hierarchical State"))
+						{
+							mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(i).createHierarchicalState();
+						}
+						
 					}
 				}
 

@@ -50,6 +50,12 @@ enum JointChannel
 	jointChannel_translate_xyz = jointChannel_translate_xy | jointChannel_translate_z,
 };
 
+enum HierarchicalStateMode
+{
+	BASE_ONLY,
+	MANUAL_FLIP,
+	AUTO_CC_FLIP,
+};
 
 struct Node
 {
@@ -131,45 +137,39 @@ struct Joint
 
 	void copy(Joint* out, Joint* in)
 	{
-		if (out && in)
-		{
+		
 			out->setPosition(in->mPos);
 			out->setRotation(in->mRot);
 			out->setScale(in->mScale);
-		}
+		
 	}
 
 	void concatenate(Joint* out, Joint* lhs, Joint* rhs)
 	{
-		if (out && lhs && rhs)
-		{
+		
 			out->setPosition(lhs->mPos + rhs->mPos);
 			out->setRotation(lhs->mRot + rhs->mRot);
 			out->setScale(lhs->mScale * rhs->mScale);
-		}
+		
 	}
 
 	void lerp(Joint* out, Joint* j0, Joint* j1, float time)
 	{
-		if (out && j0 && j1)
-		{
-			out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
-			out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
-			out->setScale(glm::mix(j0->mScale, j1->mScale, time));
-		}
+	
+		out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
+		out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
+		out->setScale(glm::mix(j0->mScale, j1->mScale, time));
+		
 	}
 
-	glm::mat4 convertToMat(Joint* in, JointChannel jc, JointEulerOrder jeo)
+	void convertToMat(Joint* in, JointChannel jc, JointEulerOrder jeo)
 	{
-		glm::mat4 temp;
+		//the states local pose is both the source and the target
+		//this seems to also filter our conversion results
 
-		if (in)
-		{
-
-		}
+		glm::mat4 tempLocal;
 
 
-		return temp;
 	}
 
 
@@ -205,6 +205,8 @@ struct HierarchicalPosePool
 	{
 		mHierarchy = h;
 	}
+
+	std::vector<HierarchicalPose> getHierarchicalPoses() { return mHierarchicalPoses; }
 
 	void addToSpatialPosePool(Joint j)
 	{
@@ -246,7 +248,22 @@ struct HierarchicalState
 	HierarchicalState(Hierarchy* h)
 	{
 		mHierarchy = h;		
+		resetAll();
 	}
+
+	void resetAll()
+	{
+		for (int i = 0; i < mHierarchy->getNumberOfNodes(); ++i)
+		{
+			mAnimatedPose.mHierarchicalJoints.at(i)->reset();
+			mLocalTransformPose.mHierarchicalJoints.at(i)->reset();
+			mGlobalTransformPose.mHierarchicalJoints.at(i)->reset();
+		}
+	}
+
+	
+
+	HierarchicalStateMode mHSM;
 
 	Hierarchy* mHierarchy;						//GIVEN THIS HIERARCHY, allocate and reset the poses below
 	HierarchicalPose mAnimatedPose;				//current animated pose at the current time
@@ -258,13 +275,11 @@ struct HierarchicalState
 
 struct ForwardKinematics
 {
-	/*ForwardKinematics(HierarchicalState* state)
-	{
-		mHState = state;
-	}*/
 
 	void fkAlgorithm(HierarchicalState* mHState)
 	{
+		//THIS IS THE VERSION FOR A DEPTH FIRST BASED TREE
+
 		//for each node in the hierarchy associated with mHState
 		//	if node is NOT root node
 		//		nodes global-space pose transform is the product of its parents global-space pose transform, and its own local-space pose transform
@@ -273,7 +288,7 @@ struct ForwardKinematics
 
 		int numNodes = mHState->mHierarchy->getNumberOfNodes();
 
-		for (int i = 0; i <= numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
+		for (int i = 0; i < numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
 		{
 			int nodeParentIndex = mHState->mHierarchy->getNodes().at(i).mParentIndex;
 			int nodeIndex = mHState->mHierarchy->getNodes().at(i).mIndex;

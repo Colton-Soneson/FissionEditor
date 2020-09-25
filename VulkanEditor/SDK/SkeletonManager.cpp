@@ -5,12 +5,7 @@ void SkeletonManager::update()
 	//only for humanoid basics
 	for (HumanoidBasic &hb : mSkeletonContainer.mHumanoidBasics)
 	{
-		//interpolation
-		//concatenation
-		//conversion
-		//FK
-
-		
+		hb.calculateGlobalSpacePose();
 	}
 }
 

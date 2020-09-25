@@ -66,6 +66,7 @@ struct HumanoidBasic
 		mpHierarchy = new Hierarchy();
 		mpHierarchicalPosePool = new HierarchicalPosePool(mpHierarchy);
 		mNumberOfPoses = 0;
+		mActiveHierarchicalState = 0;
 	}
 
 	void createBasePose()
@@ -149,6 +150,13 @@ struct HumanoidBasic
 	void addKeyPose()
 	{
 		//taking in the base pose, create modifications
+		HierarchicalPose tempH = mpHierarchicalPosePool->getHierarchicalPoses().at(0);	
+		Joint tempJ;
+		tempJ.copy(&tempJ, tempH.mHierarchicalJoints.at(5));
+		tempJ.setPosition(glm::vec4(0, +5, 0, 0));
+		tempH.mHierarchicalJoints.at(5) = &tempJ;
+		mpHierarchicalPosePool->addToHierarchicalPoses(tempH);
+
 	}
 
 	std::string getNodeNameList()
@@ -165,19 +173,34 @@ struct HumanoidBasic
 	}
 
 	
-	
+	void createHierarchicalState()
+	{
+		HierarchicalState* newState = new HierarchicalState(mpHierarchy);
+
+	}
 
 	void calculateGlobalSpacePose()
 	{
-		//interpolation
-		//concatenation
-		//conversion
-		//FK equation
+
+		//interpolation (between deltas/keyposes)
+		
+
+		//concatenation (do current delta concat with base pose)
+		
+
+		//conversion (convert base to local)
+		
+
+		//FK equation (goes from local to object space)
+		//mFK.fkAlgorithm(mpHierarchicalState);
 	}
 
+	int mActiveHierarchicalState;
 	int mNumberOfPoses;
 	Hierarchy* mpHierarchy;
 	HierarchicalPosePool* mpHierarchicalPosePool;
+	std::vector<HierarchicalState*> mpHierarchicalStates;
+	ForwardKinematics mFK;
 };
 
 //incase later on we add more skeletons
