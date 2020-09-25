@@ -6,6 +6,50 @@
 #include <string>
 
 
+//structure for JointEulerOrder and JointChannel was provided for by Dan Buckstein
+enum JointEulerOrder
+{
+	jointEulerOrder_xyz,
+	jointEulerOrder_yzx,
+	jointEulerOrder_zxy,
+	jointEulerOrder_yxz,
+	jointEulerOrder_xzy,
+	jointEulerOrder_zyx,
+};
+
+enum JointChannel
+{
+	// identity (no channels)
+	jointChannel_none,
+
+	// orientation
+	jointChannel_orient_x = 0x0001,
+	jointChannel_orient_y = 0x0002,
+	jointChannel_orient_z = 0x0004,
+	jointChannel_orient_xy = jointChannel_orient_x | jointChannel_orient_y,
+	jointChannel_orient_yz = jointChannel_orient_y | jointChannel_orient_z,
+	jointChannel_orient_zx = jointChannel_orient_z | jointChannel_orient_x,
+	jointChannel_orient_xyz = jointChannel_orient_xy | jointChannel_orient_z,
+
+	// scale
+	jointChannel_scale_x = 0x0010,
+	jointChannel_scale_y = 0x0020,
+	jointChannel_scale_z = 0x0040,
+	jointChannel_scale_xy = jointChannel_scale_x | jointChannel_scale_y,
+	jointChannel_scale_yz = jointChannel_scale_y | jointChannel_scale_z,
+	jointChannel_scale_zx = jointChannel_scale_z | jointChannel_scale_x,
+	jointChannel_scale_xyz = jointChannel_scale_xy | jointChannel_scale_z,
+
+	// translation
+	jointChannel_translate_x = 0x0100,
+	jointChannel_translate_y = 0x0200,
+	jointChannel_translate_z = 0x0400,
+	jointChannel_translate_xy = jointChannel_translate_x | jointChannel_translate_y,
+	jointChannel_translate_yz = jointChannel_translate_y | jointChannel_translate_z,
+	jointChannel_translate_zx = jointChannel_translate_z | jointChannel_translate_x,
+	jointChannel_translate_xyz = jointChannel_translate_xy | jointChannel_translate_z,
+};
+
 
 struct Node
 {
@@ -77,9 +121,63 @@ struct Joint
 		mScale = scale;
 	}
 
+	void reset()
+	{
+		mTransform = glm::mat4(1.0);
+		mPos = glm::vec4(0.0);
+		mRot = glm::vec4(0.0);
+		mScale = glm::vec4(1.0);
+	}
+
+	void copy(Joint* out, Joint* in)
+	{
+		if (out && in)
+		{
+			out->setPosition(in->mPos);
+			out->setRotation(in->mRot);
+			out->setScale(in->mScale);
+		}
+	}
+
+	void concatenate(Joint* out, Joint* lhs, Joint* rhs)
+	{
+		if (out && lhs && rhs)
+		{
+			out->setPosition(lhs->mPos + rhs->mPos);
+			out->setRotation(lhs->mRot + rhs->mRot);
+			out->setScale(lhs->mScale * rhs->mScale);
+		}
+	}
+
+	void lerp(Joint* out, Joint* j0, Joint* j1, float time)
+	{
+		if (out && j0 && j1)
+		{
+			out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
+			out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
+			out->setScale(glm::mix(j0->mScale, j1->mScale, time));
+		}
+	}
+
+	glm::mat4 convertToMat(Joint* in, JointChannel jc, JointEulerOrder jeo)
+	{
+		glm::mat4 temp;
+
+		if (in)
+		{
+
+		}
+
+
+		return temp;
+	}
+
+
+	void setTransform(glm::mat4 t) { mTransform = t; }
 	void setPosition(glm::vec4 pos) { mPos = pos; }
 	void setRotation(glm::vec4 rot) { mRot = rot; }
 	void setScale(glm::vec4 scale) { mScale = scale; }
+
 
 	//this could all just be organized by uint16_t
 	glm::mat4 mTransform;
@@ -118,6 +216,21 @@ struct HierarchicalPosePool
 		mHierarchicalPoses.push_back(hp);
 	}
 
+	void addToHierarchicalPoses(int poseNumber)
+	{
+		//pose number is the number of the pose, A / T pose would be 0, any poses after that would be 1, 2, 3....
+		int indexInSpatialPool = poseNumber * mHierarchy->getNumberOfNodes();
+		std::vector<bool> visited(mHierarchy->getNumberOfNodes(), false);
+		HierarchicalPose hp;
+
+		for (int i = indexInSpatialPool; i < indexInSpatialPool + mHierarchy->getNumberOfNodes(); ++i)	//go through each spatial pose by the number of nodes in hierarchy
+		{
+			hp.mHierarchicalJoints.push_back(&mSpatialPosePool[i]);
+		}
+
+		mHierarchicalPoses.push_back(hp);
+	}
+
 private:
 	Hierarchy* mHierarchy;								//Reference to hierarchy associated with this spatial data 
 	std::vector<Joint> mSpatialPosePool;				//contains ALL individual node poses
@@ -145,12 +258,12 @@ struct HierarchicalState
 
 struct ForwardKinematics
 {
-	ForwardKinematics(HierarchicalState* state)
+	/*ForwardKinematics(HierarchicalState* state)
 	{
 		mHState = state;
-	}
+	}*/
 
-	void fkAlgorithm()
+	void fkAlgorithm(HierarchicalState* mHState)
 	{
 		//for each node in the hierarchy associated with mHState
 		//	if node is NOT root node
@@ -158,8 +271,28 @@ struct ForwardKinematics
 		//	else the node IS root node
 		//		nodes global-space pose is its own local-space pose transform
 
+		int numNodes = mHState->mHierarchy->getNumberOfNodes();
+
+		for (int i = 0; i <= numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
+		{
+			int nodeParentIndex = mHState->mHierarchy->getNodes().at(i).mParentIndex;
+			int nodeIndex = mHState->mHierarchy->getNodes().at(i).mIndex;
+			
+			if (nodeIndex != nodeParentIndex)	//this will only happen to the root node, it would be 0 0
+			{
+				glm::mat4 childLocalMat = mHState->mLocalTransformPose.mHierarchicalJoints.at(nodeIndex)->mTransform;
+				glm::mat4 parentGlobalMat = mHState->mGlobalTransformPose.mHierarchicalJoints.at(nodeParentIndex)->mTransform;
+
+				mHState->mGlobalTransformPose.mHierarchicalJoints.at(i)->setTransform(parentGlobalMat * childLocalMat);
+			}
+			else
+			{
+				mHState->mGlobalTransformPose.mHierarchicalJoints.at(i) = mHState->mLocalTransformPose.mHierarchicalJoints.at(i);
+			}
+		}
+		
 	}
 
-	HierarchicalState* mHState;
+	//HierarchicalState* mHState;
 };
 

@@ -65,6 +65,7 @@ struct HumanoidBasic
 	{
 		mpHierarchy = new Hierarchy();
 		mpHierarchicalPosePool = new HierarchicalPosePool(mpHierarchy);
+		mNumberOfPoses = 0;
 	}
 
 	void createBasePose()
@@ -139,7 +140,8 @@ struct HumanoidBasic
 		temp.setPosition(glm::vec4(0,0,-6,0));
 		mpHierarchicalPosePool->addToSpatialPosePool(temp);
 
-		
+		mpHierarchicalPosePool->addToHierarchicalPoses(mNumberOfPoses);
+		mNumberOfPoses++;
 		
 	}
 
@@ -149,6 +151,22 @@ struct HumanoidBasic
 		//taking in the base pose, create modifications
 	}
 
+	std::string getNodeNameList()
+	{
+		std::string temp;
+
+		for (int i = 0; i < mpHierarchy->getNumberOfNodes(); ++i)
+		{
+			temp += mpHierarchy->getNodes().at(i).mName;
+			temp += ", ";
+		}
+
+		return temp;
+	}
+
+	
+	
+
 	void calculateGlobalSpacePose()
 	{
 		//interpolation
@@ -157,8 +175,15 @@ struct HumanoidBasic
 		//FK equation
 	}
 
+	int mNumberOfPoses;
 	Hierarchy* mpHierarchy;
 	HierarchicalPosePool* mpHierarchicalPosePool;
+};
+
+//incase later on we add more skeletons
+struct SkeletonContainer
+{
+	std::vector<HumanoidBasic> mHumanoidBasics;
 };
 
 class SkeletonManager
@@ -169,9 +194,14 @@ public:
 
 	}
 
+	~SkeletonManager() {};
+
+	void update();
 	void createHumanoidBasic();
 
-private:
+	SkeletonContainer getSkeletonContainer() { return mSkeletonContainer; }
 
+private:
+	SkeletonContainer mSkeletonContainer;
 
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "UniversalObjectStorage.h"
 #include "ClipController.h"
+#include "SkeletonManager.h"
 
 #include <fstream>
 #include <vector>
@@ -25,6 +26,7 @@ public:
 		mUOS = new UniversalObjectStorage(mModelFilePath, mTextureFilePath, device, physicalDevice, graphicsQueue, commandPool);
 		mpKeyframePool = new KeyframePool();
 		mpClipPool = new ClipPool();
+		mpSkeletonManager = new SkeletonManager();
 	};
 
 	~Scene() {};
@@ -75,6 +77,8 @@ public:
 	void addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
 	ClipPool* getClipPool() { return mpClipPool; }
 
+	SkeletonManager* getSkeletonManager() { return mpSkeletonManager; }
+
 	float getEngineTimeStep() { return mEngineTimeStep; }
 
 	
@@ -99,6 +103,7 @@ private:
 	std::vector<ClipController*> mClipControllers;
 	ClipPool* mpClipPool;
 	KeyframePool* mpKeyframePool;
+	SkeletonManager* mpSkeletonManager;
 	float mEngineTimeStep;
 
 };
