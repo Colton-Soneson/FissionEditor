@@ -1,5 +1,7 @@
 #pragma once
 #include "AnimHierarchies.h"
+#include <fstream>
+#include <sstream>
 
 struct HumanoidBasic
 {
@@ -205,10 +207,219 @@ struct HumanoidBasic
 	ForwardKinematics mFK;
 };
 
+struct HTRSkeleton
+{
+	HTRSkeleton(std::string filePath)
+	{
+		mFilePath = filePath;
+		mpHierarchy = new Hierarchy();
+		mpHierarchicalPosePool = new HierarchicalPosePool(mpHierarchy);
+		mNumberOfPoses = 0;
+		mActiveHierarchicalState = 0;
+	}
+
+	void loadHTRFile()
+	{
+		std::ifstream htr(mFilePath.c_str());
+		std::string line;
+
+		if (htr.is_open())
+		{
+			
+			while (std::getline(htr, line))
+			{
+				std::istringstream iss(line);
+				std::string word;
+
+				if (mStages.at(0) == line)
+				{
+					do
+					{
+						iss >> word;	//set word of line
+
+						if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
+						{
+							break;
+						}
+						else if (word == "FileType")
+						{
+							iss >> word;	//get the second word
+							mFileType = word;
+							break;
+						}
+						else if (word == "DataType")
+						{
+							iss >> word;	//get the second word
+							mDataType = word;
+							break;
+						}
+						else if (word == "FileVersion")
+						{
+							iss >> word;	//get the second word
+							mFileVersion = std::stoi(word);
+							break;
+						}
+						else if (word == "NumSegments")
+						{
+							iss >> word;	//get the second word
+							mNumSegments = std::stoi(word);
+							break;
+						}
+						else if (word == "NumFrames")
+						{
+							iss >> word;	//get the second word
+							mNumFrames = std::stoi(word);
+							break;
+						}
+						else if (word == "DataFrameRate")
+						{
+							iss >> word;	//get the second word
+							mDataFrameRate = std::stoi(word);
+							break;
+						}
+						else if (word == "EulerRotationOrder")
+						{
+							iss >> word;	//get the second word
+							mEulerRotationOrder = stringToEulerOrderConversion(word);							//GET BACK TO THIS TO ASSIGN PROPER CHANNEL, NOT JUST STRING
+							break;
+						}
+						else if (word == "CalibrationUnits")
+						{
+							iss >> word;	//get the second word
+							mCalibrationUnits = word;
+							break;
+						}
+						else if (word == "RotationUnits")
+						{
+							iss >> word;	//get the second word
+							mRotationUnits = word;
+							break;
+						}
+						else if (word == "GlobalAxisofGravity")
+						{
+							iss >> word;	//get the second word
+							mGlobalAxisOfGravity = word;
+							break;
+						}
+						else if (word == "BoneLengthAxis")
+						{
+							iss >> word;	//get the second word
+							mBoneLengthAxis = word;
+							break;
+						}
+						else if (word == "ScaleFactor")
+						{
+							iss >> word;	//get the second word
+							mScaleFactor = std::stof(word);
+							break;
+						}
+
+					} while (iss);
+
+				}
+				else if (mStages.at(1) == line)
+				{
+					do
+					{
+						iss >> word;	//set word of line
+
+						if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
+						{
+							break;
+						}
+
+						mChildren.push_back(word);
+
+						iss >> word;
+
+						mParent.push_back(word);
+
+					} while (iss);
+
+				}
+			}
+			
+		}
+
+	}
+
+	JointEulerOrder stringToEulerOrderConversion(std::string s)
+	{
+		if (s.compare("xyz"))
+		{
+			return (JointEulerOrder)jointChannel_orient_xyz;
+		}
+		else if (s.compare("yzx"))
+		{
+			return (JointEulerOrder)jointEulerOrder_yzx;
+		}
+		else if (s.compare("zxy"))
+		{
+			return (JointEulerOrder)jointEulerOrder_zxy;
+		}
+		else if (s.compare("yxz"))
+		{
+			return (JointEulerOrder)jointEulerOrder_yxz;
+		}
+		else if (s.compare("xzy"))
+		{
+			return (JointEulerOrder)jointEulerOrder_xzy;
+		}
+		else if (s.compare("zyx"))
+		{
+			return (JointEulerOrder)jointEulerOrder_zyx;
+		}
+		else
+		{
+			return (JointEulerOrder)jointEulerOrder_xyz;
+		}
+		
+	}
+
+	//stages into file
+	//	specific to HTR file
+	std::vector<std::string> mStages = {"[Header]", "[SegmentNames&Hierarchy]", "[BasePosition]", "[EndOfFile]"};
+
+	//file details
+	std::string mFilePath;
+	std::string mFileType;
+	std::string mDataType;
+	int mFileVersion;
+	
+	//animation specifics
+	int mNumSegments;
+	int mNumFrames;
+	int mDataFrameRate;
+	JointEulerOrder mEulerRotationOrder;
+	std::string mCalibrationUnits;
+	std::string mRotationUnits;
+	std::string mGlobalAxisOfGravity;
+	std::string mBoneLengthAxis;
+	float mScaleFactor;
+
+	//segment names and hierarchy
+	//	(with htr, root node's parent is "GLOBAL")
+	std::vector<std::string> mChildren;
+	std::vector<std::string> mParent;
+
+	//base positions
+
+
+
+	//This editor
+	int mActiveHierarchicalState;
+	int mNumberOfPoses;
+	Hierarchy* mpHierarchy;
+	HierarchicalPosePool* mpHierarchicalPosePool;
+	std::vector<HierarchicalState*> mpHierarchicalStates;
+	ForwardKinematics mFK;
+};
+
 //incase later on we add more skeletons
 struct SkeletonContainer
 {
 	std::vector<HumanoidBasic> mHumanoidBasics;
+	std::vector<HTRSkeleton> mHTRSkeletons;
 };
 
 class SkeletonManager
@@ -223,6 +434,7 @@ public:
 
 	void update();
 	void createHumanoidBasic();
+	void createHTRSkeleton();
 
 	SkeletonContainer getSkeletonContainer() { return mSkeletonContainer; }
 

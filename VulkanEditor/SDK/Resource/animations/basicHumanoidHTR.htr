@@ -1,0 +1,15 @@
+# 16 joint Basic Humanoid HTR file
+[Header]
+FileType htr
+DataType HTRS
+FileVersion 1
+NumSegments 16
+NumFrames 2
+DataFrameRate 60
+EulerRotationOrder ZYX
+CalibrationUnits mm
+RotationUnits Degrees
+GlobalAxisOfGravity Y
+BoneLengthAxis Y
+ScaleFactor 1.000000
+[SegmentNames&Hierarchy]

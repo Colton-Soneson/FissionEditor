@@ -467,7 +467,7 @@ void OptionsWindow::run()
 			ImVec2 winSize(600.0, 450.0);
 			ImGui::SetWindowSize(winSize);
 
-			ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
+			//ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Object Menu", &mShowObjectMenu);
 			ImGui::Checkbox("Light Menu", &mShowLightMenu);
 			ImGui::Checkbox("Animation Menu", &mShowAnimationMenu);
@@ -497,7 +497,8 @@ void OptionsWindow::run()
 		static bool activatelighting = false;
 	
 
-		static int objectSelection = 0;
+		static int objectSelectionAnim = 0;
+		static int objectSelectionEdit = 0;
 		
 		//animation stuff
 		static const char* channels[]{ "x axis", "y axis", "z axis" };
@@ -623,14 +624,14 @@ void OptionsWindow::run()
 				if (ImGui::Button("Next"))
 				{
 
-					objectSelection++;
+					objectSelectionEdit++;
 
-					if (objectSelection >= mScene->getObjects().size())
+					if (objectSelectionEdit >= mScene->getObjects().size())
 					{
-						objectSelection = 0;
+						objectSelectionEdit = 0;
 					}
 
-					glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+					glm::mat4 temp = mScene->getObjects().at(objectSelectionEdit).msUBO.model;
 					MatrixMath mMath;
 					glm::vec3 tempPos = mMath.extractTranslation(temp);
 					glm::vec3 tempScale = mMath.extractScale(temp);
@@ -645,14 +646,14 @@ void OptionsWindow::run()
 					rotX = tempRot.x;
 					rotY = tempRot.y;
 					rotZ = tempRot.z;
-					activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
-					ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
+					activatelighting = mScene->getObjects().at(objectSelectionEdit).msUBO.activeLight;
+					ambMod = mScene->getObjects().at(objectSelectionEdit).msUBO.ambientMod;
 				}
 
 				
 
 				ImGui::Text("Chosen Object:");
-				ImGui::Text(mScene->getObjects().at(objectSelection).msName.c_str());
+				ImGui::Text(mScene->getObjects().at(objectSelectionEdit).msName.c_str());
 
 				
 				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
@@ -671,7 +672,7 @@ void OptionsWindow::run()
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
-				mScene->adjustObject(objectSelection, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+				mScene->adjustObject(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
 
 				//if (ImGui::Button("EDIT THE OBJECT"))
 				//{
@@ -692,10 +693,10 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 
-		if (mShowDemoMenu)
+		/*if (mShowDemoMenu)
 		{
 			ImGui::ShowDemoWindow(&mShowDemoMenu);
-		}
+		}*/
 
 		if (mShowAnimationMenu)
 		{
@@ -789,7 +790,7 @@ void OptionsWindow::run()
 					keyframeMenu = true;
 
 					//first set
-					glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+					glm::mat4 temp = mScene->getObjects().at(objectSelectionAnim).msUBO.model;
 					MatrixMath mMath;
 					glm::vec3 tempPos = mMath.extractTranslation(temp);
 					glm::vec3 tempScale = mMath.extractScale(temp);
@@ -804,8 +805,8 @@ void OptionsWindow::run()
 					justDataRotX = tempRot.x;
 					justDataRotY = tempRot.y;
 					justDataRotZ = tempRot.z;
-					activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
-					ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
+					activatelighting = mScene->getObjects().at(objectSelectionAnim).msUBO.activeLight;
+					ambMod = mScene->getObjects().at(objectSelectionAnim).msUBO.ambientMod;
 				}
 
 				if (keyframeMenu)
@@ -813,12 +814,12 @@ void OptionsWindow::run()
 					int check = objectIndex;
 
 					ImGui::Text("CHOSEN OBJECT:");
-					ImGui::Text(mScene->getObjects().at(objectSelection).msName.c_str());
+					ImGui::Text(mScene->getObjects().at(objectSelectionAnim).msName.c_str());
 					ImGui::SliderInt("OBJECT INDEX: ", &objectIndex, 0, mScene->getObjects().size() - 1);
 
 					if (objectIndex != check)	//update only when we switch to a new object
 					{
-						glm::mat4 temp = mScene->getObjects().at(objectSelection).msUBO.model;
+						glm::mat4 temp = mScene->getObjects().at(objectSelectionAnim).msUBO.model;
 						MatrixMath mMath;
 						glm::vec3 tempPos = mMath.extractTranslation(temp);
 						glm::vec3 tempScale = mMath.extractScale(temp);
@@ -833,8 +834,8 @@ void OptionsWindow::run()
 						justDataRotX = tempRot.x;
 						justDataRotY = tempRot.y;
 						justDataRotZ = tempRot.z;
-						activatelighting = mScene->getObjects().at(objectSelection).msUBO.activeLight;
-						ambMod = mScene->getObjects().at(objectSelection).msUBO.ambientMod;
+						activatelighting = mScene->getObjects().at(objectSelectionAnim).msUBO.activeLight;
+						ambMod = mScene->getObjects().at(objectSelectionAnim).msUBO.ambientMod;
 					}
 
 
