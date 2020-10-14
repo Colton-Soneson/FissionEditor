@@ -15,3 +15,9 @@ void SkeletonManager::createHumanoidBasic()
 	temp.createBasePose();
 	mSkeletonContainer.mHumanoidBasics.push_back(temp);
 }
+
+void SkeletonManager::createHTRSkeleton()
+{
+	HTRSkeleton temp("Resource/animations/ExampleHTR.htr");
+	temp.loadHTRFile();
+}

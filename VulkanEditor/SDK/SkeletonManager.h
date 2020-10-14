@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <map>
 
 struct HTR_Position
 {
@@ -235,6 +236,7 @@ struct HTRSkeleton
 		bool basePoseComplete = false;
 		//std::vector<HTR_Position> framePose;
 
+		
 		if (htr.is_open())
 		{
 			
@@ -245,7 +247,11 @@ struct HTRSkeleton
 				bool skip = false;
 
 				//determine stage of file, and beginning of stage executions
-				if (mStages.at(0) == line)
+				if (line[0] == '#')
+				{
+					skip = true;
+				}
+				else if (mStages.at(0) == line)
 				{
 					mStageFlags.at(0) = true;
 					mStageFlags.at(1) = false;
@@ -378,22 +384,21 @@ struct HTRSkeleton
 					}
 					else if (mStageFlags.at(1))
 					{
-						do
+						
+						iss >> word;	//set word of line
+
+						if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
 						{
-							iss >> word;	//set word of line
+							break;
+						}
 
-							if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
-							{
-								break;
-							}
+						mChildren.push_back(word);
 
-							mChildren.push_back(word);
+						iss >> word;
 
-							iss >> word;
+						mParent.push_back(word);
 
-							mParent.push_back(word);
-
-						} while (iss);
+					
 
 					}
 					else if (mStageFlags.at(2))
@@ -558,16 +563,74 @@ struct HTRSkeleton
 			}
 		}
 
-		std::vector<int> newChildrenPositions;
-		std::vector<int> newPatternPositions;
+		//set the node attached to GLOBAL equal to zero as well in the children list
 
+		std::vector<std::pair<std::string, int>> childrenWithIndex;
+		std::vector<std::pair<std::string, int>> parentWithIndex;
+
+		for (int i = 0; i < mChildren.size() - 1; ++i)
+		{
+			//childrenWithIndex.emplace(std::pair<std::string, int>(mChildren.at(i), i));	//fill children list
+			//parentWithIndex.emplace(std::pair<std::string, int>(mParent.at(i), i));	//fill children list
+
+			childrenWithIndex.push_back(std::pair<std::string, int>(mChildren.at(i), i));
+			parentWithIndex.push_back(std::pair<std::string, int>(mParent.at(i), i));
+		}
+
+		//fill hierarchy of parents
+		//for (int i = 0; i < mParent.size() - 1; ++i) { hierarchy.emplace(std::pair<int, std::vector<int>>(i, std::vector<int>(0.0))); }
+
+		for (int i = 0; i < mChildren.size() - 1; ++i)
+		{
+			for (int j = 0; j < mParent.size() - 1; ++j)
+			{
+				if (mParent.at(j) == mChildren.at(i))
+				{
+					//parentWithIndex.at(mParent.at(j)) = childrenWithIndex.find(mChildren.at(i))
+					
+				}
+			}
+		}
+
+		/*std::string previousJointName;
+		for (int itrPos = indexOfRootNodeInChildren; itrPos < mChildren.size() - 1; ++itrPos)
+		{
+				
+		}
+
+		for (int itrNeg = indexOfRootNodeInChildren; itrNeg >= 0; --itrNeg)
+		{
+
+		}*/
+
+		//std::vector<std::map<int, std::string>> childrenNodesMap;
+		//std::vector<std::map<int, std::string>> parentNodesMap;
+
+
+		//std::vector<int> newParentPositions;
+
+	//	for (int i = 0; i < mChildren.size() - 1; ++i)
+	//	{
+
+	//	}
+
+
+
+
+	//}
+
+	//void DFSTraversal(int v, bool visited[])
+	//{
+	//	visited[v] = true;	//current node visited
+	//	std::vector<int>::iterator i;
+	//	for(i = )
 
 	}
 
-	void createBasePose()
-	{
+	//void createBasePose()
+	//{
 
-	}
+	//}
 
 	//stages into file
 	//	specific to HTR file
