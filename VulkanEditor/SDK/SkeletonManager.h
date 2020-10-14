@@ -2,6 +2,14 @@
 #include "AnimHierarchies.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <map>
+
+struct HTR_Position
+{
+	std::string name;
+	float Tx, Ty, Tz, Rx, Ry, Rz, BoneLength;
+};
 
 struct HumanoidBasic
 {
@@ -222,7 +230,13 @@ struct HTRSkeleton
 	{
 		std::ifstream htr(mFilePath.c_str());
 		std::string line;
+		int lineCounterForChildren = 0;
+		std::string cutWord;
+		int currentAnimationFrame = 1;	//IN THE FILE IT STARTS AT 1
+		bool basePoseComplete = false;
+		//std::vector<HTR_Position> framePose;
 
+		
 		if (htr.is_open())
 		{
 			
@@ -230,97 +244,147 @@ struct HTRSkeleton
 			{
 				std::istringstream iss(line);
 				std::string word;
+				bool skip = false;
 
-				if (mStages.at(0) == line)
+				//determine stage of file, and beginning of stage executions
+				if (line[0] == '#')
 				{
-					do
-					{
-						iss >> word;	//set word of line
-
-						if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
-						{
-							break;
-						}
-						else if (word == "FileType")
-						{
-							iss >> word;	//get the second word
-							mFileType = word;
-							break;
-						}
-						else if (word == "DataType")
-						{
-							iss >> word;	//get the second word
-							mDataType = word;
-							break;
-						}
-						else if (word == "FileVersion")
-						{
-							iss >> word;	//get the second word
-							mFileVersion = std::stoi(word);
-							break;
-						}
-						else if (word == "NumSegments")
-						{
-							iss >> word;	//get the second word
-							mNumSegments = std::stoi(word);
-							break;
-						}
-						else if (word == "NumFrames")
-						{
-							iss >> word;	//get the second word
-							mNumFrames = std::stoi(word);
-							break;
-						}
-						else if (word == "DataFrameRate")
-						{
-							iss >> word;	//get the second word
-							mDataFrameRate = std::stoi(word);
-							break;
-						}
-						else if (word == "EulerRotationOrder")
-						{
-							iss >> word;	//get the second word
-							mEulerRotationOrder = stringToEulerOrderConversion(word);							//GET BACK TO THIS TO ASSIGN PROPER CHANNEL, NOT JUST STRING
-							break;
-						}
-						else if (word == "CalibrationUnits")
-						{
-							iss >> word;	//get the second word
-							mCalibrationUnits = word;
-							break;
-						}
-						else if (word == "RotationUnits")
-						{
-							iss >> word;	//get the second word
-							mRotationUnits = word;
-							break;
-						}
-						else if (word == "GlobalAxisofGravity")
-						{
-							iss >> word;	//get the second word
-							mGlobalAxisOfGravity = word;
-							break;
-						}
-						else if (word == "BoneLengthAxis")
-						{
-							iss >> word;	//get the second word
-							mBoneLengthAxis = word;
-							break;
-						}
-						else if (word == "ScaleFactor")
-						{
-							iss >> word;	//get the second word
-							mScaleFactor = std::stof(word);
-							break;
-						}
-
-					} while (iss);
-
+					skip = true;
+				}
+				else if (mStages.at(0) == line)
+				{
+					mStageFlags.at(0) = true;
+					mStageFlags.at(1) = false;
+					mStageFlags.at(2) = false;
+					mStageFlags.at(3) = false;
+					skip = true;
+					std::cout << "\n HTR LOAD 0% COMPLETE";
 				}
 				else if (mStages.at(1) == line)
 				{
-					do
+					mStageFlags.at(0) = false;
+					mStageFlags.at(1) = true;
+					mStageFlags.at(2) = false;
+					mStageFlags.at(3) = false;
+					skip = true;
+					std::cout << "\n HTR LOAD 25% COMPLETE";
+				}
+				else if (mStages.at(2) == line)
+				{
+					mStageFlags.at(0) = false;
+					mStageFlags.at(1) = false;
+					mStageFlags.at(2) = true;
+					mStageFlags.at(3) = false;
+					skip = true;
+					std::cout << "\n HTR LOAD 50% COMPLETE";
+				}
+				else if (mStages.at(3) == line)
+				{
+					OrganizeNodesDepthFirst();
+
+					mStageFlags.at(0) = false;
+					mStageFlags.at(1) = false;
+					mStageFlags.at(2) = false;
+					mStageFlags.at(3) = true;
+
+					skip = true;
+					std::cout << "\n HTR LOAD 75% COMPLETE";
+				}
+
+				//if we checked the stage line this true and we dont compute the "[ EXAMPLE ]" word
+				if (skip == false)
+				{
+					//actions for each stage
+					if (mStageFlags.at(0))
 					{
+						do
+						{
+							iss >> word;	//set word of line
+
+							if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
+							{
+								break;
+							}
+							else if (word == "FileType")
+							{
+								iss >> word;	//get the second word
+								mFileType = word;
+								break;
+							}
+							else if (word == "DataType")
+							{
+								iss >> word;	//get the second word
+								mDataType = word;
+								break;
+							}
+							else if (word == "FileVersion")
+							{
+								iss >> word;	//get the second word
+								mFileVersion = std::stoi(word);
+								break;
+							}
+							else if (word == "NumSegments")
+							{
+								iss >> word;	//get the second word
+								mNumSegments = std::stoi(word);
+								break;
+							}
+							else if (word == "NumFrames")
+							{
+								iss >> word;	//get the second word
+								mNumFrames = std::stoi(word);
+								mFramePoses.resize(mNumFrames);
+								break;
+							}
+							else if (word == "DataFrameRate")
+							{
+								iss >> word;	//get the second word
+								mDataFrameRate = std::stoi(word);
+								break;
+							}
+							else if (word == "EulerRotationOrder")
+							{
+								iss >> word;	//get the second word
+								mEulerRotationOrder = stringToEulerOrderConversion(word);							//GET BACK TO THIS TO ASSIGN PROPER CHANNEL, NOT JUST STRING
+								break;
+							}
+							else if (word == "CalibrationUnits")
+							{
+								iss >> word;	//get the second word
+								mCalibrationUnits = word;
+								break;
+							}
+							else if (word == "RotationUnits")
+							{
+								iss >> word;	//get the second word
+								mRotationUnits = word;
+								break;
+							}
+							else if (word == "GlobalAxisofGravity")
+							{
+								iss >> word;	//get the second word
+								mGlobalAxisOfGravity = word;
+								break;
+							}
+							else if (word == "BoneLengthAxis")
+							{
+								iss >> word;	//get the second word
+								mBoneLengthAxis = word;
+								break;
+							}
+							else if (word == "ScaleFactor")
+							{
+								iss >> word;	//get the second word
+								mScaleFactor = std::stof(word);
+								break;
+							}
+
+						} while (iss);
+
+					}
+					else if (mStageFlags.at(1))
+					{
+						
 						iss >> word;	//set word of line
 
 						if (word[0] == '#')	//if we encounter the comment symbol ditch the word parser and therefore the line
@@ -334,8 +398,119 @@ struct HTRSkeleton
 
 						mParent.push_back(word);
 
-					} while (iss);
+					
 
+					}
+					else if (mStageFlags.at(2))
+					{
+						do
+						{
+							iss >> word;	//set word of line
+
+							bool doubleBreak  = false;
+
+							if (word[0] == '#') { break; }
+
+							
+							//BASE POSE SET
+							if (lineCounterForChildren < mChildren.size() - 1 && basePoseComplete == false)
+							{
+								HTR_Position htrp;
+
+								htrp.name = word;
+
+								iss >> word;
+								htrp.Tx = std::stof(word);
+
+								iss >> word;
+								htrp.Ty = std::stof(word);
+
+								iss >> word;
+								htrp.Tz = std::stof(word);
+
+								iss >> word;
+								htrp.Rx = std::stof(word);
+
+								iss >> word;
+								htrp.Ry = std::stof(word);
+
+								iss >> word;
+								htrp.Rz = std::stof(word);
+
+								iss >> word;
+								htrp.BoneLength = std::stof(word);
+
+								mBasePose.push_back(htrp);
+
+								lineCounterForChildren++;
+							}
+
+							
+							//done with base pose
+							if (lineCounterForChildren == mChildren.size() - 1)
+							{
+								basePoseComplete = true;
+								lineCounterForChildren = -1;	//this is so we can immediately do a plus 1 after first joint is called for anim data
+							}
+							
+
+							if(basePoseComplete == true)
+							{
+								//at this point we still have the children node list in order of how the file read it
+								//set current "[ JOINT NAME ]" option if we are on that line
+								if (word[0] == '[')
+								{
+									cutWord = word;
+									cutWord.erase(cutWord.begin() + 1, cutWord.end() - 1);
+									lineCounterForChildren++;								//this allows us to go through all kiddos per animation frame
+									currentAnimationFrame = 0;								//since we check for [ word first that means we dont have to track what animframe limit
+								}
+								else if(word[0] == '#')
+								{
+									//handle the second line of comments
+									doubleBreak = true;
+								}
+								else
+								{
+
+									iss >> word;	//this would now be at the frame number in front of everything
+									iss >> word;	//now we are at content of that frame
+
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Tx = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Ty = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Tz = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Rx = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Ry = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).Rz = std::stof(word);
+
+									iss >> word;
+									mFramePoses.at(currentAnimationFrame).at(lineCounterForChildren).BoneLength = std::stof(word);
+									
+									currentAnimationFrame++;
+								}
+								
+							}
+
+							
+							if (doubleBreak == true)
+							{
+								break;
+							}
+
+
+
+						} while (iss);
+					}
 				}
 			}
 			
@@ -376,9 +551,91 @@ struct HTRSkeleton
 		
 	}
 
+	void OrganizeNodesDepthFirst()
+	{
+		//go through whole list of child v parent nodes to find what child has "GLOBAL" as parent index
+		int indexOfRootNodeInChildren;
+		for (int i = 0; i < mParent.size() - 1; ++i)
+		{
+			if (mParent.at(i).compare("GLOBAL"))
+			{
+				indexOfRootNodeInChildren = i;
+			}
+		}
+
+		//set the node attached to GLOBAL equal to zero as well in the children list
+
+		std::vector<std::pair<std::string, int>> childrenWithIndex;
+		std::vector<std::pair<std::string, int>> parentWithIndex;
+
+		for (int i = 0; i < mChildren.size() - 1; ++i)
+		{
+			//childrenWithIndex.emplace(std::pair<std::string, int>(mChildren.at(i), i));	//fill children list
+			//parentWithIndex.emplace(std::pair<std::string, int>(mParent.at(i), i));	//fill children list
+
+			childrenWithIndex.push_back(std::pair<std::string, int>(mChildren.at(i), i));
+			parentWithIndex.push_back(std::pair<std::string, int>(mParent.at(i), i));
+		}
+
+		//fill hierarchy of parents
+		//for (int i = 0; i < mParent.size() - 1; ++i) { hierarchy.emplace(std::pair<int, std::vector<int>>(i, std::vector<int>(0.0))); }
+
+		for (int i = 0; i < mChildren.size() - 1; ++i)
+		{
+			for (int j = 0; j < mParent.size() - 1; ++j)
+			{
+				if (mParent.at(j) == mChildren.at(i))
+				{
+					//parentWithIndex.at(mParent.at(j)) = childrenWithIndex.find(mChildren.at(i))
+					
+				}
+			}
+		}
+
+		/*std::string previousJointName;
+		for (int itrPos = indexOfRootNodeInChildren; itrPos < mChildren.size() - 1; ++itrPos)
+		{
+				
+		}
+
+		for (int itrNeg = indexOfRootNodeInChildren; itrNeg >= 0; --itrNeg)
+		{
+
+		}*/
+
+		//std::vector<std::map<int, std::string>> childrenNodesMap;
+		//std::vector<std::map<int, std::string>> parentNodesMap;
+
+
+		//std::vector<int> newParentPositions;
+
+	//	for (int i = 0; i < mChildren.size() - 1; ++i)
+	//	{
+
+	//	}
+
+
+
+
+	//}
+
+	//void DFSTraversal(int v, bool visited[])
+	//{
+	//	visited[v] = true;	//current node visited
+	//	std::vector<int>::iterator i;
+	//	for(i = )
+
+	}
+
+	//void createBasePose()
+	//{
+
+	//}
+
 	//stages into file
 	//	specific to HTR file
 	std::vector<std::string> mStages = {"[Header]", "[SegmentNames&Hierarchy]", "[BasePosition]", "[EndOfFile]"};
+	std::vector<bool> mStageFlags = {false, false, false, false};
 
 	//file details
 	std::string mFilePath;
@@ -401,8 +658,8 @@ struct HTRSkeleton
 	//	(with htr, root node's parent is "GLOBAL")
 	std::vector<std::string> mChildren;
 	std::vector<std::string> mParent;
-
-	//base positions
+	std::vector<HTR_Position> mBasePose;
+	std::vector<std::vector<HTR_Position>> mFramePoses;
 
 
 

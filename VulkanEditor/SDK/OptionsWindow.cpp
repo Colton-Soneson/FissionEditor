@@ -726,6 +726,11 @@ void OptionsWindow::run()
 					
 				}
 
+				if (ImGui::Button("Create Example HTR Skeleton"))
+				{
+					mScene->getSkeletonManager()->createHTRSkeleton();
+				}
+
 				if (creatingSkeleton)
 				{
 					mObjectHasBeenAdded = true;
