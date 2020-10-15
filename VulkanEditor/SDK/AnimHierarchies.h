@@ -114,14 +114,22 @@ struct Joint
 	Joint()
 	{
 		mTransform = glm::mat4(1.0);	//this is how glm creates identity matrix
-		mPos = glm::vec4(0.0);
-		mRot = glm::vec4(0.0);
-		mScale = glm::vec4(1.0);
+		mPos = glm::vec3(0.0);
+		mRot = glm::vec3(0.0);
+		mScale = glm::vec3(1.0);
 	}
 
-	Joint(glm::mat4 transform, glm::vec4 position, glm::vec4 eulerRotation, glm::vec4 scale)
+	Joint(glm::mat4 transform, glm::vec3 position, glm::vec3 eulerRotation, glm::vec3 scale)
 	{
 		mTransform = transform;
+		mPos = position;
+		mRot = eulerRotation;
+		mScale = scale;
+	}
+
+	Joint(glm::vec3 position, glm::vec3 eulerRotation, glm::vec3 scale)
+	{
+		mTransform = glm::mat4(1.0);
 		mPos = position;
 		mRot = eulerRotation;
 		mScale = scale;
@@ -130,37 +138,12 @@ struct Joint
 	void reset()
 	{
 		mTransform = glm::mat4(1.0);
-		mPos = glm::vec4(0.0);
-		mRot = glm::vec4(0.0);
-		mScale = glm::vec4(1.0);
+		mPos = glm::vec3(0.0);
+		mRot = glm::vec3(0.0);
+		mScale = glm::vec3(1.0);
 	}
 
-	void copy(Joint* out, Joint* in)
-	{
-		
-			out->setPosition(in->mPos);
-			out->setRotation(in->mRot);
-			out->setScale(in->mScale);
-		
-	}
-
-	void concatenate(Joint* out, Joint* lhs, Joint* rhs)
-	{
-		
-			out->setPosition(lhs->mPos + rhs->mPos);
-			out->setRotation(lhs->mRot + rhs->mRot);
-			out->setScale(lhs->mScale * rhs->mScale);
-		
-	}
-
-	void lerp(Joint* out, Joint* j0, Joint* j1, float time)
-	{
 	
-		out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
-		out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
-		out->setScale(glm::mix(j0->mScale, j1->mScale, time));
-		
-	}
 
 	void convertToMat(Joint* in, JointChannel jc, JointEulerOrder jeo)
 	{
@@ -172,16 +155,16 @@ struct Joint
 
 
 	void setTransform(glm::mat4 t) { mTransform = t; }
-	void setPosition(glm::vec4 pos) { mPos = pos; }
-	void setRotation(glm::vec4 rot) { mRot = rot; }
-	void setScale(glm::vec4 scale) { mScale = scale; }
+	void setPosition(glm::vec3 pos) { mPos = pos; }
+	void setRotation(glm::vec3 rot) { mRot = rot; }
+	void setScale(glm::vec3 scale) { mScale = scale; }
 
 
 	//this could all just be organized by uint16_t
 	glm::mat4 mTransform;
-	glm::vec4 mPos;
-	glm::vec4 mRot;
-	glm::vec4 mScale;
+	glm::vec3 mPos;
+	glm::vec3 mRot;
+	glm::vec3 mScale;
 };
 
 //wrapper for all joints of a single pose, represents spatial descriptions of heirarchy at a point in time
@@ -307,5 +290,76 @@ struct ForwardKinematics
 	}
 
 	//HierarchicalState* mHState;
+};
+
+struct BlendOperations
+{
+public:
+	Joint identity()
+	{
+		return Joint(glm::vec3(0.0), glm::vec3(0.0), glm::vec3(1.0));
+	}
+
+	Joint* construct(Joint* out, glm::vec3 _pos, glm::vec3 _rot, glm::vec3 _scale)
+	{
+		out->mPos = _pos;
+		out->mRot = _rot;
+		out->mScale = _scale;
+		return out;
+	}
+
+	Joint* copy(Joint* out, Joint* in)
+	{
+		out->setPosition(in->mPos);
+		out->setRotation(in->mRot);
+		out->setScale(in->mScale);
+		return out;
+	}
+
+	Joint* invert(Joint* out)
+	{
+		out->mPos *= -1.0;
+		out->mRot *= -1.0;
+		out->mScale.x = 1.0 / out->mScale.x;
+		out->mScale.y = 1.0 / out->mScale.y;
+		out->mScale.z = 1.0 / out->mScale.z;
+
+		return out;
+	}
+
+	Joint* merge(Joint* out, Joint* lhs, Joint* rhs)
+	{
+		out->setPosition(lhs->mPos + rhs->mPos);
+		out->setRotation(lhs->mRot + rhs->mRot);
+		out->setScale(lhs->mScale * rhs->mScale);
+		return out;
+	}
+
+	Joint* nearest(Joint* j0, Joint* j1, float u)
+	{
+		if (u < 0.5f) { return j0; }
+		else { return j1; }
+	}
+
+	Joint* mix(Joint* out, Joint* j0, Joint* j1, float u)
+	{
+		//out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
+		//out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
+		//out->setScale(glm::mix(j0->mScale, j1->mScale, time));
+		
+		out->mPos = j0->mPos + u * (j1->mPos - j0->mPos);
+		out->mRot = j0->mRot + u * (j1->mRot - j0->mRot);
+		out->mScale = j0->mScale + u * (j1->mScale - j0->mScale);
+				
+		return out;
+	}
+
+	Joint* cubic(Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
+	{
+		float sqrdU = u * u;
+		float cubedU = u * u * u;
+
+		//float 
+	}
 };
 
