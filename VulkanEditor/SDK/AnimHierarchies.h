@@ -114,12 +114,12 @@ struct Joint
 	Joint()
 	{
 		mTransform = glm::mat4(1.0);	//this is how glm creates identity matrix
-		mPos = glm::vec3(0.0);
-		mRot = glm::vec3(0.0);
-		mScale = glm::vec3(1.0);
+		mPos = glm::vec4(0.0);
+		mRot = glm::vec4(0.0);
+		mScale = glm::vec4(1.0, 1.0, 1.0, 0.0);
 	}
 
-	Joint(glm::mat4 transform, glm::vec3 position, glm::vec3 eulerRotation, glm::vec3 scale)
+	Joint(glm::mat4 transform, glm::vec4 position, glm::vec4 eulerRotation, glm::vec4 scale)
 	{
 		mTransform = transform;
 		mPos = position;
@@ -127,7 +127,7 @@ struct Joint
 		mScale = scale;
 	}
 
-	Joint(glm::vec3 position, glm::vec3 eulerRotation, glm::vec3 scale)
+	Joint(glm::vec4 position, glm::vec4 eulerRotation, glm::vec4 scale)
 	{
 		mTransform = glm::mat4(1.0);
 		mPos = position;
@@ -138,9 +138,9 @@ struct Joint
 	void reset()
 	{
 		mTransform = glm::mat4(1.0);
-		mPos = glm::vec3(0.0);
-		mRot = glm::vec3(0.0);
-		mScale = glm::vec3(1.0);
+		mPos = glm::vec4(0.0);
+		mRot = glm::vec4(0.0);
+		mScale = glm::vec4(1.0, 1.0, 1.0, 0.0);
 	}
 
 	
@@ -155,16 +155,16 @@ struct Joint
 
 
 	void setTransform(glm::mat4 t) { mTransform = t; }
-	void setPosition(glm::vec3 pos) { mPos = pos; }
-	void setRotation(glm::vec3 rot) { mRot = rot; }
-	void setScale(glm::vec3 scale) { mScale = scale; }
+	void setPosition(glm::vec4 pos) { mPos = pos; }
+	void setRotation(glm::vec4 rot) { mRot = rot; }
+	void setScale(glm::vec4 scale) { mScale = scale; }
 
 
 	//this could all just be organized by uint16_t
 	glm::mat4 mTransform;
-	glm::vec3 mPos;
-	glm::vec3 mRot;
-	glm::vec3 mScale;
+	glm::vec4 mPos;
+	glm::vec4 mRot;
+	glm::vec4 mScale;
 };
 
 //wrapper for all joints of a single pose, represents spatial descriptions of heirarchy at a point in time
@@ -295,12 +295,12 @@ struct ForwardKinematics
 struct BlendOperations
 {
 public:
-	Joint identity()
+	Joint* identity()
 	{
-		return Joint(glm::vec3(0.0), glm::vec3(0.0), glm::vec3(1.0));
+		return new Joint(glm::vec4(0.0), glm::vec4(0.0), glm::vec4(1.0,1.0,1.0,0.0));
 	}
 
-	Joint* construct(Joint* out, glm::vec3 _pos, glm::vec3 _rot, glm::vec3 _scale)
+	Joint* construct(Joint* out, glm::vec4 _pos, glm::vec4 _rot, glm::vec4 _scale)
 	{
 		out->mPos = _pos;
 		out->mRot = _rot;
@@ -354,12 +354,71 @@ public:
 		return out;
 	}
 
-	Joint* cubic(Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
+	Joint* cubic(Joint* out, Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
 	{
-		float sqrdU = u * u;
-		float cubedU = u * u * u;
+		glm::mat4 posMat = glm::mat4(jPreInit->mPos, jInit->mPos, jTerm->mPos, jPost->mPos);
+		glm::mat4 rotMat = glm::mat4(jPreInit->mRot, jInit->mRot, jTerm->mRot, jPost->mRot);
+		glm::mat4 scaleMat = glm::mat4(jPreInit->mScale, jInit->mScale, jTerm->mScale, jPost->mScale);
 
-		//float 
+		const glm::mat4 k = glm::mat4(0.0, 2.0, 0.0, 0.0,
+									1.0, 0.0, 1.0, 0.0,
+									2.0, -5.0, 4.0, -1.0,
+									-1.0, 3.0, -3.0, 1.0);
+
+		float t0 = 0.5;
+		float t1 = t0 * u;	//basically u
+		float t2 = t1 * u;	//basically u^2
+		float t3 = t2 * u;	//basically u^3
+
+		glm::vec4 t = glm::vec4(t0, t1, t2, t3);
+
+		out->mPos = (posMat * (k * t));
+		out->mRot = (rotMat * (k * t));
+		out->mScale = (scaleMat * (k * t));
+
+		return out;
 	}
+
+
+	//--------------------ADVANCED----------------------
+	
+	Joint* split(Joint* out, Joint* j0, Joint* j1)
+	{
+		return merge(out, j0, invert(j1));
+	}
+
+	Joint* scale(Joint* out, Joint* j0, float u)
+	{
+		return mix(out, identity(), j0, u);
+	}
+
+	Joint* tri(Joint* out, Joint* j0, Joint* j1, Joint* j2, float u0, float u1)
+	{
+		//kinda like a oneMinus
+		float u = 1 - (u0 - u1);
+
+		return merge(out, merge(out, scale(out, j0, u), scale(out, j1, u0)), scale(out, j2, u1));
+	}
+
+	Joint* binearest(Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
+	{
+		return nearest(nearest(j00, j01, u0), nearest(j10, j11, u1), u);
+	}
+
+	Joint* bilerp(Joint* out, Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
+	{
+		return mix(out, mix(out, j00, j01, u0), mix(out, j10, j11, u1), u);
+	}
+
+	Joint* bicubic(Joint* out, Joint* jPreInit0, Joint* jInit0, Joint* jTerm0, Joint* jPost0,
+		Joint* jPreInit1, Joint* jInit1, Joint* jTerm1, Joint* jPost1,
+		Joint* jPreInit2, Joint* jInit2, Joint* jTerm2, Joint* jPost2,
+		Joint* jPreInit3, Joint* jInit3, Joint* jTerm3, Joint* jPost3,
+		float u0, float u1, float u2, float u3, float u)
+	{
+		return cubic(out, cubic(out, jPreInit0, jInit0, jTerm0, jPost0, u0), cubic(out, jPreInit1, jInit1, jTerm1, jPost1, u1),
+			cubic(out, jPreInit2, jInit2, jTerm2, jPost2, u2), cubic(out, jPreInit3, jInit3, jTerm3, jPost3, u3), u);
+	}
+
 };
 
