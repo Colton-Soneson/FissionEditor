@@ -1,9 +1,6 @@
 #pragma once
 #include "MatrixMath.h"
 
-#include <vector>
-#include <utility>
-#include <string>
 
 
 //structure for JointEulerOrder and JointChannel was provided for by Dan Buckstein
@@ -327,12 +324,12 @@ public:
 		return out;
 	}
 
-	Joint* merge(Joint* out, Joint* lhs, Joint* rhs)
+	Joint* merge(Joint* lhs, Joint* rhs)
 	{
-		out->setPosition(lhs->mPos + rhs->mPos);
-		out->setRotation(lhs->mRot + rhs->mRot);
-		out->setScale(lhs->mScale * rhs->mScale);
-		return out;
+		lhs->setPosition(lhs->mPos + rhs->mPos);
+		lhs->setRotation(lhs->mRot + rhs->mRot);
+		lhs->setScale(lhs->mScale * rhs->mScale);
+		return lhs;
 	}
 
 	Joint* nearest(Joint* j0, Joint* j1, float u)
@@ -341,12 +338,14 @@ public:
 		else { return j1; }
 	}
 
-	Joint* mix(Joint* out, Joint* j0, Joint* j1, float u)
+	Joint* mix(Joint* j0, Joint* j1, float u)
 	{
 		//out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
 		//out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
 		//out->setScale(glm::mix(j0->mScale, j1->mScale, time));
 		
+		Joint* out = new Joint();
+
 		out->mPos = j0->mPos + u * (j1->mPos - j0->mPos);
 		out->mRot = j0->mRot + u * (j1->mRot - j0->mRot);
 		out->mScale = j0->mScale + u * (j1->mScale - j0->mScale);
@@ -354,7 +353,7 @@ public:
 		return out;
 	}
 
-	Joint* cubic(Joint* out, Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
+	Joint* cubic(Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
 	{
 		glm::mat4 posMat = glm::mat4(jPreInit->mPos, jInit->mPos, jTerm->mPos, jPost->mPos);
 		glm::mat4 rotMat = glm::mat4(jPreInit->mRot, jInit->mRot, jTerm->mRot, jPost->mRot);
@@ -372,6 +371,8 @@ public:
 
 		glm::vec4 t = glm::vec4(t0, t1, t2, t3);
 
+		Joint* out = new Joint();
+
 		out->mPos = (posMat * (k * t));
 		out->mRot = (rotMat * (k * t));
 		out->mScale = (scaleMat * (k * t));
@@ -382,22 +383,22 @@ public:
 
 	//--------------------ADVANCED----------------------
 	
-	Joint* split(Joint* out, Joint* j0, Joint* j1)
+	Joint* split(Joint* j0, Joint* j1)
 	{
-		return merge(out, j0, invert(j1));
+		return merge(j0, invert(j1));
 	}
 
-	Joint* scale(Joint* out, Joint* j0, float u)
+	Joint* scale(Joint* j0, float u)
 	{
-		return mix(out, identity(), j0, u);
+		return mix(identity(), j0, u);
 	}
 
-	Joint* tri(Joint* out, Joint* j0, Joint* j1, Joint* j2, float u0, float u1)
+	Joint* tri(Joint* j0, Joint* j1, Joint* j2, float u0, float u1)
 	{
 		//kinda like a oneMinus
 		float u = 1 - (u0 - u1);
 
-		return merge(out, merge(out, scale(out, j0, u), scale(out, j1, u0)), scale(out, j2, u1));
+		return merge(merge(scale(j0, u), scale(j1, u0)), scale(j2, u1));
 	}
 
 	Joint* binearest(Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
@@ -407,7 +408,7 @@ public:
 
 	Joint* bilerp(Joint* out, Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
 	{
-		return mix(out, mix(out, j00, j01, u0), mix(out, j10, j11, u1), u);
+		return mix(mix(j00, j01, u0), mix(j10, j11, u1), u);
 	}
 
 	Joint* bicubic(Joint* out, Joint* jPreInit0, Joint* jInit0, Joint* jTerm0, Joint* jPost0,
@@ -416,8 +417,56 @@ public:
 		Joint* jPreInit3, Joint* jInit3, Joint* jTerm3, Joint* jPost3,
 		float u0, float u1, float u2, float u3, float u)
 	{
-		return cubic(out, cubic(out, jPreInit0, jInit0, jTerm0, jPost0, u0), cubic(out, jPreInit1, jInit1, jTerm1, jPost1, u1),
-			cubic(out, jPreInit2, jInit2, jTerm2, jPost2, u2), cubic(out, jPreInit3, jInit3, jTerm3, jPost3, u3), u);
+		return cubic(cubic(jPreInit0, jInit0, jTerm0, jPost0, u0), cubic(jPreInit1, jInit1, jTerm1, jPost1, u1),
+			cubic(jPreInit2, jInit2, jTerm2, jPost2, u2), cubic(jPreInit3, jInit3, jTerm3, jPost3, u3), u);
+	}
+
+	//bonuses
+
+	//j0 + (j1 - j0)u
+	Joint* compMix(Joint* j0, Joint* j1, float u)
+	{
+		//use the equations we just developed
+		return merge(j0, scale(split(j1, j0), u));
+	}
+
+	//DELAUNAY
+	//triangle collision brought by https://www.gamedev.net/forums/topic.asp?topic_id=295943
+	float sign(std::pair<float, float> p0, std::pair<float, float> p1, std::pair<float, float> p2)
+	{
+		return (p0.first - p2.first) * (p1.second - p2.second) - (p1.first - p2.first) * (p0.second - p2.second);
+	}
+
+	bool trigangularCollision(std::pair<float, float> p0, std::pair<float, float> p1, std::pair<float, float> p2, std::pair<float, float> pC)
+	{
+		float deriv0 = sign(pC, p0, p1);
+		float deriv1 = sign(pC, p1, p2);
+		float deriv2 = sign(pC, p2, p1);
+
+		return !(((deriv0 < 0) || (deriv1 < 0) || (deriv2 < 0)) && 
+					((deriv0 > 0) || (deriv1 > 0) || (deriv2 > 0)));
+	}
+
+	Joint* Delaunay(std::vector<triangle2D> setOfTriangles, std::map<std::pair<float, float>, Joint*> jointGridPoints, std::pair<float, float> point)
+	{
+		//we need to find the three joints grabbed from jointGridPoints forming the triangle that point is in of the setOfTrianglePoints
+		Joint* j0 = new Joint();
+		Joint* j1 = new Joint();
+		Joint* j2 = new Joint();
+
+		for (int i = 0; i < setOfTriangles.size() - 1; ++i)
+		{
+			//check to see if we are in a triangle with this point
+			if (trigangularCollision(setOfTriangles.at(i).mV0, setOfTriangles.at(i).mV0, setOfTriangles.at(i).mV0, point) == true)
+			{
+				copy(j0, jointGridPoints.at(setOfTriangles.at(i).mV0));
+				copy(j1, jointGridPoints.at(setOfTriangles.at(i).mV1));
+				copy(j2, jointGridPoints.at(setOfTriangles.at(i).mV2));
+			}
+		}
+
+
+		return tri(j0, j1, j2, point.first, point.second);
 	}
 
 };

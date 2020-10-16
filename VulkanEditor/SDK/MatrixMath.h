@@ -9,6 +9,18 @@
 #include <glm/gtc/constants.hpp>			//pi 
 
 #include <math.h>
+#include <vector>
+#include <utility>
+#include <string>
+#include <map>
+#include <tuple>
+
+struct triangle2D
+{
+	std::pair<float, float> mV0;
+	std::pair<float, float> mV1;
+	std::pair<float, float> mV2;
+};
 
 struct Quaternion
 {
