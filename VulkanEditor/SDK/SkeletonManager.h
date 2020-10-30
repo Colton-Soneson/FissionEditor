@@ -1,5 +1,6 @@
 #pragma once
-#include "AnimHierarchies.h"
+#include "ClipController.h"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>

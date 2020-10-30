@@ -5,6 +5,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE		//depth testing, configure matrix to range of 0 to 1 instead of -1 to 1
 #define GLM_ENABLE_EXPERIMENTAL		
 #include <glm/glm.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>		//rotate, lookAt, perspective
 #include <glm/gtc/constants.hpp>			//pi 
 
@@ -45,6 +46,90 @@ struct Quaternion
 		return result;
 	}
 };
+
+namespace mmath
+{
+	//theta in this case is x degrees
+	glm::mat4 XRotationMatrix(float theta)
+	{
+		glm::mat4 r;
+		r[0][0] = 1;
+		r[0][1] = 0;
+		r[0][2] = 0;
+		r[0][3] = 0;
+
+		r[1][0] = 0;
+		r[1][1] = glm::cos(theta);
+		r[1][2] = glm::sin(theta);
+		r[1][3] = 0;
+
+		r[2][0] = 0;
+		r[2][1] = -glm::sin(theta);
+		r[2][2] = glm::cos(theta);
+		r[2][3] = 0;
+
+		r[3][0] = 0;
+		r[3][1] = 0;
+		r[3][2] = 0;
+		r[3][3] = 1;
+
+		return r;
+	}
+
+	//theta in this case is y degrees
+	glm::mat4 YRotationMatrix(float theta)
+	{
+		glm::mat4 r;
+		r[0][0] = glm::cos(theta);
+		r[0][1] = 0;
+		r[0][2] = -glm::sin(theta);
+		r[0][3] = 0;
+
+		r[1][0] = 0;
+		r[1][1] = 1;
+		r[1][2] = 0;
+		r[1][3] = 0;
+
+		r[2][0] = glm::sin(theta);
+		r[2][1] = 0;
+		r[2][2] = glm::cos(theta);
+		r[2][3] = 0;
+
+		r[3][0] = 0;
+		r[3][1] = 0;
+		r[3][2] = 0;
+		r[3][3] = 1;
+
+		return r;
+	}
+
+	//theta in this case is z degrees
+	glm::mat4 ZRotationMatrix(float theta)
+	{
+		glm::mat4 r;
+		r[0][0] = glm::cos(theta);
+		r[0][1] = glm::sin(theta);
+		r[0][2] = 0;
+		r[0][3] = 0;
+
+		r[1][0] = -glm::sin(theta);
+		r[1][1] = glm::cos(theta);
+		r[1][2] = 0;
+		r[1][3] = 0;
+
+		r[2][0] = 0;
+		r[2][1] = 0;
+		r[2][2] = 1;
+		r[2][3] = 0;
+
+		r[3][0] = 0;
+		r[3][1] = 0;
+		r[3][2] = 0;
+		r[3][3] = 1;
+
+		return r;
+	}
+}
 
 class MatrixMath
 {

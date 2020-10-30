@@ -172,7 +172,6 @@ public:
 	ClipPool* mClipPool;
 };
 
-
 class ClipController
 {
 public:

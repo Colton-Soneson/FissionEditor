@@ -1,6 +1,5 @@
 #pragma once
 #include "UniversalObjectStorage.h"
-#include "ClipController.h"
 #include "SkeletonManager.h"
 
 #include <fstream>
