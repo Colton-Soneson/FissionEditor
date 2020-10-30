@@ -426,11 +426,16 @@ struct HierarchicalPose
 	Joint* mHierarchicalJoint;
 };
 
-
+//one set of hierarchy joints for a animated pose
 struct HierarchicalPoseGroup
 {
+	std::vector<HierarchicalPose> mHPG;
+};
 
-	std::vector<std::vector<HierarchicalPose>> mHPG;
+//multiple sets of hierarchy joint groups
+struct HierarchicalPoseGroupSet
+{
+	std::vector<HierarchicalPoseGroup> mHPGS;
 	std::vector<HierarchicalPose> mBasePose;
 };
 
@@ -443,7 +448,7 @@ struct HierarchicalPosePool
 		mHierarchy = h;
 	}
 
-	std::vector<HierarchicalPoseGroup> getHierarchicalPoseGroups() { return mHierarchicalPoseGroups; }
+	HierarchicalPoseGroupSet getHierarchicalPoseGroups() { return mHierarchicalPoseGroups; }
 
 	void addToSpatialPosePool(Joint j)
 	{
@@ -452,7 +457,7 @@ struct HierarchicalPosePool
 
 	void addToHierarchicalPoseGroup(HierarchicalPoseGroup hpg)
 	{
-		mHierarchicalPoseGroups.push_back(hpg);
+		mHierarchicalPoseGroups.mHPGS.push_back(hpg);
 	}
 
 	void addToHierarchicalPoses(int poseNumber)
@@ -469,15 +474,15 @@ struct HierarchicalPosePool
 			hpg.mHPG.push_back(hp);
 		}
 
-		mHierarchicalPoseGroups.push_back(hpg);
+		mHierarchicalPoseGroups.mHPGS.push_back(hpg);
 	}
 
 private:
-	Hierarchy* mHierarchy;								//Reference to hierarchy associated with this spatial data 
-	std::vector<Joint> mSpatialPosePool;				//contains ALL individual node poses
-	std::vector<HierarchicalPoseGroup> mHierarchicalPoseGroups;	//organizes above into a pose for the whole hierarchy at the same time
-														//	its like the full skeleton for n amount of poses (Ph x n)
-														//	references a subset of spacial poses
+	Hierarchy* mHierarchy;										//Reference to hierarchy associated with this spatial data 
+	std::vector<Joint> mSpatialPosePool;						//contains ALL individual node poses
+	HierarchicalPoseGroupSet mHierarchicalPoseGroups;	//organizes above into a pose for the whole hierarchy at the same time
+																//	its like the full skeleton for n amount of poses (Ph x n)
+																//	references a subset of spacial poses
 };
 
 //contains a few named poses
@@ -536,14 +541,21 @@ struct ForwardKinematics
 			
 			if (nodeIndex != nodeParentIndex)	//this will only happen to the root node, it would be 0 0
 			{
-				glm::mat4 childLocalMat = mHState->mLocalTransformPose.mHPG.at(nodeIndex).mHierarchicalJoint->mTransform;
-				glm::mat4 parentGlobalMat = mHState->mGlobalTransformPose.mHPG.at(nodeParentIndex).mHierarchicalJoint->mTransform;
+				//glm::mat4 childLocalMat = mHState->mLocalTransformPose.mHPG.at(nodeIndex).mHierarchicalJoint->mTransform;
+				//glm::mat4 parentGlobalMat = mHState->mGlobalTransformPose.mHPG.at(nodeParentIndex).mHierarchicalJoint->mTransform;
+				
+				glm::mat4 childLocalMat = mHState->mLocalTransformPose.at(nodeIndex);
+				glm::mat4 parentGlobalMat = mHState->mGlobalTransformPose.at(nodeParentIndex);
 
-				mHState->mGlobalTransformPose.mHPG.at(i).mHierarchicalJoint->setTransform(parentGlobalMat * childLocalMat);
+				//mHState->mGlobalTransformPose.mHPG.at(i).mHierarchicalJoint->setTransform(parentGlobalMat * childLocalMat);
+				
+				mHState->mGlobalTransformPose.at(i) = (parentGlobalMat * childLocalMat);
 			}
 			else
 			{
-				mHState->mGlobalTransformPose.mHPG.at(i).mHierarchicalJoint = mHState->mLocalTransformPose.mHPG.at(i).mHierarchicalJoint;
+				//mHState->mGlobalTransformPose.mHPG.at(i).mHierarchicalJoint = mHState->mLocalTransformPose.mHPG.at(i).mHierarchicalJoint;
+				
+				mHState->mGlobalTransformPose.at(i) = mHState->mLocalTransformPose.at(i);
 			}
 		}
 		
@@ -725,7 +737,7 @@ public:
 
 	Joint* revert(Joint* j)
 	{
-		j->revertFromMat();
+		j->revertFromMat(j, j->mJointChannel, j->mJointEulerOrder);
 		return j;
 	}
 
@@ -784,72 +796,74 @@ public:
 struct HierachicalBlendOperations
 {
 public:
-	Joint* identity()
+	HierarchicalPose* identity()
 	{
-		return new Joint(glm::vec4(0.0), glm::vec4(0.0), glm::vec4(1.0, 1.0, 1.0, 0.0));
+		HierarchicalPose* r = new HierarchicalPose();
+		r->mHierarchicalJoint = new Joint(glm::vec4(0.0), glm::vec4(0.0), glm::vec4(1.0, 1.0, 1.0, 0.0));
+		return r;
 	}
 
-	Joint* construct(Joint* out, glm::vec4 _pos, glm::vec4 _rot, glm::vec4 _scale)
+	HierarchicalPose* construct(HierarchicalPose* out, glm::vec4 _pos, glm::vec4 _rot, glm::vec4 _scale)
 	{
-		out->mPos = _pos;
-		out->mRot = _rot;
-		out->mScale = _scale;
+		out->mHierarchicalJoint->mPos = _pos;
+		out->mHierarchicalJoint->mRot = _rot;
+		out->mHierarchicalJoint->mScale = _scale;
 		return out;
 	}
 
-	Joint* copy(Joint* out, Joint* in)
+	HierarchicalPose* copy(HierarchicalPose* out, HierarchicalPose* in)
 	{
-		out->setPosition(in->mPos);
-		out->setRotation(in->mRot);
-		out->setScale(in->mScale);
+		out->mHierarchicalJoint->setPosition(in->mHierarchicalJoint->mPos);
+		out->mHierarchicalJoint->setRotation(in->mHierarchicalJoint->mRot);
+		out->mHierarchicalJoint->setScale(in->mHierarchicalJoint->mScale);
 		return out;
 	}
 
-	Joint* invert(Joint* out)
+	HierarchicalPose* invert(HierarchicalPose* out)
 	{
-		out->mPos *= -1.0;
-		out->mRot *= -1.0;
-		out->mScale.x = 1.0 / out->mScale.x;
-		out->mScale.y = 1.0 / out->mScale.y;
-		out->mScale.z = 1.0 / out->mScale.z;
+		out->mHierarchicalJoint->mPos *= -1.0;
+		out->mHierarchicalJoint->mRot *= -1.0;
+		out->mHierarchicalJoint->mScale.x = 1.0 / out->mHierarchicalJoint->mScale.x;
+		out->mHierarchicalJoint->mScale.y = 1.0 / out->mHierarchicalJoint->mScale.y;
+		out->mHierarchicalJoint->mScale.z = 1.0 / out->mHierarchicalJoint->mScale.z;
 
 		return out;
 	}
 
-	Joint* merge(Joint* lhs, Joint* rhs)
+	HierarchicalPose* merge(HierarchicalPose* lhs, HierarchicalPose* rhs)
 	{
-		lhs->setPosition(lhs->mPos + rhs->mPos);
-		lhs->setRotation(lhs->mRot + rhs->mRot);
-		lhs->setScale(lhs->mScale * rhs->mScale);
+		lhs->mHierarchicalJoint->setPosition(lhs->mHierarchicalJoint->mPos + rhs->mHierarchicalJoint->mPos);
+		lhs->mHierarchicalJoint->setRotation(lhs->mHierarchicalJoint->mRot + rhs->mHierarchicalJoint->mRot);
+		lhs->mHierarchicalJoint->setScale(lhs->mHierarchicalJoint->mScale * rhs->mHierarchicalJoint->mScale);
 		return lhs;
 	}
 
-	Joint* nearest(Joint* j0, Joint* j1, float u)
+	HierarchicalPose* nearest(HierarchicalPose* j0, HierarchicalPose* j1, float u)
 	{
 		if (u < 0.5f) { return j0; }
 		else { return j1; }
 	}
 
-	Joint* mix(Joint* j0, Joint* j1, float u)
+	HierarchicalPose* mix(HierarchicalPose* j0, HierarchicalPose* j1, float u)
 	{
 		//out->setPosition(glm::mix(j0->mPos, j1->mPos, time));
 		//out->setRotation(glm::mix(j0->mRot, j1->mRot, time));
 		//out->setScale(glm::mix(j0->mScale, j1->mScale, time));
 
-		Joint* out = new Joint();
+		HierarchicalPose* out = new HierarchicalPose();
 
-		out->mPos = j0->mPos + u * (j1->mPos - j0->mPos);
-		out->mRot = j0->mRot + u * (j1->mRot - j0->mRot);
-		out->mScale = j0->mScale + u * (j1->mScale - j0->mScale);
+		out->mHierarchicalJoint->mPos = j0->mHierarchicalJoint->mPos + u * (j1->mHierarchicalJoint->mPos - j0->mHierarchicalJoint->mPos);
+		out->mHierarchicalJoint->mRot = j0->mHierarchicalJoint->mRot + u * (j1->mHierarchicalJoint->mRot - j0->mHierarchicalJoint->mRot);
+		out->mHierarchicalJoint->mScale = j0->mHierarchicalJoint->mScale + u * (j1->mHierarchicalJoint->mScale - j0->mHierarchicalJoint->mScale);
 
 		return out;
 	}
 
-	Joint* cubic(Joint* jPreInit, Joint* jInit, Joint* jTerm, Joint* jPost, float u)
+	HierarchicalPose* cubic(HierarchicalPose* jPreInit, HierarchicalPose* jInit, HierarchicalPose* jTerm, HierarchicalPose* jPost, float u)
 	{
-		glm::mat4 posMat = glm::mat4(jPreInit->mPos, jInit->mPos, jTerm->mPos, jPost->mPos);
-		glm::mat4 rotMat = glm::mat4(jPreInit->mRot, jInit->mRot, jTerm->mRot, jPost->mRot);
-		glm::mat4 scaleMat = glm::mat4(jPreInit->mScale, jInit->mScale, jTerm->mScale, jPost->mScale);
+		glm::mat4 posMat = glm::mat4(jPreInit->mHierarchicalJoint->mPos, jInit->mHierarchicalJoint->mPos, jTerm->mHierarchicalJoint->mPos, jPost->mHierarchicalJoint->mPos);
+		glm::mat4 rotMat = glm::mat4(jPreInit->mHierarchicalJoint->mRot, jInit->mHierarchicalJoint->mRot, jTerm->mHierarchicalJoint->mRot, jPost->mHierarchicalJoint->mRot);
+		glm::mat4 scaleMat = glm::mat4(jPreInit->mHierarchicalJoint->mScale, jInit->mHierarchicalJoint->mScale, jTerm->mHierarchicalJoint->mScale, jPost->mHierarchicalJoint->mScale);
 
 		const glm::mat4 k = glm::mat4(0.0, 2.0, 0.0, 0.0,
 			1.0, 0.0, 1.0, 0.0,
@@ -863,11 +877,11 @@ public:
 
 		glm::vec4 t = glm::vec4(t0, t1, t2, t3);
 
-		Joint* out = new Joint();
+		HierarchicalPose* out = new HierarchicalPose();
 
-		out->mPos = (posMat * (k * t));
-		out->mRot = (rotMat * (k * t));
-		out->mScale = (scaleMat * (k * t));
+		out->mHierarchicalJoint->mPos = (posMat * (k * t));
+		out->mHierarchicalJoint->mRot = (rotMat * (k * t));
+		out->mHierarchicalJoint->mScale = (scaleMat * (k * t));
 
 		return out;
 	}
@@ -875,17 +889,17 @@ public:
 
 	//--------------------ADVANCED----------------------
 
-	Joint* split(Joint* j0, Joint* j1)
+	HierarchicalPose* split(HierarchicalPose* j0, HierarchicalPose* j1)
 	{
 		return merge(j0, invert(j1));
 	}
 
-	Joint* scale(Joint* j0, float u)
+	HierarchicalPose* scale(HierarchicalPose* j0, float u)
 	{
 		return mix(identity(), j0, u);
 	}
 
-	Joint* tri(Joint* j0, Joint* j1, Joint* j2, float u0, float u1)
+	HierarchicalPose* tri(HierarchicalPose* j0, HierarchicalPose* j1, HierarchicalPose* j2, float u0, float u1)
 	{
 		//kinda like a oneMinus
 		float u = 1 - (u0 - u1);
@@ -893,20 +907,20 @@ public:
 		return merge(merge(scale(j0, u), scale(j1, u0)), scale(j2, u1));
 	}
 
-	Joint* binearest(Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
+	HierarchicalPose* binearest(HierarchicalPose* j00, HierarchicalPose* j01, HierarchicalPose* j10, HierarchicalPose* j11, float u0, float u1, float u)
 	{
 		return nearest(nearest(j00, j01, u0), nearest(j10, j11, u1), u);
 	}
 
-	Joint* bilerp(Joint* j00, Joint* j01, Joint* j10, Joint* j11, float u0, float u1, float u)
+	HierarchicalPose* bilerp(HierarchicalPose* j00, HierarchicalPose* j01, HierarchicalPose* j10, HierarchicalPose* j11, float u0, float u1, float u)
 	{
 		return mix(mix(j00, j01, u0), mix(j10, j11, u1), u);
 	}
 
-	Joint* bicubic(Joint* jPreInit0, Joint* jInit0, Joint* jTerm0, Joint* jPost0,
-		Joint* jPreInit1, Joint* jInit1, Joint* jTerm1, Joint* jPost1,
-		Joint* jPreInit2, Joint* jInit2, Joint* jTerm2, Joint* jPost2,
-		Joint* jPreInit3, Joint* jInit3, Joint* jTerm3, Joint* jPost3,
+	HierarchicalPose* bicubic(HierarchicalPose* jPreInit0, HierarchicalPose* jInit0, HierarchicalPose* jTerm0, HierarchicalPose* jPost0,
+		HierarchicalPose* jPreInit1, HierarchicalPose* jInit1, HierarchicalPose* jTerm1, HierarchicalPose* jPost1,
+		HierarchicalPose* jPreInit2, HierarchicalPose* jInit2, HierarchicalPose* jTerm2, HierarchicalPose* jPost2,
+		HierarchicalPose* jPreInit3, HierarchicalPose* jInit3, HierarchicalPose* jTerm3, HierarchicalPose* jPost3,
 		float u0, float u1, float u2, float u3, float u)
 	{
 		return cubic(cubic(jPreInit0, jInit0, jTerm0, jPost0, u0), cubic(jPreInit1, jInit1, jTerm1, jPost1, u1),
@@ -931,24 +945,24 @@ public:
 		return t;
 	}
 
-	Joint* smoothstep(Joint* j0, Joint* j1, float u)
+	HierarchicalPose* smoothstep(HierarchicalPose* j0, HierarchicalPose* j1, float u)
 	{
-		Joint* t = new Joint();
+		HierarchicalPose* t = new HierarchicalPose();
 
 		//t->mPos.x = glm::clamp((double)((u - j0->mPos.x) / (j1->mPos.x - j0->mPos.x)), 0.0, 1.0);
 
-		t->mPos = glm::clamp(((glm::vec4(u) - j0->mPos) / (j1->mPos - j0->mPos)), glm::vec4(0.0), glm::vec4(1.0));
-		t->mRot = glm::clamp(((glm::vec4(u) - j0->mRot) / (j1->mRot - j0->mRot)), glm::vec4(0.0), glm::vec4(1.0));
-		t->mScale = glm::clamp(((glm::vec4(u) - j0->mScale) / (j1->mScale - j0->mScale)), glm::vec4(0.0), glm::vec4(1.0));
+		t->mHierarchicalJoint->mPos = glm::clamp(((glm::vec4(u) - j0->mHierarchicalJoint->mPos) / (j1->mHierarchicalJoint->mPos - j0->mHierarchicalJoint->mPos)), glm::vec4(0.0), glm::vec4(1.0));
+		t->mHierarchicalJoint->mRot = glm::clamp(((glm::vec4(u) - j0->mHierarchicalJoint->mRot) / (j1->mHierarchicalJoint->mRot - j0->mHierarchicalJoint->mRot)), glm::vec4(0.0), glm::vec4(1.0));
+		t->mHierarchicalJoint->mScale = glm::clamp(((glm::vec4(u) - j0->mHierarchicalJoint->mScale) / (j1->mHierarchicalJoint->mScale - j0->mHierarchicalJoint->mScale)), glm::vec4(0.0), glm::vec4(1.0));
 
-		t->mPos = t->mPos * t->mPos * (glm::vec4(3.0) - glm::vec4(2.0) * t->mPos);
-		t->mRot = t->mRot * t->mRot * (glm::vec4(3.0) - glm::vec4(2.0) * t->mRot);
-		t->mScale = t->mScale * t->mScale * (glm::vec4(3.0) - glm::vec4(2.0) * t->mScale);
+		t->mHierarchicalJoint->mPos = t->mHierarchicalJoint->mPos * t->mHierarchicalJoint->mPos * (glm::vec4(3.0) - glm::vec4(2.0) * t->mHierarchicalJoint->mPos);
+		t->mHierarchicalJoint->mRot = t->mHierarchicalJoint->mRot * t->mHierarchicalJoint->mRot * (glm::vec4(3.0) - glm::vec4(2.0) * t->mHierarchicalJoint->mRot);
+		t->mHierarchicalJoint->mScale = t->mHierarchicalJoint->mScale * t->mHierarchicalJoint->mScale * (glm::vec4(3.0) - glm::vec4(2.0) * t->mHierarchicalJoint->mScale);
 
 		return t;
 	}
 
-	Joint* descale(Joint* j, float u)
+	HierarchicalPose* descale(HierarchicalPose* j, float u)
 	{
 		if (u >= 1.0)
 		{
@@ -963,15 +977,15 @@ public:
 		return mix(identity(), j, u);
 	}
 
-	Joint* convert(Joint* j)
+	HierarchicalPose* convert(HierarchicalPose* j)
 	{
-		j->convertToMat(j, j->mJointChannel, j->mJointEulerOrder);
+		j->mHierarchicalJoint->convertToMat(j->mHierarchicalJoint, j->mHierarchicalJoint->mJointChannel, j->mHierarchicalJoint->mJointEulerOrder);
 		return j;
 	}
 
-	Joint* revert(Joint* j)
+	HierarchicalPose* revert(HierarchicalPose* j)
 	{
-		j->revertFromMat(j, j->mJointChannel, j->mJointEulerOrder);
+		j->mHierarchicalJoint->revertFromMat(j->mHierarchicalJoint, j->mHierarchicalJoint->mJointChannel, j->mHierarchicalJoint->mJointEulerOrder);
 		return j;
 	}
 
