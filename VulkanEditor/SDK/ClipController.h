@@ -15,49 +15,72 @@ enum OpType
 
 struct BlendNode
 {
-	
-	BlendNode(OpType _op, std::vector<HierarchicalPose> _h, std::vector<float*> _u)
+	BlendNode(OpType _op, std::vector<HierarchicalPose*> _h, std::vector<float*> _u)
 	{
 		mType = _op;
 		mHParams = _h;
 		mU = _u;
 	}
 
-	
 	void exec()
 	{
 		switch (mType)
 		{
 		case OT_ADD:
+			mOut = mOp.merge(mHParams.at(0), mHParams.at(1));
 			break;
 		case OT_SCALE:
+			mOut = mOp.scale(mHParams.at(0), *(mU.at(0)));
 			break;
 		case OT_MIX:
+			mOut = mOp.mix(mHParams.at(0), mHParams.at(1), *(mU.at(0)));
 			break;
 		case OT_CUBIC:
+			mOut = mOp.cubic(mHParams.at(0), mHParams.at(1), mHParams.at(2), mHParams.at(3), *(mU.at(0)));
 			break;
 		case OT_BILERP:
+			mOut = mOp.bilerp(mHParams.at(0), mHParams.at(1), mHParams.at(2), mHParams.at(3), *(mU.at(0)), *(mU.at(1)), *(mU.at(2)));
 			break;
 		case OT_BICUBIC:
+			mOut = mOp.bicubic(mHParams.at(0), mHParams.at(1), mHParams.at(2), mHParams.at(3),
+				mHParams.at(4), mHParams.at(5), mHParams.at(6), mHParams.at(7),
+				mHParams.at(8), mHParams.at(9), mHParams.at(10), mHParams.at(11),
+				mHParams.at(12), mHParams.at(13), mHParams.at(14), mHParams.at(15),
+				*(mU.at(0)), *(mU.at(1)), *(mU.at(2)), *(mU.at(3)), *(mU.at(4)));
 			break;
 		default:		//will just be identity
+			mOut = mOp.identity();
 			break;
 		}
 	}
 	
-
-
 	OpType mType;
 	HierarchicalBlendOperations mOp;		//operations
-	std::vector<HierarchicalPose> mHParams;	//to be operated upon (controls)
+	std::vector<HierarchicalPose*> mHParams;	//to be operated upon (controls)
 	std::vector<float*> mU;					//u values, they are constantly updating so getting pointers will allow for not being passed
 											//		during exec stage
 
-	HierarchicalPose mOut;					//outpose
+	HierarchicalPose* mOut;					//outpose
 };
 
-struct
+struct BlendTree
 {
+	void addToTree(BlendNode _n)
+	{
+		mNodes.push_back(_n);
+	}
+
+	
+	void updateTree()	//just run the exec functions on all nodes
+	{
+		for (int i = 0; i < mBTH.getNumberOfNodes(); ++i)
+		{
+			mNodes.at(i).exec();	//this is still acting on individual hierarchyPose nodes, not the full set
+		}
+	}
+
+
+
 	std::vector<BlendNode> getNodes() { return mNodes; }
 
 	Hierarchy mBTH;	//blend tree hierarchy
@@ -202,6 +225,8 @@ struct ClipSkeletal
 
 	bool mTransitionalForward;
 	bool mTransitionalBackward;
+
+	BlendTree mBT;	//blend tree for clip
 };
 
 struct ClipObjectPool
@@ -484,13 +509,13 @@ public:
 	void setStartToLastKeyframe() { mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mLastKeyframeIndex; }
 	void setStartToFirstKeyframe() { mKeyframeIndex = mpClipPool->getClips().at(mClipIndex).mFirstKeyframeIndex; }
 	void setTransitionalMode(bool mode) { mTransitionalClipMode = mode; }
+	void setUValues(std::vector<float*> _u) { mU = _u; }
 
 	float& getSlowMoMultiplier() { return mSlowMoMultiplier; }
 	int getCurrentKeyframeIndex() { return mKeyframeIndex; }
 	int getClipIndexInPool() { return mClipIndex; }	//returns -1 when empty
 	int& getPlaybackDirection() { return mPlaybackDirection; } //can be adjusted from ImGUI interface this way
 	std::string getName() { return mName; }
-
 
 
 private:
@@ -512,5 +537,7 @@ private:
 	ClipSkeletalPool* mpClipPool;					//reference to the pool of clips to control
 	TransitionalsSkeletal* mTransitionalManager;
 	bool mTransitionalClipMode;
+
+	std::vector<float*> mU;
 
 };

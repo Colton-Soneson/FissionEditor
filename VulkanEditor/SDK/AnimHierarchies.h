@@ -999,9 +999,8 @@ public:
 	//Forward Kinematics
 	glm::mat4 FK(Hierarchy h, HierarchicalPose* jL, HierarchicalPose* jG)
 	{
-		//int numNodes = h.getNumberOfNodes();
+		int i = h.getNumberOfNodes();	//this has to be its pos in hierarchy	
 		
-		//for (int i = 0; i < numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
 		{
 			int nodeParentIndex = h.getNodes().at(i).mParentIndex;
 			int nodeIndex = h.getNodes().at(i).mIndex;
@@ -1023,9 +1022,8 @@ public:
 	//Inverted Kinematics
 	glm::mat4 IK(Hierarchy h, HierarchicalPose* jG, HierarchicalPose* jL)
 	{
-		//int numNodes = h.getNumberOfNodes();
+		int i = h.getNumberOfNodes();	//this has to be its pos in hierarchy
 
-		//for (int i = 0; i < numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
 		{
 			int nodeParentIndex = h.getNodes().at(i).mParentIndex;
 			int nodeIndex = h.getNodes().at(i).mIndex;
