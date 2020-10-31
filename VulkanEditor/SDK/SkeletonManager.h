@@ -161,12 +161,12 @@ struct HumanoidBasic
 	void addKeyPose()
 	{
 		//taking in the base pose, create modifications
-		HierarchicalPose tempH = mpHierarchicalPosePool->getHierarchicalPoses().at(0);	
-		Joint tempJ;
-		tempJ.copy(&tempJ, tempH.mHierarchicalJoints.at(5));
-		tempJ.setPosition(glm::vec4(0, +5, 0, 0));
-		tempH.mHierarchicalJoints.at(5) = &tempJ;
-		mpHierarchicalPosePool->addToHierarchicalPoses(tempH);
+		//HierarchicalPose tempH = mpHierarchicalPosePool->getHierarchicalPoseGroups().mHPGS.at(0).mHPG;	
+		//Joint tempJ;
+		//tempJ.copy(&tempJ, tempH.mHierarchicalJoints.at(5));
+		//tempJ.setPosition(glm::vec4(0, +5, 0, 0));
+		//tempH.mHierarchicalJoints.at(5) = &tempJ;
+		//mpHierarchicalPosePool->addToHierarchicalPoses(tempH);
 
 	}
 

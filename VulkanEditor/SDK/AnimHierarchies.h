@@ -491,8 +491,8 @@ struct HierarchicalState
 {
 	HierarchicalState(Hierarchy* h)
 	{
-		mHierarchy = h;		
-		resetAll();
+		mHierarchy = h;	
+		//fillMembers();
 	}
 
 	void resetAll()
@@ -508,7 +508,13 @@ struct HierarchicalState
 		}
 	}
 
-	
+	/*void fillMembers()
+	{
+		for (int i = 0; i < mHierarchy->getNumberOfNodes(); ++i)
+		{
+			mLocalTransformPose.push_back(mLocalPoseList.at(i).mHierarchicalJoint->mTransform)
+		}
+	}*/
 
 	HierarchicalStateMode mHSM;
 
@@ -793,7 +799,7 @@ public:
 
 };
 
-struct HierachicalBlendOperations
+struct HierarchicalBlendOperations
 {
 public:
 	HierarchicalPose* identity()
@@ -994,7 +1000,7 @@ public:
 	glm::mat4 FK(Hierarchy h, HierarchicalPose* jL, HierarchicalPose* jG)
 	{
 		//int numNodes = h.getNumberOfNodes();
-
+		
 		//for (int i = 0; i < numNodes; ++i)	//CHECK IF  LESS EQUAL IS RIGHT OR JUST LESS
 		{
 			int nodeParentIndex = h.getNodes().at(i).mParentIndex;
