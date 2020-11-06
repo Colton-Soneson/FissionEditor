@@ -69,7 +69,6 @@ struct BlendTree
 	{
 		mNodes.push_back(_n);
 	}
-
 	
 	void updateTree()	//just run the exec functions on all nodes
 	{
@@ -79,24 +78,32 @@ struct BlendTree
 		}
 	}
 
-
-
 	std::vector<BlendNode> getNodes() { return mNodes; }
 
 	Hierarchy mBTH;	//blend tree hierarchy
 	std::vector<BlendNode> mNodes;
 };
 
-
 //input based node
 struct InputNode
 {
-	InputNode(LocomotionControlType _LeftLCT, LocomotionControlType _RightLCT)
+	InputNode(LocomotionControlType _LeftLCT, LocomotionControlType _RightLCT, float _lSpeed, float _rSpeed)
 	{
 		mLeftLCT = _LeftLCT;
 		mRightLCT = _RightLCT;
 		mLeftDirectionals = glm::vec2(0.0);
 		mRightDirectionals = glm::vec2(0.0);
+
+		mLeftP = glm::vec4(0.0);
+		mLeftV = glm::vec4(0.0);
+		mLeftA = glm::vec4(0.0);
+
+		mRightP = glm::vec4(0.0);
+		mRightV = glm::vec4(0.0);
+		mRightA = glm::vec4(0.0);
+
+		mLeftSpeed = _lSpeed;
+		mRightSpeed = _rSpeed;
 	}
 
 	InputNode()
@@ -105,14 +112,67 @@ struct InputNode
 		mRightLCT = LCT_DV;		//default the direct value
 		mLeftDirectionals = glm::vec2(0.0);
 		mRightDirectionals = glm::vec2(0.0);
+
+		mLeftP = glm::vec4(0.0);
+		mLeftV = glm::vec4(0.0);
+		mLeftA = glm::vec4(0.0);
+
+		mRightP = glm::vec4(0.0);
+		mRightV = glm::vec4(0.0);
+		mRightA = glm::vec4(0.0);
+
+		mLeftSpeed = 1.0;
+		mRightSpeed = glm::pi<float>();
 	}
 
-	void LCTupdate()
+	void LCTupdate(float dt, float u0, float u1)
 	{
+		switch (mLeftLCT)	//positional movement
+		{
+		case LCT_DV:
+			mLeftP = glm::vec4(mLeftDirectionals.x * mLeftSpeed, mLeftDirectionals.y * mLeftSpeed, 0.0, 0.0);
+			break;
+		case LCT_CV:
+			mLeftV = glm::vec4(mLeftDirectionals.x * mLeftSpeed, mLeftDirectionals.y * mLeftSpeed, 0.0, 0.0);
+			mLeftP = fIntegratedEuler(mLeftP, mLeftV, dt);
+			break;
+		case LCT_CA:
+			mLeftA = glm::vec4(mLeftDirectionals.x * mLeftSpeed, mLeftDirectionals.y * mLeftSpeed, 0.0, 0.0);
+			mLeftV = fIntegratedEuler(mLeftV, mLeftA, dt);
+			mLeftP = fIntegratedEuler(mLeftP, mLeftV, dt);
+			break;
+		case LCT_FV:
+			mLeftP = fIntegrateKinematic(glm::vec4(mLeftDirectionals.x * mLeftSpeed, mLeftDirectionals.y * mLeftSpeed, 0.0, 0.0), mLeftV, mLeftA, u0);
+			break;
+		case LCT_FA:
+			mLeftP = fIntegrateKinematic(glm::vec4(mLeftDirectionals.x * mLeftSpeed, mLeftDirectionals.y * mLeftSpeed, 0.0, 0.0), mLeftV, mLeftA, u0);
+			break;
+		}
 
+		switch (mRightLCT)	//rotational movement
+		{
+		case LCT_DV:
+			mRightP = glm::vec4(mRightDirectionals.x * mRightSpeed, mRightDirectionals.y * mRightSpeed, 0.0, 0.0);
+			break;
+		case LCT_CV:
+			mRightV = glm::vec4(mRightDirectionals.x * mRightSpeed, mRightDirectionals.y * mRightSpeed, 0.0, 0.0);
+			mRightP = fIntegratedEuler(mRightP, mRightV, dt);
+			break;
+		case LCT_CA:
+			mRightA = glm::vec4(mRightDirectionals.x * mRightSpeed, mRightDirectionals.y * mRightSpeed, 0.0, 0.0);
+			mRightV = fIntegratedEuler(mRightV, mRightA, dt);
+			mRightP = fIntegratedEuler(mRightP, mRightV, dt);
+			break;
+		case LCT_FV:
+			mRightP = fIntegrateKinematic(glm::vec4(mRightDirectionals.x * mRightSpeed, mRightDirectionals.y * mRightSpeed, 0.0, 0.0), mRightV, mRightA, u1);
+			break;
+		case LCT_FA:
+			mRightP = fIntegrateKinematic(glm::vec4(mRightDirectionals.x * mRightSpeed, mRightDirectionals.y * mRightSpeed, 0.0, 0.0), mRightV, mRightA, u1);
+			break;
+		}
 	}
 
-	void update(std::vector<int> _iList)
+	void update(std::vector<int> _iList, float dt, float u0, float u1)
 	{
 		//setting the inputs based on what was given from GLFW
 		for (int i = 0; i < _iList.size() - 1; ++i)
@@ -127,12 +187,28 @@ struct InputNode
 			else if (_iList.at(i) == OWI_D) { mLeftDirectionals = glm::vec2(mLeftDirectionals.x - 1, mLeftDirectionals.y); }
 		}
 
-
+		LCTupdate(dt, u0, u1);
 
 		//this reset is called at the very end
 		mLeftDirectionals = glm::vec2(0.0);
 		mRightDirectionals = glm::vec2(0.0);
 	}
+
+	glm::vec4 fIntegratedEuler(glm::vec4 x, glm::vec4 dx_dt, float dt)	//dx_dt aka velocity
+	{
+		return x + (dx_dt * dt);
+	}
+
+	glm::vec4 fIntegrateKinematic(glm::vec4 x, glm::vec4 dx_dt, glm::vec4 d2x_dt2, float dt)	//d2x_dt2 aka acceleration
+	{
+		return x + (dx_dt * dt) + ((d2x_dt2 * dt * dt) / 2.0f);
+	}
+
+	glm::vec4 fIntegrateInterpolated(glm::vec4 x, glm::vec4 xc, float u)
+	{
+		return x + (xc - x) * u;
+	}
+
 
 private:
 	glm::vec2 mLeftDirectionals;
@@ -140,6 +216,38 @@ private:
 	std::vector<bool*> mConditionalList;
 	LocomotionControlType mLeftLCT;
 	LocomotionControlType mRightLCT;
+
+	glm::vec4 mLeftP;
+	glm::vec4 mLeftV;
+	glm::vec4 mLeftA;
+	
+	glm::vec4 mRightP;
+	glm::vec4 mRightV;
+	glm::vec4 mRightA;
+
+	float mLeftSpeed;	//movement speed only
+	float mRightSpeed;	//rotation speed only
+};
+
+struct InputTree
+{
+	void addToTree(InputNode _n)
+	{
+		mNodes.push_back(_n);
+	}
+
+	void updateTree(std::vector<int> _iList, float dt, float u0, float u1)	//just run the exec functions on all nodes
+	{
+		for (int i = 0; i < mITH.getNumberOfNodes(); ++i)
+		{
+			mNodes.at(i).update(_iList, dt, u0, u1);	//this is still acting on individual hierarchyPose nodes, not the full set
+		}
+	}
+
+	std::vector<InputNode> getNodes() { return mNodes; }
+
+	Hierarchy mITH;	//blend tree hierarchy
+	std::vector<InputNode> mNodes;
 };
 
 struct ClipObject
