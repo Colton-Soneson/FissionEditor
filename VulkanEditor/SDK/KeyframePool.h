@@ -10,18 +10,19 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include "AnimHierarchies.h"
 
-struct KeyframeData
+struct KeyframeObjectData
 {
 public:
-	KeyframeData(glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+	KeyframeObjectData(glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
 	{
 		mPos = pos;
 		mRot = rot;
 		mScale = scale;
 	}
 
-	KeyframeData(float Px, float Py, float Pz, float Rx, float Ry, float Rz, float Sx, float Sy, float Sz)
+	KeyframeObjectData(float Px, float Py, float Pz, float Rx, float Ry, float Rz, float Sx, float Sy, float Sz)
 	{
 		mPos.x = Px;
 		mPos.y = Py;
@@ -36,7 +37,7 @@ public:
 		mScale.z = Sz;
 	}
 
-	KeyframeData()
+	KeyframeObjectData()
 	{
 		mPos.x = 0;
 		mPos.y = 0;
@@ -99,10 +100,28 @@ public:
 	glm::vec3 mScale;
 };
 
-struct Keyframe
+struct KeyframeSkeletalData
+{
+public:
+	KeyframeSkeletalData()
+	{
+		mHS = nullptr;
+	}
+
+	KeyframeSkeletalData(HierarchicalState* hs) 
+	{
+		mHS = hs;
+	}
+
+	void setData(HierarchicalState* hs) { mHS = hs;}
+
+	HierarchicalState* mHS;
+};
+
+struct KeyframeObject
 {
 
-	Keyframe()		//default
+	KeyframeObject()		//default
 	{
 		mIndex = 0;
 		mDuration = 0.0;
@@ -110,7 +129,7 @@ struct Keyframe
 		mData.setData(glm::vec3(0.0), glm::vec3(0.0), glm::vec3(0.0));
 	}
 
-	Keyframe(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+	KeyframeObject(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
 	{
 		mIndex = index;
 		mDuration = duration;
@@ -118,7 +137,7 @@ struct Keyframe
 		mData.setData(pos, rot, scale);
 	}
 	
-	Keyframe(int index, float duration, KeyframeData data)
+	KeyframeObject(int index, float duration, KeyframeObjectData data)
 	{
 		mIndex = index;
 		mDuration = duration;
@@ -126,7 +145,7 @@ struct Keyframe
 		mData = data;
 	}
 
-	~Keyframe() {};
+	~KeyframeObject() {};
 
 
 	void setDuration(float duration)
@@ -134,7 +153,7 @@ struct Keyframe
 		mDuration = duration;
 		mInvDuration = reciprocal(duration);
 	}
-	void setData(KeyframeData data) { mData = data; }
+	void setData(KeyframeObjectData data) { mData = data; }
 	void setIndex(int index) { mIndex = index; }
 
 	float reciprocal(float duration) { return 1.0 / duration; }
@@ -143,24 +162,62 @@ struct Keyframe
 	float mDuration;	//interval of time for which this keyframe is active
 	float mInvDuration;	//reciprocal of duration;
 
-	KeyframeData mData;		//data held by keyframe (in this case, the 1D position of a channel of xyz)
+	KeyframeObjectData mData;		//data held by keyframe (in this case, the 1D position of a channel of xyz)
 };
 
-class KeyframePool
+struct KeyframeSkeletal
+{
+	KeyframeSkeletal()		//default
+	{
+		mIndex = 0;
+		mDuration = 0.0;
+		mInvDuration = 0.0;
+		mData.setData(nullptr);
+	}
+
+	KeyframeSkeletal(int index, float duration, KeyframeSkeletalData data)
+	{
+		mIndex = index;
+		mDuration = duration;
+		mInvDuration = reciprocal(duration);
+		mData = data;
+	}
+
+	~KeyframeSkeletal() {};
+
+
+	void setDuration(float duration)
+	{
+		mDuration = duration;
+		mInvDuration = reciprocal(duration);
+	}
+	void setData(KeyframeSkeletalData data) { mData = data; }
+	void setIndex(int index) { mIndex = index; }
+
+	float reciprocal(float duration) { return 1.0 / duration; }
+
+	int mIndex;			//index in pool of keyframes
+	float mDuration;	//interval of time for which this keyframe is active
+	float mInvDuration;	//reciprocal of duration;
+
+	KeyframeSkeletalData mData;		//data held by keyframe (in this case, the 1D position of a channel of xyz)
+};
+
+class KeyframeObjectPool
 {
 public:
-	KeyframePool()
+	KeyframeObjectPool()
 	{
 		mKeyframeCount = 0;
 	}
 
-	~KeyframePool() {}	//may needto deallocate the pool
+	~KeyframeObjectPool() {}	//may needto deallocate the pool
 
-	Keyframe getKeyframe(int index) { return mPool.at(index); }
+	KeyframeObject getKeyframe(int index) { return mPool.at(index); }
 
 	int size() { return mKeyframeCount; }
 
-	void addKeyframe(Keyframe kf) 
+	void addKeyframe(KeyframeObject kf) 
 	{ 
 		++mKeyframeCount;
 		mPool.push_back(kf); 
@@ -168,7 +225,33 @@ public:
 
 
 private:
-	std::vector<Keyframe> mPool;						//unordered, unsorted collection of keyframes
+	std::vector<KeyframeObject> mPool;						//unordered, unsorted collection of keyframes
 	int mKeyframeCount;											//number of keyframes in the pool
 
+};
+
+class KeyframeSkeletalPool
+{
+public:
+	KeyframeSkeletalPool()
+	{
+		mKeyframeCount = 0;
+	}
+
+	~KeyframeSkeletalPool() {}	//may needto deallocate the pool
+
+	KeyframeSkeletal getKeyframe(int index) { return mPool.at(index); }
+
+	int size() { return mKeyframeCount; }
+
+	void addKeyframe(KeyframeSkeletal kf)
+	{
+		++mKeyframeCount;
+		mPool.push_back(kf);
+	}
+
+
+private:
+	std::vector<KeyframeSkeletal> mPool;						//unordered, unsorted collection of keyframes
+	int mKeyframeCount;											//number of keyframes in the pool
 };
