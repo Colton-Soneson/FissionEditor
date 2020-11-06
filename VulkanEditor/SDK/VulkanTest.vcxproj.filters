@@ -64,6 +64,9 @@
     <Filter Include="Source Files\Core\Animation">
       <UniqueIdentifier>{7937376c-7239-40f2-b7a3-dc33904c33b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\Input">
+      <UniqueIdentifier>{c564aa02-179f-4298-8be1-b13f291d3f19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
