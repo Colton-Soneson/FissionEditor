@@ -87,6 +87,61 @@ struct BlendTree
 	std::vector<BlendNode> mNodes;
 };
 
+
+//input based node
+struct InputNode
+{
+	InputNode(LocomotionControlType _LeftLCT, LocomotionControlType _RightLCT)
+	{
+		mLeftLCT = _LeftLCT;
+		mRightLCT = _RightLCT;
+		mLeftDirectionals = glm::vec2(0.0);
+		mRightDirectionals = glm::vec2(0.0);
+	}
+
+	InputNode()
+	{
+		mLeftLCT = LCT_DV;		//default the direct value
+		mRightLCT = LCT_DV;		//default the direct value
+		mLeftDirectionals = glm::vec2(0.0);
+		mRightDirectionals = glm::vec2(0.0);
+	}
+
+	void LCTupdate()
+	{
+
+	}
+
+	void update(std::vector<int> _iList)
+	{
+		//setting the inputs based on what was given from GLFW
+		for (int i = 0; i < _iList.size() - 1; ++i)
+		{
+			if (_iList.at(i) == OWI_I) { mRightDirectionals = glm::vec2(mRightDirectionals.x, mRightDirectionals.y + 1); }
+			else if (_iList.at(i) == OWI_K) { mRightDirectionals = glm::vec2(mRightDirectionals.x, mRightDirectionals.y - 1); }
+			else if (_iList.at(i) == OWI_J) { mRightDirectionals = glm::vec2(mRightDirectionals.x - 1, mRightDirectionals.y); }
+			else if (_iList.at(i) == OWI_L) { mRightDirectionals = glm::vec2(mRightDirectionals.x + 1, mRightDirectionals.y); }
+			else if (_iList.at(i) == OWI_W) { mLeftDirectionals = glm::vec2(mLeftDirectionals.x, mLeftDirectionals.y + 1); }
+			else if (_iList.at(i) == OWI_S) { mLeftDirectionals = glm::vec2(mLeftDirectionals.x, mLeftDirectionals.y - 1); }
+			else if (_iList.at(i) == OWI_A) { mLeftDirectionals = glm::vec2(mLeftDirectionals.x + 1, mLeftDirectionals.y); }
+			else if (_iList.at(i) == OWI_D) { mLeftDirectionals = glm::vec2(mLeftDirectionals.x - 1, mLeftDirectionals.y); }
+		}
+
+
+
+		//this reset is called at the very end
+		mLeftDirectionals = glm::vec2(0.0);
+		mRightDirectionals = glm::vec2(0.0);
+	}
+
+private:
+	glm::vec2 mLeftDirectionals;
+	glm::vec2 mRightDirectionals;
+	std::vector<bool*> mConditionalList;
+	LocomotionControlType mLeftLCT;
+	LocomotionControlType mRightLCT;
+};
+
 struct ClipObject
 {
 	ClipObject(KeyframeObjectPool* kfpool, int firstKeyframe, int lastKeyframe)

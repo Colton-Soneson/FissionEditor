@@ -54,6 +54,8 @@ private:
 
 	void presentFrame();
 
+	std::vector<int> getInput(bool active);	//active determines whether or not to have active search for keys
+
 
 	VkInstance mInstance;
 	VkSurfaceKHR mSurface;
@@ -85,7 +87,7 @@ private:
 	bool mObjectHasBeenAdded;
 	bool mObjectHasBeenChanged;
 
-
+	std::vector<int> mInputFromKeyboard;
 	//animation
 
 };

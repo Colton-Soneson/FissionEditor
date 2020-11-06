@@ -460,7 +460,7 @@ void OptionsWindow::run()
 		{
 			static float f = 0.0f;
 			static int counter = 0;
-		
+			static bool keyboardInput = false;
 
 			ImGui::Begin("FusionEngine Editor Main Menu");                        
 			ImGui::SetWindowFontScale(1.2f);
@@ -477,9 +477,15 @@ void OptionsWindow::run()
 			//ImGui::SameLine();
 			//ImGui::Text("counter = %d", counter);
 
+
+			ImGui::Checkbox("TRACK KEYBOARD INPUT", &keyboardInput);
+			mInputFromKeyboard = getInput(keyboardInput);
+
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
 		}
+		
+		
 
 		static bool readyToCreate = false;
 		static bool readyToEdit = false;
@@ -737,11 +743,11 @@ void OptionsWindow::run()
 					static int i = 0;
 					if (i < mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchy->getNumberOfNodes() - 1)
 					{
-						glm::vec3 tempPos = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mPos;
-						glm::vec3 tempRot = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mRot;
-						glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mScale);
+						//glm::vec3 tempPos = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mPos;
+						//glm::vec3 tempRot = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mRot;
+						//glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mScale);
 						
-						mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
+						//mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
 
 						i++;
 					}
@@ -1285,4 +1291,47 @@ void OptionsWindow::run()
 		presentFrame();
 	}
 	
+}
+
+std::vector<int> OptionsWindow::getInput(bool active)
+{
+	std::vector<int> temp;
+
+	if (active)
+	{
+		if (ImGui::IsKeyDown('W'))
+		{
+			temp.push_back(OWI_W);
+		}
+		if (ImGui::IsKeyDown('S'))
+		{
+			temp.push_back(OWI_S);
+		}
+		if (ImGui::IsKeyDown('A'))
+		{
+			temp.push_back(OWI_A);
+		}
+		if (ImGui::IsKeyDown('D'))
+		{
+			temp.push_back(OWI_D);
+		}
+		if (ImGui::IsKeyDown('I'))
+		{
+			temp.push_back(OWI_I);
+		}
+		if (ImGui::IsKeyDown('K'))
+		{
+			temp.push_back(OWI_K);
+		}
+		if (ImGui::IsKeyDown('J'))
+		{
+			temp.push_back(OWI_J);
+		}
+		if (ImGui::IsKeyDown('L'))
+		{
+			temp.push_back(OWI_L);
+		}
+	}
+	
+	return temp;
 }

@@ -1,7 +1,26 @@
 #pragma once
 #include "MatrixMath.h"
 
+enum OWInputs
+{
+	OWI_W,
+	OWI_S,
+	OWI_A,
+	OWI_D,
+	OWI_I,
+	OWI_K,
+	OWI_J,
+	OWI_L
+};
 
+enum LocomotionControlType
+{
+	LCT_DV,
+	LCT_CV,
+	LCT_CA,
+	LCT_FV,
+	LCT_FA
+};
 
 //structure for JointEulerOrder and JointChannel was provided for by Dan Buckstein
 enum JointEulerOrder
@@ -425,6 +444,7 @@ struct HierarchicalPose
 
 	Joint* mHierarchicalJoint;
 };
+
 
 //one set of hierarchy joints for a animated pose
 struct HierarchicalPoseGroup
