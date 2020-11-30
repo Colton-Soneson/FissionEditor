@@ -3,7 +3,6 @@
 #include "SkeletonManager.h"
 
 #include <fstream>
-#include <vector>
 
 struct SceneContentFile
 {
@@ -23,8 +22,8 @@ public:
 		mTextureFilePath = textureFilepath;	
 		mCount = 0;
 		mUOS = new UniversalObjectStorage(mModelFilePath, mTextureFilePath, device, physicalDevice, graphicsQueue, commandPool);
-		mpKeyframePool = new KeyframePool();
-		mpClipPool = new ClipPool();
+		mpObjectKeyframePool = new KeyframeObjectPool();
+		mpObjectClipPool = new ClipObjectPool();
 		mpSkeletonManager = new SkeletonManager();
 	};
 
@@ -61,20 +60,38 @@ public:
 
 	void setEngineTimeStep(float dt) { mEngineTimeStep = dt; }
 
-	//animation
-	void addClipController(std::string name);
-	std::vector<ClipController*> getClipControllers() { return mClipControllers; };
-	ClipController* getClipControllerByName(std::string name);
+	//--------------------ANIMATION---------------------
+	
+	//OBJECT BASED
+	void addObjectClipController(std::string name);
+	std::vector<ClipControllerObject*> getObjectClipControllers() { return mObjectClipControllers; };
+	ClipControllerObject* getObjectClipControllerByName(std::string name);
 
-	void addKeyframeToKeyframePool(Keyframe kf);
-	void addKeyframeToKeyframePool(int index, float duration, KeyframeData data);
-	void addKeyframeToKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale);
-	KeyframePool* getKeyframePool() { return mpKeyframePool; }
+	void addKeyframeToObjectKeyframePool(KeyframeObject kf);
+	void addKeyframeToObjectKeyframePool(int index, float duration, KeyframeObjectData data);
+	void addKeyframeToObjectKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale);
+	KeyframeObjectPool* getObjectKeyframePool() { return mpObjectKeyframePool; }
 
-	void addClipToClipPool(Clip c);
-	void addClipToClipPool(int firstKeyframe, int lastKeyframe);
-	void addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
-	ClipPool* getClipPool() { return mpClipPool; }
+	void addClipToObjectClipPool(ClipObject c);
+	void addClipToObjectClipPool(int firstKeyframe, int lastKeyframe);
+	void addClipToObjectClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
+	ClipObjectPool* getObjectClipPool() { return mpObjectClipPool; }
+
+
+	//SKELETAL BASED
+	void addSkeletalClipController(std::string name);
+	std::vector<ClipControllerSkeletal*> getSkeletalClipControllers() { return mSkeletalClipControllers; };
+	ClipControllerSkeletal* getSkeletalClipControllerByName(std::string name);
+
+	void addKeyframeToSkeletalKeyframePool(KeyframeSkeletal kf);
+	void addKeyframeToSkeletalKeyframePool(int index, float duration, KeyframeSkeletalData data);
+	KeyframeSkeletalPool* getSkeletalKeyframePool() { return mpSkeletalKeyframePool; }
+
+	void addClipToSkeletalClipPool(ClipSkeletal c);
+	void addClipToSkeletalClipPool(int firstKeyframe, int lastKeyframe);
+	void addClipToSkeletalClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration);
+	ClipSkeletalPool* getSkeletalClipPool() { return mpSkeletalClipPool; }
+
 
 	SkeletonManager* getSkeletonManager() { return mpSkeletonManager; }
 
@@ -99,9 +116,12 @@ private:
 	int mCount;
 
 	//animation
-	std::vector<ClipController*> mClipControllers;
-	ClipPool* mpClipPool;
-	KeyframePool* mpKeyframePool;
+	std::vector<ClipControllerObject*> mObjectClipControllers;
+	std::vector<ClipControllerSkeletal*> mSkeletalClipControllers;
+	ClipObjectPool* mpObjectClipPool;
+	ClipSkeletalPool* mpSkeletalClipPool;
+	KeyframeObjectPool* mpObjectKeyframePool;
+	KeyframeSkeletalPool* mpSkeletalKeyframePool;
 	SkeletonManager* mpSkeletonManager;
 	float mEngineTimeStep;
 

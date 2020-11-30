@@ -1,5 +1,4 @@
 #include "OptionsWindow.h"
-#include "MatrixMath.h"
 
 static bool mSwapChainRebuild = false;
 static int mSwapChainResizeWidth = 0;
@@ -747,7 +746,12 @@ void OptionsWindow::run()
 						//glm::vec3 tempRot = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mRot;
 						//glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoses().at(0).mHierarchicalJoints.at(i)->mScale);
 						
-						//mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
+						glm::vec3 tempPos = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoseGroups().mBasePose.mHPG.at(i).mHierarchicalJoint->mPos;
+						glm::vec3 tempRot = mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoseGroups().mBasePose.mHPG.at(i).mHierarchicalJoint->mRot;
+						glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoseGroups().mBasePose.mHPG.at(i).mHierarchicalJoint->mScale);
+
+
+						mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
 
 						i++;
 					}
@@ -873,7 +877,7 @@ void OptionsWindow::run()
 						if (ImGui::Button("Add Keyframe to Pool"))
 						{
 
-							mScene->addKeyframeToKeyframePool(keyframeCount, justDataDuration,
+							mScene->addKeyframeToObjectKeyframePool(keyframeCount, justDataDuration,
 								glm::vec3(justDataPosX, justDataPosY, justDataPosZ),
 								glm::vec3(justDataRotX, justDataRotY, justDataRotZ),
 								glm::vec3(justDataScaleX, justDataScaleY, justDataScaleZ));
@@ -912,7 +916,7 @@ void OptionsWindow::run()
 					if (clipMenu)
 					{
 						ImGui::SliderInt("First Clip Keyframe:", &justDataFirstClipKeyframe, 0, justDataLastClipKeyframe);
-						ImGui::SliderInt("Last Clip Keyframe:", &justDataLastClipKeyframe, justDataFirstClipKeyframe, (mScene->getKeyframePool()->size() - 1));
+						ImGui::SliderInt("Last Clip Keyframe:", &justDataLastClipKeyframe, justDataFirstClipKeyframe, (mScene->getObjectKeyframePool()->size() - 1));
 
 						ImGui::Checkbox("Fixed Duration", &fixedDurationMenu);
 
@@ -932,11 +936,11 @@ void OptionsWindow::run()
 							{
 								if (fixedDurationMenu == false)
 								{
-									mScene->addClipToClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe);
+									mScene->addClipToObjectClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe);
 								}
 								else
 								{
-									mScene->addClipToClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe, justDataFixedDuration);
+									mScene->addClipToObjectClipPool(justDataFirstClipKeyframe, justDataLastClipKeyframe, justDataFixedDuration);
 								}
 
 								++clipCount;
@@ -961,7 +965,7 @@ void OptionsWindow::run()
 					defaultName += std::to_string(clipControllerCount);
 
 					//add the controller
-					mScene->addClipController(defaultName);
+					mScene->addObjectClipController(defaultName);
 
 					//clipControllerMenus.push_back(false);
 					clipControllerMenus.push_back(std::pair<bool, int>(false, -1));
@@ -993,7 +997,7 @@ void OptionsWindow::run()
 				{
 					for (int i = 0; i < clipControllerCount; ++i)
 					{
-						if (ImGui::Button(mScene->getClipControllers().at(i)->getName().c_str()))
+						if (ImGui::Button(mScene->getObjectClipControllers().at(i)->getName().c_str()))
 						{
 							clipControllerMenus.at(i).first = !clipControllerMenus.at(i).first;
 						}
@@ -1002,7 +1006,7 @@ void OptionsWindow::run()
 						{
 							if (clipControllerMenus.at(i).first)
 							{
-								if (mScene->getClipControllers().at(i)->getClipIndexInPool() == -1)	//if we dont have a clip to control yet
+								if (mScene->getObjectClipControllers().at(i)->getClipIndexInPool() == -1)	//if we dont have a clip to control yet
 								{
 									ImGui::TextColored(ImVec4(0.2, 1.0, 1.0, 1.0), "Choose a Clip To Control");
 
@@ -1014,8 +1018,8 @@ void OptionsWindow::run()
 
 										if (ImGui::Button(clipName.c_str()))
 										{
-											mScene->getClipControllers().at(i)->setClipToUseByIndex(j);
-											mScene->getClipControllers().at(i)->setStartToFirstKeyframe();
+											mScene->getObjectClipControllers().at(i)->setClipToUseByIndex(j);
+											mScene->getObjectClipControllers().at(i)->setStartToFirstKeyframe();
 											++clipControllerMenus.at(i).second;								//This is for multiclip control????
 											break;
 										}
@@ -1024,7 +1028,7 @@ void OptionsWindow::run()
 								else
 								{
 									std::string CtoC = "Using Clip #";
-									CtoC += std::to_string(mScene->getClipControllers().at(i)->getClipIndexInPool());
+									CtoC += std::to_string(mScene->getObjectClipControllers().at(i)->getClipIndexInPool());
 									ImGui::TextColored(ImVec4(0.7, 0.7, 0.0, 1.0), CtoC.c_str());
 
 									//CLIP CONTROLS
@@ -1044,7 +1048,7 @@ void OptionsWindow::run()
 													if (clipControllerOptions.at(j + 1).second.second == true)
 													{
 														//set the timestep to 0 (or just set playback direction to pause mode)
-														mScene->getClipControllers().at(i)->getPlaybackDirection() = 1;
+														mScene->getObjectClipControllers().at(i)->getPlaybackDirection() = 1;
 
 													}
 													ImGui::Indent(-32.0f);
@@ -1064,12 +1068,12 @@ void OptionsWindow::run()
 
 													if (ImGui::Button("Start Playing at First Frame"))
 													{
-														mScene->getClipControllers().at(i)->setStartToFirstKeyframe();
+														mScene->getObjectClipControllers().at(i)->setStartToFirstKeyframe();
 													}
 
 													if (ImGui::Button("Start Playing at Last Frame"))
 													{
-														mScene->getClipControllers().at(i)->setStartToLastKeyframe();
+														mScene->getObjectClipControllers().at(i)->setStartToLastKeyframe();
 													}
 
 													ImGui::Indent(-32.0f);
@@ -1096,7 +1100,7 @@ void OptionsWindow::run()
 
 														if (ImGui::Button(clipName.c_str()))
 														{
-															mScene->getClipControllers().at(i)->setClipToUseByIndex(m);
+															mScene->getObjectClipControllers().at(i)->setClipToUseByIndex(m);
 															++clipControllerMenus.at(i).second;								//This is for multiclip control????
 															break;
 														}
@@ -1104,16 +1108,16 @@ void OptionsWindow::run()
 
 													//get the keyframes in clip
 													std::string kfc = "Clip #";
-													int clipNum = mScene->getClipControllers().at(i)->getClipIndexInPool();
+													int clipNum = mScene->getObjectClipControllers().at(i)->getClipIndexInPool();
 													kfc += std::to_string(clipNum);
 													kfc += " Keyframes: ";
 													ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), kfc.c_str());
 
-													for (int m = mScene->getClipPool()->getClips().at(clipNum).mFirstKeyframeIndex; m <= mScene->getClipPool()->getClips().at(clipNum).mLastKeyframeIndex; ++m)
+													for (int m = mScene->getObjectClipPool()->getClips().at(clipNum).mFirstKeyframeIndex; m <= mScene->getObjectClipPool()->getClips().at(clipNum).mLastKeyframeIndex; ++m)
 													{
-														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputPositionString().c_str());
-														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputRotationString().c_str());
-														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(m).mData.outputScaleString().c_str());
+														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(m).mData.outputPositionString().c_str());
+														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(m).mData.outputRotationString().c_str());
+														ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(m).mData.outputScaleString().c_str());
 													}
 
 													ImGui::Indent(-32.0f);
@@ -1136,21 +1140,21 @@ void OptionsWindow::run()
 													}
 
 													ImGui::Text("-1 / 0 / 1  :  backwards / pause / fowards");
-													ImGui::SliderInt("Direction: ", &mScene->getClipControllers().at(i)->getPlaybackDirection(), -1, 1);
+													ImGui::SliderInt("Direction: ", &mScene->getObjectClipControllers().at(i)->getPlaybackDirection(), -1, 1);
 
 													ImGui::Checkbox("\tTransitional Clip Looping", &clipControllerOptions.at(j + 1).second.second);
 													if (clipControllerOptions.at(j + 1).second.second == true)
 													{
-														mScene->getClipControllers().at(i)->setTransitionalMode(true);
+														mScene->getObjectClipControllers().at(i)->setTransitionalMode(true);
 														std::string temp = "RETRIEVED (multi clip loop): ";
-														temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
+														temp += std::to_string(mScene->getObjectClipControllers().at(i)->getPlaybackDirection());
 														ImGui::BulletText(temp.c_str());
 													}
 													else
 													{
-														mScene->getClipControllers().at(i)->setTransitionalMode(false);
+														mScene->getObjectClipControllers().at(i)->setTransitionalMode(false);
 														std::string temp = "RETRIEVED (single clip loop): ";
-														temp += std::to_string(mScene->getClipControllers().at(i)->getPlaybackDirection());
+														temp += std::to_string(mScene->getObjectClipControllers().at(i)->getPlaybackDirection());
 														ImGui::BulletText(temp.c_str());
 													}
 
@@ -1168,12 +1172,12 @@ void OptionsWindow::run()
 												if (clipControllerOptions.at(j).second.second == true)
 												{
 													ImGui::Indent(32.0f);
-													ImGui::InputFloat("SlowMo Multiplier ( >= 0): ", &mScene->getClipControllers().at(i)->getSlowMoMultiplier());
+													ImGui::InputFloat("SlowMo Multiplier ( >= 0): ", &mScene->getObjectClipControllers().at(i)->getSlowMoMultiplier());
 
-													if (mScene->getClipControllers().at(i)->getSlowMoMultiplier() < 0)
+													if (mScene->getObjectClipControllers().at(i)->getSlowMoMultiplier() < 0)
 													{
 														ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "WARNING: SloMo has to be above 0");
-														mScene->getClipControllers().at(i)->getSlowMoMultiplier() = 1;
+														mScene->getObjectClipControllers().at(i)->getSlowMoMultiplier() = 1;
 													}
 
 													ImGui::Indent(-32.0f);
@@ -1195,12 +1199,12 @@ void OptionsWindow::run()
 
 									ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), "Current Keyframe (Data |  Index): ");
 
-									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputPositionString().c_str());
-									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputRotationString().c_str());
-									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputScaleString().c_str());
+									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputPositionString().c_str());
+									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputRotationString().c_str());
+									ImGui::TextColored(ImVec4(0.3, 1.0, 0.0, 1.0), mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.outputScaleString().c_str());
 									std::string currentKeyframe = " ";
 									currentKeyframe += " | ";
-									currentKeyframe += std::to_string(mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mIndex);
+									currentKeyframe += std::to_string(mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mIndex);
 									ImGui::TextColored(ImVec4(0.2, 1.0, 0.0, 1.0), currentKeyframe.c_str());
 
 
@@ -1254,20 +1258,20 @@ void OptionsWindow::run()
 
 				for (int i = 0; i < clipControllerCount; ++i)
 				{
-					if (mScene->getClipControllers().at(i)->getClipIndexInPool() != -1)	//if we have clips to go through on this controller
+					if (mScene->getObjectClipControllers().at(i)->getClipIndexInPool() != -1)	//if we have clips to go through on this controller
 					{
 
-						glm::vec3 pos = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mPos;
-						glm::vec3 rot = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mRot;
-						glm::vec3 scale = mScene->getKeyframePool()->getKeyframe(mScene->getClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mScale;
+						glm::vec3 pos = mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mPos;
+						glm::vec3 rot = mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mRot;
+						glm::vec3 scale = mScene->getObjectKeyframePool()->getKeyframe(mScene->getObjectClipControllers().at(i)->getCurrentKeyframeIndex()).mData.mScale;
 
 						if (lerpUpdateMode)
 						{
-							mScene->getClipControllers().at(i)->lerpUpdate(1 / mScene->getEngineTimeStep(), pos, rot, scale);
+							mScene->getObjectClipControllers().at(i)->lerpUpdate(1 / mScene->getEngineTimeStep(), pos, rot, scale);
 						}
 						else
 						{
-							mScene->getClipControllers().at(i)->update(1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
+							mScene->getObjectClipControllers().at(i)->update(1 / mScene->getEngineTimeStep());	// 1/60 for 60fps 
 						}
 
 						mScene->adjustObject(i, pos, scale, rot, ambMod, activatelighting);
@@ -1275,8 +1279,6 @@ void OptionsWindow::run()
 				}
 
 			}
-
-
 
 			if (ImGui::Button("Close"))
 				mShowAnimationMenu = false;

@@ -93,6 +93,71 @@ struct HumanoidBasic
 		mpHierarchicalPosePool->addToSpatialPosePool(temp);
 
 		mpHierarchy->addNode(Node("Neck", 1, 0));
+		temp.setPosition(glm::vec4(0, 0, -1, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("BaseNeck", 2, 1));
+		temp.setPosition(glm::vec4(0, 0, -2, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Shoulder0", 3, 2));
+		temp.setPosition(glm::vec4(-3, 0, -2, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Shoulder1", 5, 2));
+		temp.setPosition(glm::vec4(+3, 0, -2, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Elbow0", 6, 3));
+		temp.setPosition(glm::vec4(-3, 0, -6, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Elbow1", 14, 5));
+		temp.setPosition(glm::vec4(+3, 0, -6, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Hand0", 7, 6));
+		temp.setPosition(glm::vec4(-3, 0, -10, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Hand1", 15, 14));
+		temp.setPosition(glm::vec4(+3, 0, -10, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Hipbone", 4, 2));
+		temp.setPosition(glm::vec4(0, 0, -12, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Hip0", 8, 4));
+		temp.setPosition(glm::vec4(-2.5, 0, -11.75, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Hip1", 11, 4));
+		temp.setPosition(glm::vec4(+2.5, 0, -11.75, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Knee0", 9, 8));
+		temp.setPosition(glm::vec4(-2.5, 0, -16, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Knee1", 12, 11));
+		temp.setPosition(glm::vec4(+2.5, 0, -16, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Foot0", 10, 9));
+		temp.setPosition(glm::vec4(-2.5, 0, -20, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Foot1", 13, 12));
+		temp.setPosition(glm::vec4(+2.5, 0, -20, 0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		/*
+		mpHierarchy->addNode(Node("Face (ROOT)", 0, 0));
+		temp.setPosition(glm::vec4(0.0));
+		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+
+		mpHierarchy->addNode(Node("Neck", 1, 0));
 		temp.setPosition(glm::vec4(0,0,-1,0));
 		mpHierarchicalPosePool->addToSpatialPosePool(temp);
 		
@@ -151,6 +216,8 @@ struct HumanoidBasic
 		mpHierarchy->addNode(Node("Foot1", 13, 12));
 		temp.setPosition(glm::vec4(0,0,-6,0));
 		mpHierarchicalPosePool->addToSpatialPosePool(temp);
+		*/
+
 
 		mpHierarchicalPosePool->addToHierarchicalPoses(mNumberOfPoses);
 		mNumberOfPoses++;
@@ -683,11 +750,7 @@ struct SkeletonContainer
 class SkeletonManager
 {
 public:
-	SkeletonManager()
-	{
-
-	}
-
+	SkeletonManager() {};
 	~SkeletonManager() {};
 
 	void update();

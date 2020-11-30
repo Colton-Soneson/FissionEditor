@@ -122,15 +122,15 @@ void Scene::storeLight(glm::vec3 lightPos, glm::vec4 lightColor, glm::float32 li
 	mLightSources.push_back(light);
 }
 
-void Scene::addClipController(std::string name)
+void Scene::addObjectClipController(std::string name)
 {
-	ClipController* temp = new ClipController(name, mpClipPool);
-	mClipControllers.push_back(temp);
+	ClipControllerObject* temp = new ClipControllerObject(name, mpObjectClipPool);
+	mObjectClipControllers.push_back(temp);
 }
 
-ClipController* Scene::getClipControllerByName(std::string name)
+ClipControllerObject* Scene::getObjectClipControllerByName(std::string name)
 {
-	for (ClipController* CC : mClipControllers)
+	for (ClipControllerObject* CC : mObjectClipControllers)
 	{
 		if (CC->getName().compare(name) == 0)
 		{
@@ -141,38 +141,84 @@ ClipController* Scene::getClipControllerByName(std::string name)
 	return nullptr;
 }
 
-void Scene::addKeyframeToKeyframePool(Keyframe kf)
+void Scene::addKeyframeToObjectKeyframePool(KeyframeObject kf)
 {
-	mpKeyframePool->addKeyframe(kf);
+	mpObjectKeyframePool->addKeyframe(kf);
 }
 
-void Scene::addKeyframeToKeyframePool(int index, float duration, KeyframeData data)
+void Scene::addKeyframeToObjectKeyframePool(int index, float duration, KeyframeObjectData data)
 {
-	Keyframe temp(index, duration, data);
-	mpKeyframePool->addKeyframe(temp);
+	KeyframeObject temp(index, duration, data);
+	mpObjectKeyframePool->addKeyframe(temp);
 }
 
-void Scene::addKeyframeToKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
+void Scene::addKeyframeToObjectKeyframePool(int index, float duration, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale)
 {
-	Keyframe temp(index, duration, pos, rot, scale);
-	mpKeyframePool->addKeyframe(temp);
+	KeyframeObject temp(index, duration, pos, rot, scale);
+	mpObjectKeyframePool->addKeyframe(temp);
 }
 
-void Scene::addClipToClipPool(Clip c)
+void Scene::addClipToObjectClipPool(ClipObject c)
 {
-	mpClipPool->addClip(c);
+	mpObjectClipPool->addClip(c);
 }
 
-void Scene::addClipToClipPool(int firstKeyframe, int lastKeyframe)
+void Scene::addClipToObjectClipPool(int firstKeyframe, int lastKeyframe)
 {
-	Clip temp(mpKeyframePool, firstKeyframe, lastKeyframe);
-	mpClipPool->addClip(temp);
+	ClipObject temp(mpObjectKeyframePool, firstKeyframe, lastKeyframe);
+	mpObjectClipPool->addClip(temp);
 }
 
-void Scene::addClipToClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration)
+void Scene::addClipToObjectClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration)
 {
-	Clip temp(mpKeyframePool, firstKeyframe, lastKeyframe, fixedDuration);
-	mpClipPool->addClip(temp);
+	ClipObject temp(mpObjectKeyframePool, firstKeyframe, lastKeyframe, fixedDuration);
+	mpObjectClipPool->addClip(temp);
 }
 
+void Scene::addSkeletalClipController(std::string name)
+{
+	ClipControllerSkeletal* temp = new ClipControllerSkeletal(name, mpSkeletalClipPool);
+	mSkeletalClipControllers.push_back(temp);
+}
+
+ClipControllerSkeletal* Scene::getSkeletalClipControllerByName(std::string name)
+{
+	for (ClipControllerSkeletal* CC : mSkeletalClipControllers)
+	{
+		if (CC->getName().compare(name) == 0)
+		{
+			return CC;
+		}
+	}
+
+	return nullptr;
+}
+
+void Scene::addKeyframeToSkeletalKeyframePool(KeyframeSkeletal kf)
+{
+	mpSkeletalKeyframePool->addKeyframe(kf);
+}
+
+void Scene::addKeyframeToSkeletalKeyframePool(int index, float duration, KeyframeSkeletalData data)
+{
+	KeyframeSkeletal temp(index, duration, data);
+	mpSkeletalKeyframePool->addKeyframe(temp);
+}
+
+void Scene::addClipToSkeletalClipPool(ClipSkeletal c)
+{
+	mpSkeletalClipPool->addClip(c);
+}
+
+void Scene::addClipToSkeletalClipPool(int firstKeyframe, int lastKeyframe)
+{
+	ClipSkeletal temp(mpSkeletalKeyframePool, firstKeyframe, lastKeyframe);
+	mpSkeletalClipPool->addClip(temp);
+}
+
+void Scene::addClipToSkeletalClipPool(int firstKeyframe, int lastKeyframe, float fixedDuration)
+{
+	ClipSkeletal temp(mpSkeletalKeyframePool, firstKeyframe, lastKeyframe, fixedDuration);
+	mpSkeletalClipPool->addClip(temp);
+}
 

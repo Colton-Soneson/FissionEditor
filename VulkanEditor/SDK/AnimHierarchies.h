@@ -456,7 +456,7 @@ struct HierarchicalPoseGroup
 struct HierarchicalPoseGroupSet
 {
 	std::vector<HierarchicalPoseGroup> mHPGS;
-	std::vector<HierarchicalPose> mBasePose;
+	HierarchicalPoseGroup mBasePose;
 };
 
 //PURPOSE: describes where the poses themselves are in space
@@ -494,7 +494,15 @@ struct HierarchicalPosePool
 			hpg.mHPG.push_back(hp);
 		}
 
-		mHierarchicalPoseGroups.mHPGS.push_back(hpg);
+		//its base pose if posenum is 0
+		if (poseNumber == 0)
+		{
+			mHierarchicalPoseGroups.mBasePose = hpg;
+		}
+		else
+		{
+			mHierarchicalPoseGroups.mHPGS.push_back(hpg);
+		}
 	}
 
 private:
