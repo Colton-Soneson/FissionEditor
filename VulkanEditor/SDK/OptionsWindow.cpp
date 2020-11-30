@@ -512,6 +512,7 @@ void OptionsWindow::run()
 		static int clipCount = -1;
 		static int clipControllerCount = 0;
 		static int skeletonCount = -1;
+		static int sphereObjectIndex = 0;
 
 		static float justDataPosX = 0.0;
 		static float justDataPosY = 0.0;
@@ -557,7 +558,6 @@ void OptionsWindow::run()
 			{
 				ImGui::BulletText(light.msName.c_str());
 			}
-
 
 
 			if (ImGui::Button("Close"))
@@ -660,30 +660,48 @@ void OptionsWindow::run()
 				ImGui::Text("Chosen Object:");
 				ImGui::Text(mScene->getObjects().at(objectSelectionEdit).msName.c_str());
 
-				
+				bool noChange = true;	//no change has been made to the values
+				float nc1, nc2, nc3, nc4, nc5, nc6, nc7, nc8, nc9, nc10;
+				bool ncb;
+
+				nc1 = scaleX;
+				nc2 = scaleY;
+				nc3 = scaleZ;
 				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-			 
+
+				nc4 = posX;
+				nc5 = posY;
+				nc6 = posZ;
 				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 				
+				nc7 = rotX;
+				nc8 = rotY;
+				nc9 = rotZ;
 				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 				
+				ncb = activatelighting;
+				nc10 = ambMod;
 				ImGui::Checkbox("Activate Lighting", &activatelighting);
 				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
+				if (nc1 != scaleX || nc2 != scaleY || nc3 != scaleZ || nc4 != posX || nc5 != posY || nc6 != posZ
+						|| nc7 != rotX || nc8 != rotY || nc9 != rotZ || nc10 != ambMod || ncb != activatelighting)
+				{
+					noChange = false;
+				}
 
-				mScene->adjustObject(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
 
-				//if (ImGui::Button("EDIT THE OBJECT"))
-				//{
-				//	//mObjectHasBeenChanged = true;
-
-				//}
+				if (noChange == false)
+				{
+					mScene->adjustObject(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+				}
+				
 			}
 
 			ImGui::Text("");
@@ -712,20 +730,13 @@ void OptionsWindow::run()
 
 			if (skeletalAnimationMenu)
 			{
+
 				if (ImGui::Button("Create Basic Humanoid Skeleton"))
 				{
 					mScene->getSkeletonManager()->createHumanoidBasic();
 					skeletonCount++;
 					
-					int objIndex = 2;
-					/*for (int i = 0; i < mScene->getUOSTotalStorageNumber(); i++)
-					{
-						if (mScene->getUOSNameByIndex(i).compare("sphere"))
-						{
-							int objIndex = i;
-							break;
-						}
-					}*/
+					sphereObjectIndex = mScene->getIndexFromObjectName("sphere");
 
 					creatingSkeleton = true;
 					
@@ -751,7 +762,7 @@ void OptionsWindow::run()
 						glm::vec3 tempScale = 0.5f * (mScene->getSkeletonManager()->getSkeletonContainer().mHumanoidBasics.at(skeletonCount).mpHierarchicalPosePool->getHierarchicalPoseGroups().mBasePose.mHPG.at(i).mHierarchicalJoint->mScale);
 
 
-						mScene->instantiateObject(objectIndex, tempPos, tempScale, tempRot, 0.5, false);
+						mScene->instantiateObject(sphereObjectIndex, tempPos, tempScale, tempRot, 0.15, false);
 
 						i++;
 					}

@@ -42,6 +42,7 @@ public:
 	////objects
 	void instantiateObject(int objectListIndex);
 	void instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting);
+	int getIndexFromObjectName(std::string name);
 
 	void adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting);
 	//void storeObject(sourced3D obj, std::string name);

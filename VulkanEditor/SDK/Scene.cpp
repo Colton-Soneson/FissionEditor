@@ -45,6 +45,24 @@ void Scene::instantiateObject(int objectListIndex, glm::vec3 position, glm::vec3
 
 }
 
+int Scene::getIndexFromObjectName(std::string name)
+{
+	int objIndex = 0;
+
+	for (int i = 0; i < getUOSTotalStorageNumber(); i++)
+	{
+		std::string temp = getUOSNameByIndex(i);
+		if (temp == name)
+		{
+			objIndex = i;
+			std::cout << getUOSNameByIndex(i);
+			break;
+		}
+	}
+
+	return objIndex;
+}
+
 void Scene::adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting)
 {
 	sourced3D temp3D = mSceneContent.at(sceneContentIndex);
@@ -68,30 +86,10 @@ void Scene::adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 sc
 	}
 
 
-	mSceneContent.erase(mSceneContent.begin() + (sceneContentIndex));
-	mSceneContent.push_back(temp3D);
-
-	
-	
-	//mSceneContent.at(sceneContentIndex).msUBO.model = glm::scale(mSceneContent.at(sceneContentIndex).msUBO.model, scale);
-
-	//mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-	//mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-	//mSceneContent.at(sceneContentIndex).msUBO.model = glm::rotate(mSceneContent.at(sceneContentIndex).msUBO.model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-
-	//mSceneContent.at(sceneContentIndex).msUBO.model = glm::scale(mSceneContent.at(sceneContentIndex).msUBO.model, scale);
-
-	//mSceneContent.at(sceneContentIndex).msUBO.ambientMod = ambientMod;
-
-	//if (activateLighting == true)
-	//{
-	//	mSceneContent.at(sceneContentIndex).msUBO.activeLight = 1;
-	//}
-	//else
-	//{
-	//	mSceneContent.at(sceneContentIndex).msUBO.activeLight = 0;
-	//}
-	
+	std::vector<sourced3D>::iterator sci = mSceneContent.begin() + sceneContentIndex;
+	mSceneContent.erase(sci);
+	sci = mSceneContent.begin() + (sceneContentIndex);
+	mSceneContent.insert(sci, temp3D);
 }
 
 void Scene::storeLight(light3D light, std::string name)
