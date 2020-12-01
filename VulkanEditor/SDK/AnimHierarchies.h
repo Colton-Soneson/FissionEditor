@@ -445,7 +445,6 @@ struct HierarchicalPose
 	Joint* mHierarchicalJoint;
 };
 
-
 //one set of hierarchy joints for a animated pose
 struct HierarchicalPoseGroup
 {

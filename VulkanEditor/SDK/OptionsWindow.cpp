@@ -480,6 +480,22 @@ void OptionsWindow::run()
 			ImGui::Checkbox("TRACK KEYBOARD INPUT", &keyboardInput);
 			mInputFromKeyboard = getInput(keyboardInput);
 
+			std::string tempCodes = "";
+
+			if (!mInputFromKeyboard.empty())
+			{
+				for (int i = 0; i < mInputFromKeyboard.size() - 1; i++)
+				{
+					std::string tKCout = mInputFromKeyboard.at(i) + ", ";
+					tempCodes += tKCout;
+				}
+				
+			}
+
+
+			std::string fKC = "Current Input KeyCodes: " + tempCodes;
+			ImGui::Text(fKC.c_str());
+
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
 		}

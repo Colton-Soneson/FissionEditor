@@ -763,3 +763,63 @@ private:
 	SkeletonContainer mSkeletonContainer;
 
 };
+
+/*
+	Although this is "look", it doesn't have to be 
+	just a "neck" bone to recieve this, Kinematics should resolve other joints
+*/
+struct ProceduralLook
+{
+	/*
+		this should have the input of the hierarchical joint from the active skeleton
+	*/
+	ProceduralLook(Joint* target, glm::vec3 up)
+	{
+		mTarget = target;
+		mUpDir = glm::normalize(up);
+		mTargetJointPos = target->mPos;
+	}
+
+	void LookAtMatrixConv(glm::vec3 lookPoint)
+	{
+		//smoothing isnt done in here, so dont worry about it
+
+		glm::vec3 pointToJointDir = glm::normalize(lookPoint - mTargetJointPos);
+		glm::vec3 rightDir = glm::normalize(glm::cross(pointToJointDir, mUpDir));
+		glm::vec3 perpUpDir = glm::cross(rightDir, pointToJointDir);	//make the up vector perp to the right
+	
+		mTarget->mTransform[0][0] = rightDir.x;
+		mTarget->mTransform[1][0] = rightDir.y;
+		mTarget->mTransform[2][0] = rightDir.z;
+		mTarget->mTransform[0][1] = perpUpDir.x;
+		mTarget->mTransform[1][1] = perpUpDir.y;
+		mTarget->mTransform[2][1] = perpUpDir.z;
+		mTarget->mTransform[0][2] = -pointToJointDir.x;
+		mTarget->mTransform[1][2] = -pointToJointDir.y;
+		mTarget->mTransform[2][2] = -pointToJointDir.z;
+		mTarget->mTransform[3][0] = -glm::dot(rightDir, mTargetJointPos);
+		mTarget->mTransform[3][1] = -glm::dot(perpUpDir, mTargetJointPos);
+		mTarget->mTransform[3][2] = glm::dot(pointToJointDir, mTargetJointPos);
+	};
+
+	Joint* mTarget;
+	glm::vec3 mUpDir;
+	glm::vec3 mTargetJointPos;
+};
+
+/*
+	this is specifically for arms, gonna use dan's
+	triangle solver formula for this
+*/
+//struct ProceduralGrab
+//{
+//	ProceduralGrab(Joint* contactJoint, Joint* locatorJoint)
+//	{
+//
+//	}
+//
+//	void InverseKinematics(glm::vec3 targetPos, glm::vec3 targetRot)
+//	{
+//
+//	}
+//};
