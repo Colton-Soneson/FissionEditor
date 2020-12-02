@@ -1,4 +1,5 @@
 #include "OptionsWindow.h"
+#include <sstream>
 
 static bool mSwapChainRebuild = false;
 static int mSwapChainResizeWidth = 0;
@@ -481,19 +482,17 @@ void OptionsWindow::run()
 			mInputFromKeyboard = getInput(keyboardInput);
 
 			std::string tempCodes = "";
+			std::stringstream inputOutStatement;
 
 			if (!mInputFromKeyboard.empty())
 			{
-				for (int i = 0; i < mInputFromKeyboard.size() - 1; i++)
+				for (int i = 0; i < mInputFromKeyboard.size(); i++)
 				{
-					std::string tKCout = mInputFromKeyboard.at(i) + ", ";
-					tempCodes += tKCout;
+					inputOutStatement << mInputFromKeyboard.at(i) << " ";
 				}
-				
 			}
 
-
-			std::string fKC = "Current Input KeyCodes: " + tempCodes;
+			std::string fKC = "Current Input KeyCodes: " + inputOutStatement.str();
 			ImGui::Text(fKC.c_str());
 
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -1330,35 +1329,35 @@ std::vector<int> OptionsWindow::getInput(bool active)
 	{
 		if (ImGui::IsKeyDown('W'))
 		{
-			temp.push_back(OWI_W);
+			temp.push_back((int)OWI_W);
 		}
 		if (ImGui::IsKeyDown('S'))
 		{
-			temp.push_back(OWI_S);
+			temp.push_back((int)OWI_S);
 		}
 		if (ImGui::IsKeyDown('A'))
 		{
-			temp.push_back(OWI_A);
+			temp.push_back((int)OWI_A);
 		}
 		if (ImGui::IsKeyDown('D'))
 		{
-			temp.push_back(OWI_D);
+			temp.push_back((int)OWI_D);
 		}
 		if (ImGui::IsKeyDown('I'))
 		{
-			temp.push_back(OWI_I);
+			temp.push_back((int)OWI_I);
 		}
 		if (ImGui::IsKeyDown('K'))
 		{
-			temp.push_back(OWI_K);
+			temp.push_back((int)OWI_K);
 		}
 		if (ImGui::IsKeyDown('J'))
 		{
-			temp.push_back(OWI_J);
+			temp.push_back((int)OWI_J);
 		}
 		if (ImGui::IsKeyDown('L'))
 		{
-			temp.push_back(OWI_L);
+			temp.push_back((int)OWI_L);
 		}
 	}
 	

@@ -808,18 +808,276 @@ struct ProceduralLook
 };
 
 /*
-	this is specifically for arms, gonna use dan's
-	triangle solver formula for this
+	use the ik process from the slide / FABRIK approach
 */
-//struct ProceduralGrab
-//{
-//	ProceduralGrab(Joint* contactJoint, Joint* locatorJoint)
-//	{
-//
-//	}
-//
-//	void InverseKinematics(glm::vec3 targetPos, glm::vec3 targetRot)
-//	{
-//
-//	}
-//};
+struct ProceduralGrab
+{
+	ProceduralGrab(Joint* baseEffector, Joint* endEffector, glm::vec4* platformPos, HierarchicalPosePool* skeleton, int baseEffectorNode, int endEffectorNode)
+	{
+		mpBaseEffector = baseEffector;
+		mpEndEffector = endEffector;
+		mBEN = baseEffectorNode;	//use to determine place in hierarchy
+		mEEN = endEffectorNode;
+		mpSkeleton = skeleton;
+
+		mChainLength = 0;
+		mEffectorDistance = 0;
+
+		if (platformPos != nullptr)
+		{
+			mpPlatPos = platformPos;
+		}
+
+		fillJointList();
+	}
+
+	/*
+		create easily accessable list of joint pointers that you dont have to 
+		cycle through getting the data for index positions
+	*/
+	void fillJointList()
+	{
+		//assume jointList is sorted from baseEffector to endEffector
+		//use mBEN index and mEEN index to get and integer list of indices to then translate to joint pointers
+		int nextJointIndex = mBEN;
+		while (nextJointIndex != mEEN)
+		{
+			for (int i = 0; i < mpSkeleton->getHierarchy()->getNumberOfNodes(); ++i)
+			{
+				if (mpSkeleton->getHierarchy()->getNodes().at(i).mIndex == nextJointIndex)
+				{
+					mJointList.push_back(mpSkeleton->getJoint(nextJointIndex, 0));
+
+					//assign the nextJoint to be parent of joint
+					nextJointIndex = mpSkeleton->getHierarchy()->getNodes().at(i).mParentIndex;
+				}
+			}
+		}
+
+		//calculate chain length after jointlist is filled
+		for (int i = 0; i < mJointList.size() - 2; ++i)			//get actual distance between the joints, like physical distance
+		{
+			float dist = glm::length(mJointList.at(i + 1)->mPos - mJointList.at(i)->mPos);
+			mDistances.push_back(dist);
+			mChainLength += dist;
+		}
+
+		//calculate effector distance
+		mEffectorDistance = glm::distance(mJointList.front()->mPos, mJointList.back()->mPos);
+	}
+
+	/*
+		grabs with any amount of joints available, but in this case it does disregaurd the joint constraints
+		iterations is how many times we want to repeat for better accuracy
+	*/
+	void SolveInverseKinematicsIter(glm::vec4 targetPos, int iterations)	
+	{
+		if (mJointList.empty() || mEffectorDistance >= mChainLength)
+		{
+			return;
+		}
+
+		int iter = 0;
+		if (iterations <= 0)
+		{
+			iter = 1;
+		}
+
+		glm::vec4 firstBasePos = mJointList.at(0)->mPos;	//record original root location
+
+		for (int i = 0; i < iter; ++i)
+		{
+			mJointList.back()->mPos = targetPos;	//move the endEffector to the target
+
+			//go through the chain from end to beginning
+			for (int i = mJointList.size(); i > 1; --i)		//has to be this weird way for parents
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* parentJoint = mJointList.at(i - 1);
+
+				glm::vec4 dir = glm::normalize(parentJoint->mPos - currJoint->mPos);	//set the direction vector to place the parent joint inline
+
+				parentJoint->mPos = currJoint->mPos - (mDistances.at(i - 1) * dir);	//set position of parent joint in the direction of the joint movement by the distance between
+			}
+
+			mJointList.at(0)->mPos = firstBasePos;		//move the beginning joint back to its root pos
+
+			for (int i = 0; i < mJointList.size() - 1; ++i)
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* childJoint = mJointList.at(i + 1);
+
+				glm::vec4 dir = glm::normalize(childJoint->mPos - currJoint->mPos);
+				childJoint->mPos = currJoint->mPos + (mDistances.at(i) * dir);
+			}
+		}
+	}
+
+	void SolveInverseKinematicsMOE(glm::vec4 targetPos, float marginOfError)
+	{
+		if (mJointList.empty() || mEffectorDistance >= mChainLength)
+		{
+			return;
+		}
+
+		if (marginOfError <= 0)
+		{
+			std::cout << "Margin of error at or below 0\n";
+			return;
+		}
+
+		glm::vec4 firstBasePos = mJointList.at(0)->mPos;	//record original root location
+
+		while (!passMarginOfError(mJointList.back()->mPos, targetPos, marginOfError))
+		{
+			mJointList.back()->mPos = targetPos;	//move the endEffector to the target
+
+			//go through the chain from end to beginning
+			for (int i = mJointList.size(); i > 1; --i)		//has to be this weird way for parents
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* parentJoint = mJointList.at(i - 1);
+
+				glm::vec4 dir = glm::normalize(parentJoint->mPos - currJoint->mPos);	//set the direction vector to place the parent joint inline
+
+				parentJoint->mPos = currJoint->mPos - (mDistances.at(i - 1) * dir);	//set position of parent joint in the direction of the joint movement by the distance between
+			}
+
+			mJointList.at(0)->mPos = firstBasePos;		//move the beginning joint back to its root pos
+
+			for (int i = 0; i < mJointList.size() - 1; ++i)
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* childJoint = mJointList.at(i + 1);
+
+				glm::vec4 dir = glm::normalize(childJoint->mPos - currJoint->mPos);
+				childJoint->mPos = currJoint->mPos + (mDistances.at(i) * dir);
+			}
+		}
+	}
+
+	/*
+		rather than just giving a higher target, we can use a set series of target positions that only get adjusted, then
+		add whatever hieght is necessary to the end effector. The targetPos can always stay the same while we take in the height of the platform
+		in comparison to the height of the character
+	*/
+	void SolveInverseKinematicsIterWithPlat(glm::vec4 targetPos, int iterations)
+	{
+		if (mJointList.empty() || mEffectorDistance >= mChainLength)
+		{
+			return;
+		}
+
+		int iter = 0;
+		if (iterations <= 0)
+		{
+			iter = 1;
+		}
+
+		glm::vec4 firstBasePos = mJointList.at(0)->mPos;	//record original root location
+
+		for (int i = 0; i < iter; ++i)
+		{
+			if (mpPlatPos != nullptr)
+			{
+				mJointList.back()->mPos = targetPos + (firstBasePos + *(mpPlatPos));	//move the endEffector to the target plus the height of the platform in comparison to hieght of current foot or hand
+			}
+			else
+			{
+				mJointList.back()->mPos = targetPos;
+			}
+
+			//go through the chain from end to beginning
+			for (int i = mJointList.size(); i > 1; --i)		//has to be this weird way for parents
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* parentJoint = mJointList.at(i - 1);
+
+				glm::vec4 dir = glm::normalize(parentJoint->mPos - currJoint->mPos);	//set the direction vector to place the parent joint inline
+
+				parentJoint->mPos = currJoint->mPos - (mDistances.at(i - 1) * dir);	//set position of parent joint in the direction of the joint movement by the distance between
+			}
+
+			mJointList.at(0)->mPos = firstBasePos;		//move the beginning joint back to its root pos
+
+			for (int i = 0; i < mJointList.size() - 1; ++i)
+			{
+				Joint* currJoint = mJointList.at(i);
+				Joint* childJoint = mJointList.at(i + 1);
+
+				glm::vec4 dir = glm::normalize(childJoint->mPos - currJoint->mPos);
+				childJoint->mPos = currJoint->mPos + (mDistances.at(i) * dir);
+			}
+		}
+	}
+
+	bool passMarginOfError(glm::vec4 endEffectorPos, glm::vec4 targetPos, float moe)
+	{
+		//check if our end joint is close enough to the target
+		if (glm::length(endEffectorPos - targetPos) > moe)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	std::vector<Joint*> mJointList;
+
+	std::vector<float> mDistances;
+	float mChainLength;	//total length of all joints
+	float mEffectorDistance;	//distance from root to effector
+	int mBEN;
+	int mEEN;
+	Joint* mpBaseEffector;
+	Joint* mpEndEffector;
+	HierarchicalPosePool* mpSkeleton;
+
+	glm::vec4* mpPlatPos;
+
+	/*
+	ProceduralGrab(Joint* baseEffector, Joint* endEffector, HierarchicalPosePool* skeleton, int baseEffectorNode, int endEffectorNode, int length)
+	{
+		mpBaseEffector = baseEffector;
+		mpEndEffector = endEffector;
+		mLength = length;
+		mBEN = baseEffectorNode;	//use to determine place in hierarchy
+		mEEN = endEffectorNode;
+		mpSkeleton = skeleton;
+	}
+
+	void SolveInverseKinematics(glm::vec4 targetPos)
+	{
+		if (mLength < 0)
+		{
+			return;
+		}
+
+		//get actual distance between the joints, like physical distance
+		std::vector<float> distances;
+		for (int i = mBEN; i < mEEN - 1; ++i)
+		{
+			//get node pose, get parent pos, get distance
+			float dist = glm::length(mpSkeleton->getJointFromBase(i)->mPos - mpSkeleton->getJointFromBase(i + 1)->mPos);
+			distances.push_back(dist);
+		}
+
+		mpEndEffector->mPos = targetPos;	//move the endEffector to the target
+
+		//go through the 
+		for (int i = mEEN; i > mLength; --i)
+		{
+			mpCurrentJoint 
+		}
+
+	}
+
+	int mLength;
+	int mBEN;
+	int mEEN;
+	Joint* mpCurrentJoint;
+	Joint* mpBaseEffector;
+	Joint* mpEndEffector;
+	HierarchicalPosePool* mpSkeleton;
+	*/
+};

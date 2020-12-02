@@ -159,8 +159,6 @@ struct Joint
 		mScale = glm::vec4(1.0, 1.0, 1.0, 0.0);
 	}
 
-	
-
 	void convertToMat(Joint* in, JointChannel jc, JointEulerOrder jeo)
 	{
 		//the states local pose is both the source and the target
@@ -432,6 +430,7 @@ struct Joint
 	glm::vec4 mRot;
 	glm::vec4 mScale;
 
+
 	JointChannel mJointChannel;
 	JointEulerOrder mJointEulerOrder;
 };
@@ -464,10 +463,12 @@ struct HierarchicalPosePool
 
 	HierarchicalPosePool(Hierarchy* h)
 	{
-		mHierarchy = h;
+		mpHierarchy = h;
 	}
 
 	HierarchicalPoseGroupSet getHierarchicalPoseGroups() { return mHierarchicalPoseGroups; }
+
+	Hierarchy* getHierarchy() { return mpHierarchy; };
 
 	void addToSpatialPosePool(Joint j)
 	{
@@ -482,11 +483,11 @@ struct HierarchicalPosePool
 	void addToHierarchicalPoses(int poseNumber)
 	{
 		//pose number is the number of the pose, A / T pose would be 0, any poses after that would be 1, 2, 3....
-		int indexInSpatialPool = poseNumber * mHierarchy->getNumberOfNodes();
-		std::vector<bool> visited(mHierarchy->getNumberOfNodes(), false);
+		int indexInSpatialPool = poseNumber * mpHierarchy->getNumberOfNodes();
+		std::vector<bool> visited(mpHierarchy->getNumberOfNodes(), false);
 		HierarchicalPoseGroup hpg;
 
-		for (int i = indexInSpatialPool; i < indexInSpatialPool + mHierarchy->getNumberOfNodes(); ++i)	//go through each spatial pose by the number of nodes in hierarchy
+		for (int i = indexInSpatialPool; i < indexInSpatialPool + mpHierarchy->getNumberOfNodes(); ++i)	//go through each spatial pose by the number of nodes in hierarchy
 		{
 			HierarchicalPose hp;
 			hp.mHierarchicalJoint = &mSpatialPosePool[i];
@@ -504,8 +505,34 @@ struct HierarchicalPosePool
 		}
 	}
 
+	/*
+		used data from hierarchy crossed with data from non base pose inside HPGS to get these values
+		assumes that HPG is sorted by order of current index node 0 to end
+	*/
+	Joint* getJoint(int nodeID, int poseNum)
+	{
+		for (int i = 0; i < mpHierarchy->getNumberOfNodes(); ++i)
+		{
+			if (nodeID == i)
+			{
+				if (poseNum != 0)
+				{
+					return mHierarchicalPoseGroups.mHPGS.at(poseNum).mHPG.at(i).mHierarchicalJoint;
+				}
+				else
+				{
+					//forced to use base pose
+					return mHierarchicalPoseGroups.mBasePose.mHPG.at(i).mHierarchicalJoint;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+
 private:
-	Hierarchy* mHierarchy;										//Reference to hierarchy associated with this spatial data 
+	Hierarchy* mpHierarchy;										//Reference to hierarchy associated with this spatial data 
 	std::vector<Joint> mSpatialPosePool;						//contains ALL individual node poses
 	HierarchicalPoseGroupSet mHierarchicalPoseGroups;	//organizes above into a pose for the whole hierarchy at the same time
 																//	its like the full skeleton for n amount of poses (Ph x n)
