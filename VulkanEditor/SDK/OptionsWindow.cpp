@@ -1326,6 +1326,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 {
 	static bool ownPersonalServer = false;
 	static bool openServerList = false;
+	static bool openServerOptions = false;
 
 	if (showMenu)
 	{
@@ -1334,15 +1335,19 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		ImGui::Text("This menu is for controlling server and client abilities of this program");
 		ImGui::Text("________________________________________________________________________");
 
+
 		//--------------------SERVER----------------------
 		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
-		if (ImGui::Button("Create Server"))
+		ImGui::Checkbox("Connect to server as client", &openServerOptions);
+		if (openServerOptions)
 		{
-			ownPersonalServer = true;
+			if (ImGui::Button("Create Server"))
+			{
+				ownPersonalServer = true;
+				mpNetworkManager->initServer();
+			}
 
-
-
-
+			
 			if (ImGui::Button("Shutdown Server"))
 			{
 				ownPersonalServer = false;

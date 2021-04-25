@@ -19,6 +19,7 @@ public:
 		mShowAnimationMenu = false;
 		mShowNetworkingMenu = false;
 		mScene = scene;
+		mpNetworkManager = new NetworkManager();
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
 	}
@@ -93,6 +94,8 @@ private:
 	bool mObjectHasBeenChanged;
 
 	std::vector<int> mInputFromKeyboard;
-	//animation
+	
 
+	//networking
+	NetworkManager* mpNetworkManager;
 };

@@ -471,6 +471,9 @@
     <ClCompile Include="Source\Raknet\Source\WSAStartupSingleton.cpp">
       <Filter>RakNet</Filter>
     </ClCompile>
+    <ClCompile Include="NetworkingController.cpp">
+      <Filter>Source Files\Core\Networking</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugTools.h">
@@ -1012,6 +1015,9 @@
     </ClInclude>
     <ClInclude Include="Source\Raknet\Source\XBox360Includes.h">
       <Filter>RakNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkingController.h">
+      <Filter>Header Files\Core\Networking</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

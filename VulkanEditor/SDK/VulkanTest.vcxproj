@@ -167,6 +167,7 @@
     <ClCompile Include="KeyframePool.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MatrixMath.cpp" />
+    <ClCompile Include="NetworkingController.cpp" />
     <ClCompile Include="OptionsWindow.cpp" />
     <ClCompile Include="ProceduralLoader.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -301,6 +302,7 @@
     <ClInclude Include="KeyframePool.h" />
     <ClInclude Include="MatrixMath.h" />
     <ClInclude Include="ModelData.h" />
+    <ClInclude Include="NetworkingController.h" />
     <ClInclude Include="NeuralBase.h" />
     <ClInclude Include="OptionsWindow.h" />
     <ClInclude Include="ProceduralLoader.h" />

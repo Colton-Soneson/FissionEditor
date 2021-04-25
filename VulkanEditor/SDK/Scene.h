@@ -1,6 +1,7 @@
 #pragma once
 #include "UniversalObjectStorage.h"
 #include "SkeletonManager.h"
+#include "NetworkingController.h"
 
 #include <fstream>
 
