@@ -484,7 +484,7 @@ void DemoApplication::cleanupSwapChain()
 	vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
 	
 	
-
+	
 	if (mpOpWindow->getObjectAddedStatus() == true || mpOpWindow->getObjectChangedStatus() == true)
 	{
 		for (int itr = 0; itr < mScene->getObjects().size() - 1; ++itr)	//we dont count the object we JUST added
@@ -510,6 +510,7 @@ void DemoApplication::cleanupSwapChain()
 			}
 		}
 	}
+	
 		
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
@@ -557,6 +558,9 @@ void DemoApplication::createCommandBuffers()
 			{
 				throw std::runtime_error("failed to begin recording command buffer");
 			}
+
+			//TRYING TO LOAD FONTS
+			//ImGui_ImplVulkan_CreateFontsTexture(mCommandBuffers[i]);
 
 			//start the render pass
 			VkRenderPassBeginInfo renderPassInfo = {};
@@ -610,6 +614,9 @@ void DemoApplication::createCommandBuffers()
 			{
 				throw std::runtime_error("failed to record command buffer");
 			}
+
+			//THIS IS IN THE CORRECT PLACE, AFTER BUFFER ENDS
+			//ImGui_ImplVulkan_DestroyFontUploadObjects();
 		}
 
 	
@@ -1225,6 +1232,37 @@ void DemoApplication::createInstance() {
 }
 
 
+void DemoApplication::createMainGUIWindow()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplGlfw_InitForVulkan(mpWindow, true);
+	//ImGui_ImplVulkan_InitInfo init_info = {};
+	//init_info.Instance = mInstance;
+	//init_info.PhysicalDevice = mPhysicalDevice;
+	//init_info.Device = mDevice;
+	//init_info.QueueFamily = mpDevSel->getQueueFamGraphicsIndices();
+	//init_info.Queue = mPresentQueue;
+	//init_info.PipelineCache = VK_NULL_HANDLE;
+	//init_info.DescriptorPool = mDescriptorPool;
+	//init_info.Allocator = VK_NULL_HANDLE;
+	//init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
+	//init_info.ImageCount = 2;	//mpWindow->ImageCount
+	//
+	////ImGui_ImplVulkan_Init(&init_info, mRenderPass);
+
+}
+
+
 void DemoApplication::createRenderPass()
 {
 	//single color buffer attachment
@@ -1472,7 +1510,6 @@ void DemoApplication::createSwapChain()
 }
 
 
-
 void DemoApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -1551,7 +1588,59 @@ void DemoApplication::drawFrame()
 		throw std::runtime_error("Failed to aquire next image, line 1531 DA");
 	}
 
+	/*
+	//	NEW OPTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// Start the Dear ImGui frame
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	static bool mShowDemoMenu = true;
+
+	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+	{
+		static float f = 0.0f;
+		static int counter = 0;
+		static bool keyboardInput = false;
+
+		ImGui::Begin("FusionEngine Editor Main Menu");
+		ImGui::SetWindowFontScale(1.2f);
+		ImVec2 winSize(600.0, 450.0);
+		ImGui::SetWindowSize(winSize);
+
+		ImGui::Checkbox("Demo Menu", &mShowDemoMenu);      // Edit bools storing our window open/close state
+
+		std::string tempCodes = "";
+		std::stringstream inputOutStatement;
+
+		std::string fKC = "Current Input KeyCodes: " + inputOutStatement.str();
+		ImGui::Text(fKC.c_str());
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+	}
+
+	if (mShowDemoMenu)
+	{
+		ImGui::ShowDemoWindow(&mShowDemoMenu);
+	}
+
+	// Rendering
+	//ImGui::Render();
+	//memcpy(&mpWindow->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
+
+	//drawFrame();
+	// Record Imgui Draw Data and draw funcs into command buffer
+	//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), mCommandBuffers[imageIndex]);				//FIND WAY TO RECOMMENT IN
+
+	//AT THE BOTTOM OF THIS
+	//presentFrame();
+
+	//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	*/
+
 	//options window changes apply
+	
 	mpOpWindow->run();
 
 	if (mpOpWindow->getObjectAddedStatus() || mpOpWindow->getObjectChangedStatus())
@@ -1639,11 +1728,11 @@ void DemoApplication::drawFrame()
 		throw std::runtime_error("failed to present swap chain image");
 	}
 
+
 	//advance the frame at the end
 	//	we index loop after amount of queued frames, in this case MAX_FRAMES_IN_FLIGHt
 	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
-
 
 
 VkFormat DemoApplication::findDepthFormat()
@@ -1827,6 +1916,9 @@ void DemoApplication::initVulkan()
 	createUniformBuffers();		//has objects
 	createDescriptorPool();		//has objects
 	createDescriptorSets();		//has objects
+
+	//createMainGUIWindow();	//ADDED HERE
+
 	createCommandBuffers();		//has objects
 	createSyncObjects();
 }
@@ -1861,7 +1953,6 @@ void DemoApplication::mainLoop()
 		glfwPollEvents(); //the min rec for this, keep it running till we get polled for an error
 		drawFrame();	  //draw the frame 
 
-		//mpOpWindow->run();
 	}
 
 	vkDeviceWaitIdle(mDevice);
@@ -1955,6 +2046,10 @@ void DemoApplication::recreateSwapChain()
 	createUniformBuffers();
 	createDescriptorPool();
 	createDescriptorSets();
+
+	//createMainGUIWindow();	//ADDED HERE
+
+
 	createCommandBuffers();
 }
 
@@ -1979,7 +2074,6 @@ void DemoApplication::setupDebugMessenger()
 }
 
 
-
 void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();	//our continuous time from first use
@@ -1989,7 +2083,6 @@ void DemoApplication::updateUniformBuffer(uint32_t currentImage)
 	static float frameCount;
 	++frameCount;
 	mScene->setEngineTimeStep(frameCount / time);
-
 
 	for (auto& object : mScene->getObjects())
 	{

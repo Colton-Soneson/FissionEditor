@@ -10,8 +10,8 @@ public:
 
 	void run() {
 		initWindow();
-		initVulkan();	//preparation
 		initGUIWindow();
+		initVulkan();	//preparation
 		mainLoop();
 		cleanup();
 	}
@@ -30,6 +30,8 @@ private:
 	void initScene();		//initial Scene, not that big of a deal just make it 3 rotating cubes
 
 	void initGUIWindow();
+
+	void createMainGUIWindow();
 
 	void createInstance();
 
@@ -200,24 +202,7 @@ private:
 	void copyBufferToImage(VkDevice device, VkQueue graphicsQueue, VkCommandPool commandPool, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 
-
-
-
-
-
-
-
-
-
-
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
 
 
 	//getters

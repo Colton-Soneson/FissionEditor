@@ -17,6 +17,7 @@ public:
 		mShowLightMenu = false;
 		mShowObjectMenu = false;
 		mShowAnimationMenu = false;
+		mShowNetworkingMenu = false;
 		mScene = scene;
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
@@ -54,6 +55,9 @@ private:
 
 	void presentFrame();
 
+	// options for networking
+	void networkingOptions(bool *showMenu);
+
 	std::vector<int> getInput(bool active);	//active determines whether or not to have active search for keys
 
 
@@ -83,6 +87,7 @@ private:
 	bool mShowLightMenu;
 	bool mShowAnimationMenu;
 	bool mShowDemoMenu;
+	bool mShowNetworkingMenu;
 
 	bool mObjectHasBeenAdded;
 	bool mObjectHasBeenChanged;

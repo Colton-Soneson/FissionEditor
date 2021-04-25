@@ -357,7 +357,6 @@ void OptionsWindow::prerun()
 	init_info.Allocator = VK_NULL_HANDLE;
 	init_info.MinImageCount = mMinImageCount;
 	init_info.ImageCount = mpWindow->ImageCount;
-	//init_info.CheckVkResultFn = check_vk_result;
 	ImGui_ImplVulkan_Init(&init_info, mpWindow->RenderPass);
 
 	// Load Fonts
@@ -471,6 +470,8 @@ void OptionsWindow::run()
 			ImGui::Checkbox("Object Menu", &mShowObjectMenu);
 			ImGui::Checkbox("Light Menu", &mShowLightMenu);
 			ImGui::Checkbox("Animation Menu", &mShowAnimationMenu);
+			ImGui::Checkbox("Networking Menu", &mShowNetworkingMenu);
+
 
 			//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
@@ -499,8 +500,6 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 		
-		
-
 		static bool readyToCreate = false;
 		static bool readyToEdit = false;
 		static int objectIndex = 0;
@@ -1311,6 +1310,8 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 
+		networkingOptions(&mShowNetworkingMenu);
+
 		// Rendering
 		ImGui::Render();
 		memcpy(&mpWindow->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
@@ -1319,6 +1320,46 @@ void OptionsWindow::run()
 		presentFrame();
 	}
 	
+}
+
+void OptionsWindow::networkingOptions(bool *showMenu)
+{
+	ImGui::Begin("Networking Menu", showMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+	ImGui::SetWindowFontScale(1.5);
+	ImGui::Text("This menu is for controlling server and client abilities of this program");
+
+	static bool ownPersonalServer = false;
+	static bool openServerList = false;
+
+	if (*showMenu)
+	{
+		//--------------------SERVER----------------------
+		if (ImGui::Button("Create Server"))
+		{
+			ownPersonalServer = true;
+
+			if (ImGui::Button("Shutdown Server"))
+			{
+				ownPersonalServer = false;
+			}
+		}
+
+		//---------------------CLIENT----------------------
+
+		ImGui::Checkbox("Connect to server as client", &openServerList);
+		if (openServerList)
+		{
+
+			if (ImGui::Button("Leave server"))
+			{
+				ownPersonalServer = false;
+			}
+		}
+	}
+
+	if (ImGui::Button("Close"))
+		*showMenu = false;
+	ImGui::End();
 }
 
 std::vector<int> OptionsWindow::getInput(bool active)
