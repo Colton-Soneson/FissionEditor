@@ -7,9 +7,6 @@ std::string FRAGMENT_SHADER_PATH = "Resource/shaders/frag.spv";
 std::string GEOMETRY_SHADER_PATH = "Resource/shaders/geometry.spv";
 
 
-
-
-
 VkCommandBuffer DemoApplication::beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
 {
 	//temp command buffer (can be optimized at some point with VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
@@ -337,8 +334,53 @@ VkExtent2D DemoApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 		
 		//get the extents of the surface bounds and sets them in actualExtent 
 		//max and min clamp width and height between the supported implementation
-		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
-		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
+
+		uint32_t minWidth;
+		if (actualExtent.width < capabilities.maxImageExtent.width)
+		{
+			minWidth = actualExtent.width;
+		}
+		else
+		{
+			minWidth = capabilities.maxImageExtent.width;
+		}
+
+		uint32_t maxWidth;
+		if (capabilities.minImageExtent.width < minWidth)
+		{
+			maxWidth = minWidth;
+		}
+		else
+		{
+			maxWidth = capabilities.minImageExtent.width;
+		}
+		actualExtent.width = maxWidth;
+
+
+		uint32_t minHeight;
+		if (actualExtent.height < capabilities.maxImageExtent.height)
+		{
+			minHeight = actualExtent.height;
+		}
+		else
+		{
+			minHeight = capabilities.maxImageExtent.height;
+		}
+
+		uint32_t maxHeight;
+		if (capabilities.minImageExtent.height < minHeight)
+		{
+			maxHeight = minHeight;
+		}
+		else
+		{
+			maxHeight = capabilities.minImageExtent.height;
+		}
+		actualExtent.height = maxHeight;
+
+		//THESE WORKED BUT NOW WITH NETWORKING THEY CAUSE ISSUES
+		//actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
+		//actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
 
 		return actualExtent;
 	}

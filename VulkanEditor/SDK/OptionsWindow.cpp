@@ -1327,47 +1327,74 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static bool ownPersonalServer = false;
 	static bool openServerList = false;
 	static bool openServerOptions = false;
+	static bool currentlyAClient = false;
 
 	if (showMenu)
 	{
 		ImGui::Begin("Networking Menu", &showMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 		ImGui::SetWindowFontScale(1.0);
 		ImGui::Text("This menu is for controlling server and client abilities of this program");
-		ImGui::Text("________________________________________________________________________");
+		ImGui::Text(" ");
 
 
 		//--------------------SERVER----------------------
 		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
-		ImGui::Checkbox("Connect to server as client", &openServerOptions);
+		ImGui::Checkbox("Create a server", &openServerOptions);
 		if (openServerOptions)
 		{
 			if (ImGui::Button("Create Server"))
 			{
 				ownPersonalServer = true;
-				mpNetworkManager->initServer();
+				mpNetworkManager->initServer(60000, 10);
 			}
-
 			
 			if (ImGui::Button("Shutdown Server"))
 			{
 				ownPersonalServer = false;
+				mpNetworkManager->closeServer();
 			}
+		}
+		if (ownPersonalServer)
+		{
+			ImGui::Text("SERVER IS ONLINE AND UPDATING");
+			mpNetworkManager->updateServer();
 		}
 		ImGui::Text(" ");
 
-
-
 		//---------------------CLIENT----------------------
 		ImGui::Text("__________________________CLIENT_OPTIONS________________________________");
-		ImGui::Checkbox("Connect to server as client", &openServerList);
+		ImGui::Checkbox("Connect to a server as client", &openServerList);
 		if (openServerList)
 		{
-
-			if (ImGui::Button("Leave server"))
+			if (ImGui::Button("Join Server"))
 			{
-				ownPersonalServer = false;
+				currentlyAClient = true;
+				char name[512] = "Colton";
+				char ip[512] = "192.168.1.72";
+				mpNetworkManager->initClient(name, 60000, ip);
+			}
+
+			if (ImGui::Button("Chat Ping Server"))
+			{
+				char msg[512] = "TEST MESSAGE FROM CLIENT";
+				mpNetworkManager->sendClientMessage(msg);
+			}
+
+			if (ImGui::Button("Leave Server"))
+			{
+				currentlyAClient = false;
+				mpNetworkManager->closeClient();
 			}
 		}
+
+		if (currentlyAClient)
+		{
+			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
+			mpNetworkManager->updateClient();
+		}
+
+		ImGui::Text(" ");
+
 
 		if (ImGui::Button("Close"))
 			showMenu = false;

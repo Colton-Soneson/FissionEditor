@@ -76,7 +76,7 @@ public:
 	{
 		mpServerPeer = nullptr;
 		mServerActive = false;
-		mClietActive = false;
+		mClientActive = false;
 		mpServOps = nullptr;
 	};
 	~NetworkManager() {};
@@ -84,7 +84,7 @@ public:
 	void init();
 	
 	void initServer(unsigned short port, unsigned short maxConnections);
-	void initClient(char nameType[512], unsigned short serverPort, char serverIP[]);
+	void initClient(char nameType[512], unsigned short serverPort, char* serverIP);
 
 	void updateServer();
 	void updateClient();
@@ -93,7 +93,12 @@ public:
 	void closeClient();
 
 	void sendClientMessage(char mesKB[512]);
+	void sendClientAdminRequest(char mesKB[512]);
+
 	void sendServerMessage(char mesKB[512]);
+
+	bool isLocalServerActive() { return mServerActive; };
+	bool isLocalClientActive() { return mClientActive; };
 
 private:
 	//both client and server
@@ -107,7 +112,7 @@ private:
 	void serverPacketHandlerGameLogOn(RakNet::Packet* p);
 
 	//client specific
-	void clientIL_AdminPassEnter();
+	void clientIL_AdminPassEnter(char mesKB[512]);
 	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void clientIL_GenericMessage(char mesKB[512]);
 	void clientHandleInputRemote();
@@ -116,7 +121,7 @@ private:
 	RakNet::RakPeerInterface* mpServerPeer;
 
 	bool mServerActive;
-	bool mClietActive;
+	bool mClientActive;
 	
 	ServerOptions* mpServOps;
 };

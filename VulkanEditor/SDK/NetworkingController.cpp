@@ -30,11 +30,14 @@ void NetworkManager::updateServer()
 
 void NetworkManager::closeServer()
 {
-	mpServerPeer->ClearBanList();
+	if (mServerActive)
+	{
+		mpServerPeer->ClearBanList();
 
-	RakNet::RakPeerInterface::DestroyInstance(mpServerPeer);
+		RakNet::RakPeerInterface::DestroyInstance(mpServerPeer);
 
-	mServerActive = false;
+		mServerActive = false;
+	}
 }
 
 void NetworkManager::initClient(char nameType[512], unsigned short serverPort, char* serverIP)
@@ -76,11 +79,12 @@ void NetworkManager::initClient(char nameType[512], unsigned short serverPort, c
 		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
 		msg.sysAddr, true);			//internet
 
+	mClientActive = true;
 }
 
 void NetworkManager::updateClient()
 {
-	if (mClietActive)
+	if (mClientActive)
 	{
 		// recieve data and merge
 		clientHandleInputRemote();
@@ -91,13 +95,17 @@ void NetworkManager::updateClient()
 
 void NetworkManager::closeClient()
 {
-	RakNet::RakPeerInterface::DestroyInstance(mGS->clientPeer);
+	if (mClientActive)
+	{
+		RakNet::RakPeerInterface::DestroyInstance(mGS->clientPeer);
+		mClientActive = false;
+	}
 }
 
 void NetworkManager::sendClientMessage(char mesKB[512])
 {
 	//make sure we registered as a client first
-	if (mClietActive)
+	if (mClientActive)
 	{
 		clientIL_GenericMessage(mesKB);
 	}
@@ -109,6 +117,14 @@ void NetworkManager::sendServerMessage(char mesKB[512])
 	if (mServerActive)
 	{
 		serverIL_GenericMessage(mesKB);
+	}
+}
+
+void NetworkManager::sendClientAdminRequest(char mesKB[512])
+{
+	if (mClientActive)
+	{
+		clientIL_AdminPassEnter(mesKB);
 	}
 }
 
@@ -493,10 +509,9 @@ void NetworkManager::serverPacketHandlerGameLogOn(RakNet::Packet* p)
 }
 
 //--------------Handling CLIENT Functionality--------------
-void NetworkManager::clientIL_AdminPassEnter()
+void NetworkManager::clientIL_AdminPassEnter(char mesKB[512])
 {
-	printf("\n\ntry and enter admin pass: ");
-	std::cin >> mGS->logOn;
+	strcpy(mGS->logOn, mesKB);
 
 	GameMessageGeneric msg = {
 				(unsigned char)ID_TIMESTAMP,
@@ -550,11 +565,11 @@ void NetworkManager::clientIL_GenericMessage(char mesKB[512])
 
 	char firstLetter = mesKB[0];
 
-	if (strcmp(mesKB, "admin_mode") == 0)
+	/*if (strcmp(mesKB, "admin_mode") == 0)
 	{
 		clientIL_AdminPassEnter();
 		strcpy(mesKB, "");
-	}
+	}*/
 
 	//consol command mode
 	if (firstLetter == '-')
@@ -609,8 +624,6 @@ void NetworkManager::clientIL_GenericMessage(char mesKB[512])
 			//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
 			//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
 	}
-
-	
 }
 
 void NetworkManager::clientHandleInputRemote()
@@ -664,7 +677,6 @@ void NetworkManager::clientHandleInputRemote()
 
 		case ID_GAME_MESSAGE_GENERIC:
 		{
-			//printf("GAME MES 1");
 			clientPacketHandlerGameMessageGeneric(packet);
 		}
 		break;
