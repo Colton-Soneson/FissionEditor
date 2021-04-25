@@ -1310,7 +1310,7 @@ void OptionsWindow::run()
 			ImGui::End();
 		}
 
-		networkingOptions(&mShowNetworkingMenu);
+		networkingOptions(mShowNetworkingMenu);
 
 		// Rendering
 		ImGui::Render();
@@ -1322,30 +1322,38 @@ void OptionsWindow::run()
 	
 }
 
-void OptionsWindow::networkingOptions(bool *showMenu)
+void OptionsWindow::networkingOptions(bool &showMenu)
 {
-	ImGui::Begin("Networking Menu", showMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-	ImGui::SetWindowFontScale(1.5);
-	ImGui::Text("This menu is for controlling server and client abilities of this program");
-
 	static bool ownPersonalServer = false;
 	static bool openServerList = false;
 
-	if (*showMenu)
+	if (showMenu)
 	{
+		ImGui::Begin("Networking Menu", &showMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::SetWindowFontScale(1.0);
+		ImGui::Text("This menu is for controlling server and client abilities of this program");
+		ImGui::Text("________________________________________________________________________");
+
 		//--------------------SERVER----------------------
+		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
 		if (ImGui::Button("Create Server"))
 		{
 			ownPersonalServer = true;
+
+
+
 
 			if (ImGui::Button("Shutdown Server"))
 			{
 				ownPersonalServer = false;
 			}
 		}
+		ImGui::Text(" ");
+
+
 
 		//---------------------CLIENT----------------------
-
+		ImGui::Text("__________________________CLIENT_OPTIONS________________________________");
 		ImGui::Checkbox("Connect to server as client", &openServerList);
 		if (openServerList)
 		{
@@ -1355,11 +1363,11 @@ void OptionsWindow::networkingOptions(bool *showMenu)
 				ownPersonalServer = false;
 			}
 		}
-	}
 
-	if (ImGui::Button("Close"))
-		*showMenu = false;
-	ImGui::End();
+		if (ImGui::Button("Close"))
+			showMenu = false;
+		ImGui::End();
+	}
 }
 
 std::vector<int> OptionsWindow::getInput(bool active)

@@ -56,7 +56,7 @@ private:
 	void presentFrame();
 
 	// options for networking
-	void networkingOptions(bool *showMenu);
+	void networkingOptions(bool &showMenu);
 
 	std::vector<int> getInput(bool active);	//active determines whether or not to have active search for keys
 
