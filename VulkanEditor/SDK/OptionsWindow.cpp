@@ -1328,6 +1328,17 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static bool openServerList = false;
 	static bool openServerOptions = false;
 	static bool currentlyAClient = false;
+	static bool openChatWindow = false;
+	static bool openServerWindow = false;
+	static char clientJoinName[512] = "Colton";
+	static char clientJoinServerAddress[512] = "192.168.1.72";
+
+	static std::vector<std::string> chatHistoryClient;
+	static std::vector<std::string> serverHistory;
+
+	//char name[512] = "Colton";
+	//char ip[512] = "192.168.1.72";
+
 
 	if (showMenu)
 	{
@@ -1336,6 +1347,44 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		ImGui::Text("This menu is for controlling server and client abilities of this program");
 		ImGui::Text(" ");
 
+		//---------------------CLIENT----------------------
+		ImGui::Text("__________________________CLIENT_OPTIONS________________________________");
+		ImGui::Checkbox("Connect to a server as client", &openServerList);
+		if (openServerList)
+		{
+			ImGui::InputText("Username", clientJoinName, IM_ARRAYSIZE(clientJoinName));
+			ImGui::InputText("Server Address", clientJoinServerAddress, IM_ARRAYSIZE(clientJoinServerAddress));
+
+			if (ImGui::Button("Join Server"))
+			{
+				currentlyAClient = true;
+				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress, &chatHistoryClient);
+			}
+
+			if (ImGui::Button("Ping Server"))
+			{
+				char msg[512] = "TEST MESSAGE FROM CLIENT";
+				mpNetworkManager->sendClientMessage(msg);
+			}
+			ImGui::Text(" ");
+
+
+			ImGui::Checkbox("Open Chat Window", &openChatWindow);
+
+
+			if (ImGui::Button("Leave Server"))
+			{
+				currentlyAClient = false;
+				mpNetworkManager->closeClient();
+			}
+		}
+		if (currentlyAClient)
+		{
+			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
+			mpNetworkManager->updateClient(&chatHistoryClient);
+		}
+
+		ImGui::Text(" ");
 
 		//--------------------SERVER----------------------
 		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
@@ -1345,7 +1394,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			if (ImGui::Button("Create Server"))
 			{
 				ownPersonalServer = true;
-				mpNetworkManager->initServer(60000, 10);
+				mpNetworkManager->initServer(60000, 10, &serverHistory);
 			}
 			
 			if (ImGui::Button("Shutdown Server"))
@@ -1353,51 +1402,66 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 				ownPersonalServer = false;
 				mpNetworkManager->closeServer();
 			}
+
+			ImGui::Checkbox("Open Server Status Window", &openServerWindow);
+
 		}
 		if (ownPersonalServer)
 		{
 			ImGui::Text("SERVER IS ONLINE AND UPDATING");
-			mpNetworkManager->updateServer();
+			mpNetworkManager->updateServer(&serverHistory);
 		}
 		ImGui::Text(" ");
 
-		//---------------------CLIENT----------------------
-		ImGui::Text("__________________________CLIENT_OPTIONS________________________________");
-		ImGui::Checkbox("Connect to a server as client", &openServerList);
-		if (openServerList)
-		{
-			if (ImGui::Button("Join Server"))
-			{
-				currentlyAClient = true;
-				char name[512] = "Colton";
-				char ip[512] = "192.168.1.72";
-				mpNetworkManager->initClient(name, 60000, ip);
-			}
-
-			if (ImGui::Button("Chat Ping Server"))
-			{
-				char msg[512] = "TEST MESSAGE FROM CLIENT";
-				mpNetworkManager->sendClientMessage(msg);
-			}
-
-			if (ImGui::Button("Leave Server"))
-			{
-				currentlyAClient = false;
-				mpNetworkManager->closeClient();
-			}
-		}
-
-		if (currentlyAClient)
-		{
-			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
-			mpNetworkManager->updateClient();
-		}
-
-		ImGui::Text(" ");
+		
 
 
 		if (ImGui::Button("Close"))
 			showMenu = false;
+		ImGui::End();
+	}
+	
+	if (showMenu && openChatWindow)
+	{
+		static char chatMsg[512];
+
+		ImGui::Begin("Chat Window", &openChatWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::SetWindowFontScale(1.25);
+		
+		ImGui::Text("");
+
+		for (std::vector<std::string>::iterator it = begin(chatHistoryClient); it != end(chatHistoryClient); ++it)
+		{
+			ImGui::BulletText(it->c_str());
+		}
+
+		ImGui::InputText("", chatMsg, IM_ARRAYSIZE(chatMsg));
+
+		if (ImGui::Button("send"))
+		{
+			mpNetworkManager->sendClientMessage(chatMsg);
+		}
+
+		if (ImGui::Button("Close"))
+			openChatWindow = false;
+		ImGui::End();
+	}
+
+	if (showMenu && openServerWindow)
+	{
+
+		ImGui::Begin("Server Status Window", &openServerWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::SetWindowFontScale(1.25);
+		ImGui::Text("");
+
+		for (std::vector<std::string>::iterator it = begin(serverHistory); it != end(serverHistory); ++it)
+		{
+			ImGui::BulletText(it->c_str());
+		}
+		
+
+		if (ImGui::Button("Close"))
+			openChatWindow = false;
 		ImGui::End();
 	}
 }

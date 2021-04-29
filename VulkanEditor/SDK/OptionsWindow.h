@@ -98,4 +98,5 @@ private:
 
 	//networking
 	NetworkManager* mpNetworkManager;
+
 };

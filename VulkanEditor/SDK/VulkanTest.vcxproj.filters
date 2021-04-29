@@ -76,6 +76,12 @@
     <Filter Include="RakNet">
       <UniqueIdentifier>{86c2df45-5487-4118-9816-f0054aa0d917}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Core\Physics">
+      <UniqueIdentifier>{41874608-259a-4110-b4d4-25f13777625b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Physics">
+      <UniqueIdentifier>{fcd3572a-deea-429b-8576-6e75ff5c7d49}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
