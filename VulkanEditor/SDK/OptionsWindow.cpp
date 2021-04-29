@@ -1333,12 +1333,6 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static char clientJoinName[512] = "Colton";
 	static char clientJoinServerAddress[512] = "192.168.1.72";
 
-	static std::vector<std::string> chatHistoryClient;
-	static std::vector<std::string> serverHistory;
-
-	//char name[512] = "Colton";
-	//char ip[512] = "192.168.1.72";
-
 
 	if (showMenu)
 	{
@@ -1358,7 +1352,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			if (ImGui::Button("Join Server"))
 			{
 				currentlyAClient = true;
-				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress, &chatHistoryClient);
+				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
 			}
 
 			if (ImGui::Button("Ping Server"))
@@ -1381,7 +1375,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		if (currentlyAClient)
 		{
 			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
-			mpNetworkManager->updateClient(&chatHistoryClient);
+			mpNetworkManager->updateClient();
 		}
 
 		ImGui::Text(" ");
@@ -1394,7 +1388,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			if (ImGui::Button("Create Server"))
 			{
 				ownPersonalServer = true;
-				mpNetworkManager->initServer(60000, 10, &serverHistory);
+				mpNetworkManager->initServer(60000, 10);
 			}
 			
 			if (ImGui::Button("Shutdown Server"))
@@ -1409,7 +1403,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		if (ownPersonalServer)
 		{
 			ImGui::Text("SERVER IS ONLINE AND UPDATING");
-			mpNetworkManager->updateServer(&serverHistory);
+			mpNetworkManager->updateServer();
 		}
 		ImGui::Text(" ");
 
@@ -1430,7 +1424,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		
 		ImGui::Text("");
 
-		for (std::vector<std::string>::iterator it = begin(chatHistoryClient); it != end(chatHistoryClient); ++it)
+		for (std::vector<std::string>::iterator it = begin(*mpChatHistoryClient); it != end(*mpChatHistoryClient); ++it)
 		{
 			ImGui::BulletText(it->c_str());
 		}
@@ -1454,7 +1448,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		ImGui::SetWindowFontScale(1.25);
 		ImGui::Text("");
 
-		for (std::vector<std::string>::iterator it = begin(serverHistory); it != end(serverHistory); ++it)
+		for (std::vector<std::string>::iterator it = begin(*mpServerHistory); it != end(*mpServerHistory); ++it)
 		{
 			ImGui::BulletText(it->c_str());
 		}

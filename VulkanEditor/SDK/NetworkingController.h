@@ -72,22 +72,24 @@ struct GameMessageGeneric
 class NetworkManager
 {
 public:
-	NetworkManager() 
+	NetworkManager(std::vector<std::string>* serverHistory, std::vector<std::string>* clientChatHistory)
 	{
 		mpServerPeer = nullptr;
 		mServerActive = false;
 		mClientActive = false;
 		mpServOps = nullptr;
+		mpClientChatHistory = clientChatHistory;
+		mpServerHistory = serverHistory;
 	};
 	~NetworkManager() {};
 
 	void init();
 	
-	void initServer(unsigned short port, unsigned short maxConnections, std::vector<std::string>* history);
-	void initClient(char nameType[512], unsigned short serverPort, char* serverIP, std::vector<std::string>* history);
+	void initServer(unsigned short port, unsigned short maxConnections);
+	void initClient(char nameType[512], unsigned short serverPort, char* serverIP);
 
-	void updateServer(std::vector<std::string> *history);
-	void updateClient(std::vector<std::string> *history);
+	void updateServer();
+	void updateClient();
 
 	void closeServer();
 	void closeClient();
@@ -106,16 +108,16 @@ private:
 
 	//server specific
 	void serverIL_GenericMessage(char mesKB[512]);
-	void serverHandleInputRemote(std::vector<std::string>* history);
-	void serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, std::vector<std::string>* history);
-	void serverPacketHandlerIncomingPlayer(RakNet::Packet* p, std::vector<std::string>* history);
-	void serverPacketHandlerGameLogOn(RakNet::Packet* p, std::vector<std::string>* history);
+	void serverHandleInputRemote();
+	void serverPacketHandlerGameMessageGeneric(RakNet::Packet* p);
+	void serverPacketHandlerIncomingPlayer(RakNet::Packet* p);
+	void serverPacketHandlerGameLogOn(RakNet::Packet* p);
 
 	//client specific
 	void clientIL_AdminPassEnter(char mesKB[512]);
-	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p, std::vector<std::string>* history);
+	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void clientIL_GenericMessage(char mesKB[512]);
-	void clientHandleInputRemote(std::vector<std::string>* history);
+	void clientHandleInputRemote();
 
 	GameState mGS[1] = { 0 };				//array of size one gives address
 	RakNet::RakPeerInterface* mpServerPeer;
@@ -124,4 +126,8 @@ private:
 	bool mClientActive;
 	
 	ServerOptions* mpServOps;
+
+	//LOGS
+	std::vector<std::string>* mpClientChatHistory;
+	std::vector<std::string>* mpServerHistory;
 };

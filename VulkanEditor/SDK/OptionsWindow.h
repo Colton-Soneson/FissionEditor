@@ -19,7 +19,9 @@ public:
 		mShowAnimationMenu = false;
 		mShowNetworkingMenu = false;
 		mScene = scene;
-		mpNetworkManager = new NetworkManager();
+		mpChatHistoryClient = new std::vector<std::string>;
+		mpServerHistory = new std::vector<std::string>;
+		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient);
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
 	}
@@ -98,5 +100,6 @@ private:
 
 	//networking
 	NetworkManager* mpNetworkManager;
-
+	std::vector<std::string>* mpChatHistoryClient;
+	std::vector<std::string>* mpServerHistory;
 };

@@ -5,7 +5,7 @@ void NetworkManager::init()
 
 }
 
-void NetworkManager::initServer(unsigned short port, unsigned short maxConnections, std::vector<std::string>* history)
+void NetworkManager::initServer(unsigned short port, unsigned short maxConnections)
 {
 	mpServOps = new ServerOptions(port, maxConnections);
 	mpServerPeer = RakNet::RakPeerInterface::GetInstance();
@@ -14,18 +14,18 @@ void NetworkManager::initServer(unsigned short port, unsigned short maxConnectio
 	mpServerPeer->Startup(mpServOps->MAX_CLIENTS, &sd, 1);
 
 	printf("Starting the server.\n");
-	history->push_back("Starting the server.");
+	mpServerHistory->push_back("Starting the server.");
 	// We need to let the server accept incoming connections from the clients
 	mpServerPeer->SetMaximumIncomingConnections(mpServOps->MAX_CLIENTS);
 
 	mServerActive = true;
 }
 
-void NetworkManager::updateServer(std::vector<std::string> *history)
+void NetworkManager::updateServer()
 {
 	if (mServerActive)
 	{
-		serverHandleInputRemote(history);
+		serverHandleInputRemote();
 	}
 }
 
@@ -41,7 +41,7 @@ void NetworkManager::closeServer()
 	}
 }
 
-void NetworkManager::initClient(char nameType[512], unsigned short serverPort, char* serverIP, std::vector<std::string>* history)
+void NetworkManager::initClient(char nameType[512], unsigned short serverPort, char* serverIP)
 {
 	//char str[512];
 	//const unsigned short SERVER_PORT = 4024;
@@ -55,16 +55,16 @@ void NetworkManager::initClient(char nameType[512], unsigned short serverPort, c
 	RakNet::SocketDescriptor sd;
 
 	printf("Initializing client.\n");
-	history->push_back("Initializing Local client");
+	mpClientChatHistory->push_back("Initializing Local client");
 	mGS->clientPeer->Startup(1, &sd, 1);
 	mGS->clientPeer->SetMaximumIncomingConnections(0);
 
 
 	printf("Connecting the client.\n");
-	history->push_back("Connecting the local client.");
+	mpClientChatHistory->push_back("Connecting the local client.");
 	mGS->clientPeer->Connect(mGS->SERVER_IP, mGS->SERVER_PORT, 0, 0);
 	printf("Starting the client.\n");
-	history->push_back("Starting the local client.");
+	mpClientChatHistory->push_back("Starting the local client.");
 
 	strcpy(mGS->clientName, nameType);
 
@@ -86,12 +86,12 @@ void NetworkManager::initClient(char nameType[512], unsigned short serverPort, c
 	mClientActive = true;
 }
 
-void NetworkManager::updateClient(std::vector<std::string>* history)
+void NetworkManager::updateClient()
 {
 	if (mClientActive)
 	{
 		// recieve data and merge
-		clientHandleInputRemote(history);
+		clientHandleInputRemote();
 	}
 
 	strcpy(mGS->logOn, "");	//wipe the log on guess
@@ -188,6 +188,8 @@ void NetworkManager::serverIL_GenericMessage(char mesKB[512])
 
 	strcpy(msg.msg, result);
 
+	mpServerHistory->push_back(msg.msg);
+
 	//send function in raknet follows UDP Rules
 	mpServerPeer->Send((char*)&msg, sizeof(msg),			//application
 		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
@@ -198,7 +200,7 @@ void NetworkManager::serverIL_GenericMessage(char mesKB[512])
 	
 }
 
-void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, std::vector<std::string>* history)
+void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p)
 {
 	GameMessageGeneric* s = (GameMessageGeneric*)p->data;
 	assert(p->length == sizeof(GameMessageGeneric));
@@ -212,7 +214,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 	//strcat(smsg, s->msg);
 	std::string smsg = "SERVER RECIEVED: ";
 	smsg += s->msg;
-	history->push_back(smsg);
+	mpServerHistory->push_back(smsg);
 
 	char firstLetter;
 	firstLetter = s->msg[0];
@@ -277,7 +279,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 						printf(resultOut.c_str());
 
 						//log
-						history->push_back(resultOut);
+						mpServerHistory->push_back(resultOut);
 
 						break;
 					}
@@ -287,7 +289,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 				{
 					resultOut = "SERVER: player does not exist or is already banned";
 					printf("SERVER: player does not exist or is already banned");
-					history->push_back(resultOut);
+					mpServerHistory->push_back(resultOut);
 				}
 
 				GameMessageGeneric msg = {
@@ -330,7 +332,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 						printf(resultOut.c_str());
 
 						//log
-						history->push_back(resultOut);
+						mpServerHistory->push_back(resultOut);
 						break;
 					}
 				}
@@ -379,7 +381,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 						resultOut += "\n";
 						printf(resultOut.c_str());
 		
-						history->push_back(resultOut);
+						mpServerHistory->push_back(resultOut);
 						break;
 					}
 				}
@@ -388,7 +390,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 				{
 					resultOut = "SERVER: player not available to kick";
 					printf("SERVER: player not available to kick");
-					history->push_back(resultOut);
+					mpServerHistory->push_back(resultOut);
 				}
 
 				GameMessageGeneric msg = {
@@ -419,7 +421,7 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 
 }
 
-void NetworkManager::serverHandleInputRemote(std::vector<std::string>* history)
+void NetworkManager::serverHandleInputRemote()
 {
 	RakNet::Packet* packet;
 
@@ -429,56 +431,56 @@ void NetworkManager::serverHandleInputRemote(std::vector<std::string>* history)
 		{
 		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
 			printf("Another client has disconnected.\n");
-			history->push_back("Another client has disconnected");
+			mpServerHistory->push_back("Another client has disconnected");
 			break;
 		case ID_REMOTE_CONNECTION_LOST:
 			printf("Another client has lost the connection.\n");
-			history->push_back("Another client has lost the connection.");
+			mpServerHistory->push_back("Another client has lost the connection.");
 			break;
 		case ID_REMOTE_NEW_INCOMING_CONNECTION:
 			printf("Another client has connected.\n");
-			history->push_back("Another client has connected.");
+			mpServerHistory->push_back("Another client has connected.");
 			break;
 		case ID_CONNECTION_REQUEST_ACCEPTED:
 		{
 			printf("Our connection request has been accepted.\n");
-			history->push_back("Our connection request has been accepted.");
+			mpServerHistory->push_back("Our connection request has been accepted.");
 		}
 		break;
 		case ID_NEW_INCOMING_CONNECTION:
 			printf("A connection is incoming.\n");
-			history->push_back("A connection is incoming.");
+			mpServerHistory->push_back("A connection is incoming.");
 			break;
 		case ID_NO_FREE_INCOMING_CONNECTIONS:
 			printf("The server is full.\n");
-			history->push_back("The server is full.");
+			mpServerHistory->push_back("The server is full.");
 			break;
 		case ID_DISCONNECTION_NOTIFICATION:
 		{
 			printf("A client has disconnected.\n");
-			history->push_back("A client has disconnected.");
+			mpServerHistory->push_back("A client has disconnected.");
 		}
 		break;
 		case ID_CONNECTION_LOST:
 		{
 			printf("A client lost the connection.\n");
-			history->push_back("A client lost the connection.");
+			mpServerHistory->push_back("A client lost the connection.");
 		}
 		break;
 
 		case ID_GAME_MESSAGE_GENERIC:
 		{
-			serverPacketHandlerGameMessageGeneric(packet, history);	//recieve the game message one
+			serverPacketHandlerGameMessageGeneric(packet);	//recieve the game message one
 		}
 		break;
 		case ID_GAME_LOG_ON:
 		{
-			serverPacketHandlerGameLogOn(packet, history);
+			serverPacketHandlerGameLogOn(packet);
 		}
 		break;
 		case ID_GAME_REGISTER_NAME:
 		{
-			serverPacketHandlerIncomingPlayer(packet, history);
+			serverPacketHandlerIncomingPlayer(packet);
 		}
 		break;
 		default:
@@ -491,7 +493,7 @@ void NetworkManager::serverHandleInputRemote(std::vector<std::string>* history)
 	}
 }
 
-void NetworkManager::serverPacketHandlerIncomingPlayer(RakNet::Packet* p, std::vector<std::string>* history)
+void NetworkManager::serverPacketHandlerIncomingPlayer(RakNet::Packet* p)
 {
 	GameMessageGeneric* s = (GameMessageGeneric*)p->data;
 	assert(p->length == sizeof(GameMessageGeneric));
@@ -505,12 +507,12 @@ void NetworkManager::serverPacketHandlerIncomingPlayer(RakNet::Packet* p, std::v
 
 	printf("SERVER: adding to player list");
 	char smsg[512] = "SERVER: adding to player list";
-	history->push_back(smsg);
+	mpServerHistory->push_back(smsg);
 
 	mpServOps->playerList.push_back(result);
 }
 
-void NetworkManager::serverPacketHandlerGameLogOn(RakNet::Packet* p, std::vector<std::string>* history)
+void NetworkManager::serverPacketHandlerGameLogOn(RakNet::Packet* p)
 {
 	GameMessageGeneric* s = (GameMessageGeneric*)p->data;
 	assert(p->length == sizeof(GameMessageGeneric));
@@ -521,7 +523,7 @@ void NetworkManager::serverPacketHandlerGameLogOn(RakNet::Packet* p, std::vector
 
 	printf("SERVER RECIEVED ADMIN LOG IN ATTEMPT\n");
 	char smsg[512] = "SERVER RECIEVED ADMIN LOG IN ATTEMPT\n";
-	history->push_back(smsg);
+	mpServerHistory->push_back(smsg);
 
 	if (strcmp(s->msg, mpServOps->adminPass) == 0)	//if our password guess matches, add them to the admin list
 	{
@@ -537,14 +539,14 @@ void NetworkManager::serverPacketHandlerGameLogOn(RakNet::Packet* p, std::vector
 			//chat log
 			char smsg[512];
 			strcpy(smsg, mpServOps->adminList.at(i).c_str());
-			history->push_back(smsg);
+			mpServerHistory->push_back(smsg);
 		}
 	}
 	else
 	{
 		printf("FAILED ADMIN LOG ON\n");
 		char smsg[512] = "FAILED ADMIN LOG ON\n";
-		history->push_back(smsg);
+		mpServerHistory->push_back(smsg);
 	}
 }
 
@@ -566,6 +568,8 @@ void NetworkManager::clientIL_AdminPassEnter(char mesKB[512])
 	strcpy(msg.msg, mGS->logOn);
 	strcpy(msg.ownerName, mGS->clientName);
 
+	mpClientChatHistory->push_back(msg.msg);
+
 	RakNet::RakPeerInterface* peer = mGS->clientPeer;
 
 	//send function in raknet follows UDP Rules
@@ -574,7 +578,7 @@ void NetworkManager::clientIL_AdminPassEnter(char mesKB[512])
 		msg.sysAddr, true);			//internet
 }
 
-void NetworkManager::clientPacketHandlerGameMessageGeneric(RakNet::Packet* p, std::vector<std::string>* history)
+void NetworkManager::clientPacketHandlerGameMessageGeneric(RakNet::Packet* p)
 {
 	GameMessageGeneric* s = (GameMessageGeneric*)p->data;
 	assert(p->length == sizeof(GameMessageGeneric));
@@ -587,7 +591,7 @@ void NetworkManager::clientPacketHandlerGameMessageGeneric(RakNet::Packet* p, st
 	// PRINT THE MESSAGE 
 	//printf("%s\n", p->data);
 	printf("%s\n", s->msg);
-	history->push_back(s->msg);
+	mpClientChatHistory->push_back(s->msg);
 }
 
 void NetworkManager::clientIL_GenericMessage(char mesKB[512])
@@ -626,6 +630,8 @@ void NetworkManager::clientIL_GenericMessage(char mesKB[512])
 
 		strcpy(msg.ownerName, mGS->clientName);
 		strcpy(msg.msg, mesKB);
+
+		mpClientChatHistory->push_back(msg.msg);
 
 		//send function in raknet follows UDP Rules
 		peer->Send((char*)&msg, sizeof(msg),			//application
@@ -667,7 +673,7 @@ void NetworkManager::clientIL_GenericMessage(char mesKB[512])
 	}
 }
 
-void NetworkManager::clientHandleInputRemote(std::vector<std::string>* history)
+void NetworkManager::clientHandleInputRemote()
 {
 	//recieve packets, merge with above
 
@@ -684,50 +690,50 @@ void NetworkManager::clientHandleInputRemote(std::vector<std::string>* history)
 		{
 		case ID_CONNECTION_ATTEMPT_FAILED:
 			printf("connection attempt failed. CHECK THE IP AND PORT.\n");
-			history->push_back("connection attempt failed. CHECK THE IP AND PORT.");
+			mpClientChatHistory->push_back("connection attempt failed. CHECK THE IP AND PORT.");
 			break;
 		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
 			printf("Another client has disconnected.\n");
-			history->push_back("Another client has disconnected.");
+			mpClientChatHistory->push_back("Another client has disconnected.");
 			break;
 		case ID_REMOTE_CONNECTION_LOST:
 			printf("Another client has lost the connection.\n");
-			history->push_back("Another client has lost the connection.");
+			mpClientChatHistory->push_back("Another client has lost the connection.");
 			break;
 		case ID_REMOTE_NEW_INCOMING_CONNECTION:
 			printf("Another client has connected.\n");
-			history->push_back("Another client has connected.");
+			mpClientChatHistory->push_back("Another client has connected.");
 			break;
 		case ID_CONNECTION_REQUEST_ACCEPTED:
 		{
 			printf("Our connection request has been accepted.\n");
-			history->push_back("Our connection request has been accepted.");
+			mpClientChatHistory->push_back("Our connection request has been accepted.");
 		}
 		break;
 		case ID_NEW_INCOMING_CONNECTION:
 			printf("A connection is incoming.\n");
-			history->push_back("A connection is incoming.");
+			mpClientChatHistory->push_back("A connection is incoming.");
 			break;
 		case ID_NO_FREE_INCOMING_CONNECTIONS:
 			printf("The server is full.\n");
-			history->push_back("The server is full.");
+			mpClientChatHistory->push_back("The server is full.");
 			break;
 		case ID_DISCONNECTION_NOTIFICATION:
 		{
 			printf("We have been disconnected.\n");
-			history->push_back("We have been disconnected.");
+			mpClientChatHistory->push_back("We have been disconnected.");
 		}
 		break;
 		case ID_CONNECTION_LOST:
 		{
 			printf("Connection lost.\n");
-			history->push_back("Connection lost.");
+			mpClientChatHistory->push_back("Connection lost.");
 		}
 		break;
 
 		case ID_GAME_MESSAGE_GENERIC:
 		{
-			clientPacketHandlerGameMessageGeneric(packet, history);
+			clientPacketHandlerGameMessageGeneric(packet);
 		}
 		break;
 
