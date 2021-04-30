@@ -124,6 +124,14 @@ void NetworkManager::clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::ve
 	}
 }
 
+void NetworkManager::clientObjectEditSend(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	if (mClientActive)
+	{
+		clientIL_EditObject(selectionInHierarchy, pos, scale, rot, ambMod, activatelighting);
+	}
+}
+
 void NetworkManager::sendServerMessage(char mesKB[512])
 {
 	//make sure we have a server to send the message on
@@ -212,7 +220,7 @@ void NetworkManager::serverIL_GenericMessage(char mesKB[512])
 void NetworkManager::serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
 {
 
-	GameAddObject msg = {
+	GameObjectChange msg = {
 			(unsigned char)ID_TIMESTAMP,
 			RakNet::GetTime(),
 			(unsigned char)ID_GAME_OBJECT_ADD,
@@ -243,11 +251,45 @@ void NetworkManager::serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec
 
 }
 
+void NetworkManager::serverIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+
+	GameObjectChange msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_EDIT,
+			selectionInHierarchy,
+			pos.x,			//use these down to just floats rather than glm because passing that data would be a nightmare
+			pos.y,
+			pos.z,
+			scale.x,
+			scale.y,
+			scale.z,
+			rot.x,
+			rot.y,
+			rot.z,
+			ambMod,
+			activatelighting,
+			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+			"[SERVER] Object Editted"
+	};
+
+	mpServerHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, true);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+
+}
+
 void NetworkManager::serverPacketHandlerGameObjectAdd(RakNet::Packet* p)
 {
-	GameAddObject* s = (GameAddObject*)p->data;
-	assert(p->length == sizeof(GameAddObject));
-	if (p->length != sizeof(GameAddObject))
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
 	{
 		return;
 	}
@@ -263,6 +305,28 @@ void NetworkManager::serverPacketHandlerGameObjectAdd(RakNet::Packet* p)
 			HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
 			p->systemAddress, true);			//internet		SEND TO ALL BUT THIS ADDRESS (true is checked)
 	
+}
+
+void NetworkManager::serverPacketHandlerGameObjectEdit(RakNet::Packet* p)
+{
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
+	{
+		return;
+	}
+
+
+	std::string smsg = "[SERVER RECIEVED] ";
+	smsg += s->ownerStatement;
+	mpServerHistory->push_back(smsg);
+
+	//send game message one to everyone BUT who originally sent it
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&(*s), sizeof(*s),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		p->systemAddress, true);			//internet		SEND TO ALL BUT THIS ADDRESS (true is checked)
+
 }
 
 void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p)
@@ -555,6 +619,11 @@ void NetworkManager::serverHandleInputRemote()
 			serverPacketHandlerGameObjectAdd(packet);
 		}
 		break;
+		case ID_GAME_OBJECT_EDIT:
+		{
+			serverPacketHandlerGameObjectEdit(packet);
+		}
+		break;
 		default:
 			printf("SERVER: Message with identifier %i has arrived.\n", packet->data[0]);
 			break;
@@ -670,9 +739,9 @@ void NetworkManager::clientPacketHandlerGameMessageGeneric(RakNet::Packet* p)
 
 void NetworkManager::clientPacketHandlerGameObjectAdd(RakNet::Packet* p)
 {
-	GameAddObject* s = (GameAddObject*)p->data;
-	assert(p->length == sizeof(GameAddObject));
-	if (p->length != sizeof(GameAddObject))
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
 	{
 		return;
 	}
@@ -680,6 +749,28 @@ void NetworkManager::clientPacketHandlerGameObjectAdd(RakNet::Packet* p)
 	mpClientChatHistory->push_back("[CLIENT] Recieved Object Added");
 	ObjectCommandQueueData ocq;
 	ocq.commandType = (unsigned char)OCQ_OBJECT_ADD;
+	ocq.objectIndex = s->msgObjectIndex;
+	ocq.pos = glm::vec3(s->msgPosX, s->msgPosY, s->msgPosZ);
+	ocq.scale = glm::vec3(s->msgScaleX, s->msgScaleY, s->msgScaleZ);
+	ocq.rot = glm::vec3(s->msgRotX, s->msgRotY, s->msgRotZ);
+	ocq.ambMod = s->msgAmbMod;
+	ocq.activatelighting = s->msgActivatelighting;
+
+	mpClientCommands->push(ocq);
+}
+
+void NetworkManager::clientPacketHandlerGameObjectEdit(RakNet::Packet* p)
+{
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
+	{
+		return;
+	}
+
+	mpClientChatHistory->push_back("[CLIENT] Recieved Object Editted");
+	ObjectCommandQueueData ocq;
+	ocq.commandType = (unsigned char)OCQ_OBJECT_EDIT;
 	ocq.objectIndex = s->msgObjectIndex;
 	ocq.pos = glm::vec3(s->msgPosX, s->msgPosY, s->msgPosZ);
 	ocq.scale = glm::vec3(s->msgScaleX, s->msgScaleY, s->msgScaleZ);
@@ -776,7 +867,7 @@ void NetworkManager::clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec
 	//RakNet::Packet* packet;
 	//RakNet::MessageID msg = packet->data[0];
 
-	GameAddObject msg = {
+	GameObjectChange msg = {
 			(unsigned char)ID_TIMESTAMP,
 			RakNet::GetTime(),
 			(unsigned char)ID_GAME_OBJECT_ADD,
@@ -797,6 +888,43 @@ void NetworkManager::clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec
 	};
 
 	
+	mpClientChatHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	peer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, true);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+}
+
+void NetworkManager::clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	RakNet::RakPeerInterface* peer = mGS->clientPeer;
+	//RakNet::Packet* packet;
+	//RakNet::MessageID msg = packet->data[0];
+
+	GameObjectChange msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_EDIT,
+			selectionInHierarchy,
+			pos.x,			//use these down to just floats rather than glm because passing that data would be a nightmare
+			pos.y,
+			pos.z,
+			scale.x,
+			scale.y,
+			scale.z,
+			rot.x,
+			rot.y,
+			rot.z,
+			ambMod,
+			activatelighting,
+			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+			"[CLIENT] Object Edit Server Command"
+	};
+
+
 	mpClientChatHistory->push_back(msg.ownerStatement);
 
 	//send function in raknet follows UDP Rules
@@ -874,6 +1002,12 @@ void NetworkManager::clientHandleInputRemote()
 		case ID_GAME_OBJECT_ADD:
 		{
 			clientPacketHandlerGameObjectAdd(packet);
+		}
+		break;
+
+		case ID_GAME_OBJECT_EDIT:
+		{
+			clientPacketHandlerGameObjectEdit(packet);
 		}
 		break;
 

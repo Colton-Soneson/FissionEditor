@@ -641,86 +641,89 @@ void OptionsWindow::run()
 
 			if (readyToEdit)
 			{
-				
-
 				ImGui::Text("CHOOSE OBJECT:");
-				
-				if (ImGui::Button("Next"))
+				if (mScene->getObjects().size() != 0)
 				{
-
-					objectSelectionEdit++;
-
-					if (objectSelectionEdit >= mScene->getObjects().size())
+					if (ImGui::Button("Next"))
 					{
-						objectSelectionEdit = 0;
+
+						objectSelectionEdit++;
+
+						if (objectSelectionEdit >= mScene->getObjects().size())
+						{
+							objectSelectionEdit = 0;
+						}
+
+						glm::mat4 temp = mScene->getObjects().at(objectSelectionEdit).msUBO.model;
+						MatrixMath mMath;
+						glm::vec3 tempPos = mMath.extractTranslation(temp);
+						glm::vec3 tempScale = mMath.extractScale(temp);
+						glm::vec3 tempRot = mMath.extractEulerRotation(temp);
+
+						posX = tempPos.x;
+						posY = tempPos.y;
+						posZ = tempPos.z;
+						scaleX = tempScale.x;
+						scaleY = tempScale.y;
+						scaleZ = tempScale.z;
+						rotX = tempRot.x;
+						rotY = tempRot.y;
+						rotZ = tempRot.z;
+						activatelighting = mScene->getObjects().at(objectSelectionEdit).msUBO.activeLight;
+						ambMod = mScene->getObjects().at(objectSelectionEdit).msUBO.ambientMod;
 					}
 
-					glm::mat4 temp = mScene->getObjects().at(objectSelectionEdit).msUBO.model;
-					MatrixMath mMath;
-					glm::vec3 tempPos = mMath.extractTranslation(temp);
-					glm::vec3 tempScale = mMath.extractScale(temp);
-					glm::vec3 tempRot = mMath.extractEulerRotation(temp);
 
-					posX = tempPos.x;
-					posY = tempPos.y;
-					posZ = tempPos.z;
-					scaleX = tempScale.x;
-					scaleY = tempScale.y;
-					scaleZ = tempScale.z;
-					rotX = tempRot.x;
-					rotY = tempRot.y;
-					rotZ = tempRot.z;
-					activatelighting = mScene->getObjects().at(objectSelectionEdit).msUBO.activeLight;
-					ambMod = mScene->getObjects().at(objectSelectionEdit).msUBO.ambientMod;
-				}
 
-				
+					ImGui::Text("Chosen Object:");
+					ImGui::Text(mScene->getObjects().at(objectSelectionEdit).msName.c_str());
 
-				ImGui::Text("Chosen Object:");
-				ImGui::Text(mScene->getObjects().at(objectSelectionEdit).msName.c_str());
+					bool noChange = true;	//no change has been made to the values
+					float nc1, nc2, nc3, nc4, nc5, nc6, nc7, nc8, nc9, nc10;
+					bool ncb;
 
-				bool noChange = true;	//no change has been made to the values
-				float nc1, nc2, nc3, nc4, nc5, nc6, nc7, nc8, nc9, nc10;
-				bool ncb;
+					nc1 = scaleX;
+					nc2 = scaleY;
+					nc3 = scaleZ;
+					ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+					ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+					ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 
-				nc1 = scaleX;
-				nc2 = scaleY;
-				nc3 = scaleZ;
-				ImGui::SliderFloat("ScaleX", &scaleX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				ImGui::SliderFloat("ScaleY", &scaleY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				ImGui::SliderFloat("ScaleZ", &scaleZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+					nc4 = posX;
+					nc5 = posY;
+					nc6 = posZ;
+					ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+					ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
+					ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
 
-				nc4 = posX;
-				nc5 = posY;
-				nc6 = posZ;
-				ImGui::SliderFloat("PositionX", &posX, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				ImGui::SliderFloat("PositionY", &posY, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				ImGui::SliderFloat("PositionZ", &posZ, -50.0f, 50.0f);            // Edit 1 float using a slider from -50.0f to 50.0f
-				
-				nc7 = rotX;
-				nc8 = rotY;
-				nc9 = rotZ;
-				ImGui::SliderFloat("RotationX", &rotX, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				ImGui::SliderFloat("RotationY", &rotY, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
-				
-				ncb = activatelighting;
-				nc10 = ambMod;
-				ImGui::Checkbox("Activate Lighting", &activatelighting);
-				ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+					nc7 = rotX;
+					nc8 = rotY;
+					nc9 = rotZ;
+					ImGui::SliderFloat("RotationX", &rotX, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+					ImGui::SliderFloat("RotationY", &rotY, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
+					ImGui::SliderFloat("RotationZ", &rotZ, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 
-				if (nc1 != scaleX || nc2 != scaleY || nc3 != scaleZ || nc4 != posX || nc5 != posY || nc6 != posZ
+					ncb = activatelighting;
+					nc10 = ambMod;
+					ImGui::Checkbox("Activate Lighting", &activatelighting);
+					ImGui::SliderFloat("ambientLighting", &ambMod, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+					if (nc1 != scaleX || nc2 != scaleY || nc3 != scaleZ || nc4 != posX || nc5 != posY || nc6 != posZ
 						|| nc7 != rotX || nc8 != rotY || nc9 != rotZ || nc10 != ambMod || ncb != activatelighting)
-				{
-					noChange = false;
-				}
+					{
+						noChange = false;
+					}
 
+					if (noChange == false)
+					{
+						mScene->adjustObject(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
 
-				if (noChange == false)
-				{
-					mScene->adjustObject(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+						if (mCurrentlyAClient)
+						{
+							mpNetworkManager->clientObjectEditSend(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+						}
+					}
 				}
-				
 			}
 
 			ImGui::Text("");
@@ -1430,10 +1433,10 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 				}
 				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_EDIT)
 				{
-
+					mScene->adjustObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
 				}
 				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_REMOVE)
-				{
+				{ 
 
 				}
 				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
