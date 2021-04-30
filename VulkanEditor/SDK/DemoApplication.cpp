@@ -1856,14 +1856,12 @@ void DemoApplication::initGUIWindow()
 }
 
 
-void DemoApplication::initScene()
+void DemoApplication::initSceneAndOptions()
 {
 	mScene = new Scene("Resource/models/", "Resource/textures/", mDevice, mPhysicalDevice, mGraphicsQueue, mCommandPool);
 	mScene->runDirectoryLoad();
 
-	mScene->instantiateObject(0);
-	//mScene->instantiateObject(0);
-	//mScene->instantiateObject(0);
+	//test
 	//mScene->instantiateObject(0);
 
 	light3D light1;
@@ -1873,65 +1871,7 @@ void DemoApplication::initScene()
 	light1.lightSize = 20.0f;
 	mScene->storeLight(light1, "Light");
 
-	/*
-	sourced3D obj1;
-	sourced3D obj2;
-	sourced3D mockBox;
-
-	sourced3D skybox;
-
-
-	obj1.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 1.0f));
-	obj2.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 1.0f));
-	mockBox.msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(35.0f, 35.0f, 35.0f));
-	//obj3.msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(7.0f, 7.0f, 7.0f));
-
-
-	obj1.msModelPath = "Resource/models/cube.obj";
-	obj2.msModelPath = "Resource/models/cube.obj";
-	mockBox.msModelPath = "Resource/models/invertedNormalsCube.obj";
-	//mockBox.msModelPath = "Resource/models/skybox.obj";
-	//obj3.msModelPath = "Resource/models/chalet2.obj";
-
-	obj1.msTexturePath = "Resource/textures/grey.jpg";
-	obj2.msTexturePath = "Resource/textures/grey.jpg";
-	mockBox.msTexturePath = "Resource/textures/blue.jpg";
-	//obj3.msTexturePath = "Resource/textures/chalet.jpg";
-
-	obj1.msUBO.ambientMod = 0.015f;
-	obj2.msUBO.ambientMod = 0.015f;
-	mockBox.msUBO.ambientMod = 0.050f;
-	//obj3.msUBO.ambientMod = 0.015;
-
-	obj1.msUBO.activeLight = 1;
-	obj2.msUBO.activeLight = 1;
-	mockBox.msUBO.activeLight = 0;
-
-
-	//skybox.msModelPath = "Resource/models/cube.obj";
-	//skybox.msTexturePath = "Resource/textures/grey.jpg";
-	//skybox.msUBO.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 1.0f));
-	//skybox.msUBO.model = glm::scale(glm::mat4(1.0f), glm::vec3(30.0f, 30.0f, 30.0f));
-	//skybox.msUBO.ambientMod = 0.5f;
-
-
-	light3D light1;
-
-	light1.lightPos = glm::vec3(2.0f, 12.0f, 7.0f);
-	light1.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	light1.lightIntensity = 10.0f;
-	light1.lightSize = 20.0f;
-
-
-	mScene->storeObject(obj1, "Object1");
-	mScene->storeObject(obj2, "Object2");
-	mScene->storeObject(mockBox, "Mockbox");
-	//mScene->storeObject(obj3);
-
-	//mScene->storeSkybox(skybox);
-
-	mScene->storeLight(light1, "Light");
-	*/
+	initGUIWindow();
 }
 
 
@@ -1952,7 +1892,7 @@ void DemoApplication::initVulkan()
 	createCommandPool();
 
 	//have objects
-	initScene();
+	initSceneAndOptions();
 
 
 	createUniformBuffers();		//has objects

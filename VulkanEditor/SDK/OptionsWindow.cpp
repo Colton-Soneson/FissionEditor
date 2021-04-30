@@ -720,20 +720,17 @@ void OptionsWindow::run()
 
 			ImGui::Text("");
 			ImGui::Text("Current objects in scene: ");
+
 			for (auto& object : mScene->getObjects())
 			{
 				ImGui::BulletText(object.msName.c_str());
 			}
+			
 
 			if (ImGui::Button("Close"))
 				mShowObjectMenu = false;
 			ImGui::End();
 		}
-
-		/*if (mShowDemoMenu)
-		{
-			ImGui::ShowDemoWindow(&mShowDemoMenu);
-		}*/
 
 		if (mShowAnimationMenu)
 		{
@@ -1332,6 +1329,8 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static bool openServerWindow = false;
 	static char clientJoinName[512] = "Colton";
 	static char clientJoinServerAddress[512] = "192.168.1.72";
+	static char serverPasswordSet[512] = "default_password";
+	static char clientPasswordGuess[512] = "default_guess";
 
 
 	if (showMenu)
@@ -1339,6 +1338,36 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		ImGui::Begin("Networking Menu", &showMenu);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 		ImGui::SetWindowFontScale(1.0);
 		ImGui::Text("This menu is for controlling server and client abilities of this program");
+		ImGui::Text(" ");
+
+
+		//--------------------SERVER----------------------
+		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
+		ImGui::Checkbox("Create a server", &openServerOptions);
+		if (openServerOptions)
+		{
+			ImGui::InputText("Set Server Password", serverPasswordSet, IM_ARRAYSIZE(serverPasswordSet));
+
+			if (ImGui::Button("Create Server"))
+			{
+				ownPersonalServer = true;
+				mpNetworkManager->initServer(60000, 10, serverPasswordSet);
+			}
+
+			if (ImGui::Button("Shutdown Server"))
+			{
+				ownPersonalServer = false;
+				mpNetworkManager->closeServer();
+			}
+
+			ImGui::Checkbox("Open Server Status Window", &openServerWindow);
+
+		}
+		if (ownPersonalServer)
+		{
+			ImGui::Text("SERVER IS ONLINE AND UPDATING");
+			mpNetworkManager->updateServer();
+		}
 		ImGui::Text(" ");
 
 		//---------------------CLIENT----------------------
@@ -1349,15 +1378,23 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			ImGui::InputText("Username", clientJoinName, IM_ARRAYSIZE(clientJoinName));
 			ImGui::InputText("Server Address", clientJoinServerAddress, IM_ARRAYSIZE(clientJoinServerAddress));
 
+			ImGui::InputText("Admin Password", clientPasswordGuess, IM_ARRAYSIZE(clientPasswordGuess));
+
 			if (ImGui::Button("Join Server"))
 			{
 				currentlyAClient = true;
 				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
 			}
 
-			if (ImGui::Button("Ping Server"))
+			if (ImGui::Button("Request Admin Access"))
 			{
-				char msg[512] = "TEST MESSAGE FROM CLIENT";
+				mpNetworkManager->sendClientAdminRequest(clientPasswordGuess);
+			}
+
+			if (ImGui::Button("Ping Yourself (admin only)"))
+			{
+				char msg[512] = "-pi ";
+				strcat(msg, clientJoinName);
 				mpNetworkManager->sendClientMessage(msg);
 			}
 			ImGui::Text(" ");
@@ -1379,34 +1416,6 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		}
 
 		ImGui::Text(" ");
-
-		//--------------------SERVER----------------------
-		ImGui::Text("__________________________SERVER_OPTIONS________________________________");
-		ImGui::Checkbox("Create a server", &openServerOptions);
-		if (openServerOptions)
-		{
-			if (ImGui::Button("Create Server"))
-			{
-				ownPersonalServer = true;
-				mpNetworkManager->initServer(60000, 10);
-			}
-			
-			if (ImGui::Button("Shutdown Server"))
-			{
-				ownPersonalServer = false;
-				mpNetworkManager->closeServer();
-			}
-
-			ImGui::Checkbox("Open Server Status Window", &openServerWindow);
-
-		}
-		if (ownPersonalServer)
-		{
-			ImGui::Text("SERVER IS ONLINE AND UPDATING");
-			mpNetworkManager->updateServer();
-		}
-		ImGui::Text(" ");
-
 		
 
 

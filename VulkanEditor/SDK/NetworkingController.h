@@ -3,6 +3,9 @@
 #include <string.h>
 #include <iostream>
 #include <vector>
+#include <queue>
+
+#include "Scene.h"
 #include "Source/Raknet/Source/RakPeerInterface.h";
 #include "Source/Raknet/Source/MessageIdentifiers.h"
 #include "Source/Raknet/Source/BitStream.h"
@@ -14,7 +17,10 @@ enum GameMessages
 {
 	ID_GAME_MESSAGE_GENERIC = ID_USER_PACKET_ENUM + 1,
 	ID_GAME_LOG_ON = ID_USER_PACKET_ENUM + 2,
-	ID_GAME_REGISTER_NAME = ID_USER_PACKET_ENUM + 3
+	ID_GAME_REGISTER_NAME = ID_USER_PACKET_ENUM + 3,
+	ID_GAME_OBJECT_ADD = ID_USER_PACKET_ENUM + 4,
+	ID_GAME_OBJECT_EDIT = ID_USER_PACKET_ENUM + 5,
+	ID_GAME_OBJECT_REMOVE = ID_USER_PACKET_ENUM + 6
 };
 
 struct GameState
@@ -52,8 +58,8 @@ struct GameMessageGeneric
 {
 	//HAS TO BE THIS ORDER
 	// if timespaming, then 1) time ID, 2) time
-	unsigned char timeID;		 //												UNCOMMENT!!!!
-	RakNet::Time timeStamp; //assign using RakNet::GetTime();				UNCOMMENT!!!!
+	unsigned char timeID;		 
+	RakNet::Time timeStamp; //assign using RakNet::GetTime();				
 
 	// id: use char for byte limit
 	unsigned char msgID;
@@ -69,10 +75,46 @@ struct GameMessageGeneric
 };
 #pragma pack (pop)
 
+
+#pragma pack (push)	
+#pragma pack (1)		//number of bytes to pack
+struct GameAddObject
+{
+	//HAS TO BE THIS ORDER
+	// if timespaming, then 1) time ID, 2) time
+	unsigned char timeID;		 
+	RakNet::Time timeStamp; //assign using RakNet::GetTime();		
+
+	// id: use char for byte limit
+	unsigned char msgID;
+
+	// contains actual data
+	int msgObjectIndex;
+	float msgPosX;			//use these down to just floats rather than glm because passing that data would be a nightmare
+	float msgPosY; 
+	float msgPosZ; 
+	float msgScaleX;
+	float msgScaleY;
+	float msgScaleZ;
+	float msgRotX;
+	float msgRotY;
+	float msgRotZ;
+	float msgAmbMod;
+	bool msgActivatelighting;
+
+	//system address of the player that owns the msgID
+	RakNet::SystemAddress sysAddr;
+
+	//owner name
+	char ownerStatement[512];
+};
+#pragma pack (pop)
+
+
 class NetworkManager
 {
 public:
-	NetworkManager(std::vector<std::string>* serverHistory, std::vector<std::string>* clientChatHistory)
+	NetworkManager(std::vector<std::string>* serverHistory, std::vector<std::string>* clientChatHistory, std::queue<ObjectCommandQueueData>* ocqList)
 	{
 		mpServerPeer = nullptr;
 		mServerActive = false;
@@ -80,12 +122,13 @@ public:
 		mpServOps = nullptr;
 		mpClientChatHistory = clientChatHistory;
 		mpServerHistory = serverHistory;
+		mpClientCommands = ocqList;
 	};
 	~NetworkManager() {};
 
 	void init();
 	
-	void initServer(unsigned short port, unsigned short maxConnections);
+	void initServer(unsigned short port, unsigned short maxConnections, char serverPass[512]);
 	void initClient(char nameType[512], unsigned short serverPort, char* serverIP);
 
 	void updateServer();
@@ -95,6 +138,7 @@ public:
 	void closeClient();
 
 	void sendClientMessage(char mesKB[512]);
+	void clientInputPasswordGuess(char mesKB[512]);
 	void sendClientAdminRequest(char mesKB[512]);
 
 	void sendServerMessage(char mesKB[512]);
@@ -108,15 +152,19 @@ private:
 
 	//server specific
 	void serverIL_GenericMessage(char mesKB[512]);
+	void serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void serverHandleInputRemote();
 	void serverPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void serverPacketHandlerIncomingPlayer(RakNet::Packet* p);
 	void serverPacketHandlerGameLogOn(RakNet::Packet* p);
+	void serverPacketHandlerGameObjectAdd(RakNet::Packet* p);
 
 	//client specific
-	void clientIL_AdminPassEnter(char mesKB[512]);
 	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p);
+	void clientPacketHandlerGameObjectAdd(RakNet::Packet* p);
+	void clientIL_AdminPassEnter(char mesKB[512]);
 	void clientIL_GenericMessage(char mesKB[512]);
+	void clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientHandleInputRemote();
 
 	GameState mGS[1] = { 0 };				//array of size one gives address
@@ -130,4 +178,7 @@ private:
 	//LOGS
 	std::vector<std::string>* mpClientChatHistory;
 	std::vector<std::string>* mpServerHistory;
+
+	//Queue Pointer (owned by options window)
+	std::queue<ObjectCommandQueueData>* mpClientCommands;
 };

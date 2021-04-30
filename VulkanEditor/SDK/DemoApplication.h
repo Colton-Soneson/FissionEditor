@@ -10,7 +10,6 @@ public:
 
 	void run() {
 		initWindow();
-		initGUIWindow();
 		initVulkan();	//preparation
 		mainLoop();
 		cleanup();
@@ -27,7 +26,7 @@ private:
 	//it not to do that
 	void initWindow();
 
-	void initScene();		//initial Scene, not that big of a deal just make it 3 rotating cubes
+	void initSceneAndOptions();		//initial Scene, not that big of a deal just make it 3 rotating cubes
 
 	void initGUIWindow();
 

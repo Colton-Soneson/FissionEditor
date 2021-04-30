@@ -1,9 +1,16 @@
 #pragma once
 #include "UniversalObjectStorage.h"
 #include "SkeletonManager.h"
-#include "NetworkingController.h"
 
 #include <fstream>
+
+enum OCQCommandType
+{
+	OCQ_OBJECT_ADD,
+	OCQ_OBJECT_REMOVE,
+	OCQ_OBJECT_EDIT,
+	OCQ_OBJECT_ANIMATE
+};
 
 struct SceneContentFile
 {
@@ -12,6 +19,16 @@ struct SceneContentFile
 	std::vector<glm::mat4> mSceneModelsMat;
 };
 
+struct ObjectCommandQueueData
+{
+	unsigned char commandType;	//take from OCQCommandType
+	int objectIndex;
+	glm::vec3 pos;
+	glm::vec3 scale;
+	glm::vec3 rot;
+	float ambMod;
+	bool activatelighting;
+};
 
 class Scene
 {
@@ -100,6 +117,8 @@ public:
 	float getEngineTimeStep() { return mEngineTimeStep; }
 
 	
+	
+
 private:
 
 	UniversalObjectStorage* mUOS;

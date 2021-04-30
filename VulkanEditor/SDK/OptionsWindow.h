@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Scene.h"
+#include "NetworkingController.h"
 #include <map>
-
 
 class OptionsWindow
 {
@@ -21,7 +20,8 @@ public:
 		mScene = scene;
 		mpChatHistoryClient = new std::vector<std::string>;
 		mpServerHistory = new std::vector<std::string>;
-		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient);
+		mpClientCommands = new std::queue<ObjectCommandQueueData>;
+		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient, mpClientCommands);
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
 	}
@@ -84,7 +84,6 @@ private:
 
 
 	//object manipulation
-
 	Scene* mScene;
 	bool mShowObjectMenu;
 	bool mShowLightMenu;
@@ -102,4 +101,5 @@ private:
 	NetworkManager* mpNetworkManager;
 	std::vector<std::string>* mpChatHistoryClient;
 	std::vector<std::string>* mpServerHistory;
+	std::queue<ObjectCommandQueueData>* mpClientCommands;
 };
