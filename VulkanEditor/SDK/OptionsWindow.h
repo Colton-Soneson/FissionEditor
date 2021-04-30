@@ -102,4 +102,5 @@ private:
 	std::vector<std::string>* mpChatHistoryClient;
 	std::vector<std::string>* mpServerHistory;
 	std::queue<ObjectCommandQueueData>* mpClientCommands;
+	bool mCurrentlyAClient = false;								//we have this out here, because our normal functionality for networking gets integrated with out editor
 };

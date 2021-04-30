@@ -617,6 +617,11 @@ void OptionsWindow::run()
 					//mScene->instantiateObject(objectIndex);
 					mScene->instantiateObject(objectIndex, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting );
 
+					//networking add object
+					if (mCurrentlyAClient)
+					{
+						mpNetworkManager->clientObjectAddSend(objectIndex, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+					}
 
 					posX = 0;
 					posY = 0;
@@ -1324,7 +1329,6 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static bool ownPersonalServer = false;
 	static bool openServerList = false;
 	static bool openServerOptions = false;
-	static bool currentlyAClient = false;
 	static bool openChatWindow = false;
 	static bool openServerWindow = false;
 	static char clientJoinName[512] = "Colton";
@@ -1382,7 +1386,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 
 			if (ImGui::Button("Join Server"))
 			{
-				currentlyAClient = true;
+				mCurrentlyAClient = true;
 				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
 			}
 
@@ -1405,14 +1409,41 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 
 			if (ImGui::Button("Leave Server"))
 			{
-				currentlyAClient = false;
+				mCurrentlyAClient = false;
 				mpNetworkManager->closeClient();
 			}
 		}
-		if (currentlyAClient)
+		if (mCurrentlyAClient)
 		{
 			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
 			mpNetworkManager->updateClient();
+
+			//UPDATE THE OBJECTS  (MAYBE TRY MULTITHREADING)
+			if (!mpClientCommands->empty())
+			{
+				ObjectCommandQueueData cmd = mpClientCommands->front();
+
+				if (cmd.commandType == (unsigned char)OCQ_OBJECT_ADD)
+				{
+					mObjectHasBeenAdded = true;
+					mScene->instantiateObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
+				}
+				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_EDIT)
+				{
+
+				}
+				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_REMOVE)
+				{
+
+				}
+				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
+				{
+
+				}
+
+				//end with getting first element out
+				mpClientCommands->pop();
+			}
 		}
 
 		ImGui::Text(" ");

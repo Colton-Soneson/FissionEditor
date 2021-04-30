@@ -116,6 +116,14 @@ void NetworkManager::sendClientMessage(char mesKB[512])
 	}
 }
 
+void NetworkManager::clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	if (mClientActive)
+	{
+		clientIL_AddObject(objectIndex, pos, scale, rot, ambMod, activatelighting);
+	}
+}
+
 void NetworkManager::sendServerMessage(char mesKB[512])
 {
 	//make sure we have a server to send the message on

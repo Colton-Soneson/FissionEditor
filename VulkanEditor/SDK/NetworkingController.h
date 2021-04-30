@@ -140,6 +140,7 @@ public:
 	void sendClientMessage(char mesKB[512]);
 	void clientInputPasswordGuess(char mesKB[512]);
 	void sendClientAdminRequest(char mesKB[512]);
+	void clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 
 	void sendServerMessage(char mesKB[512]);
 
