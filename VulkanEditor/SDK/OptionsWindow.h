@@ -21,7 +21,8 @@ public:
 		mpChatHistoryClient = new std::vector<std::string>;
 		mpServerHistory = new std::vector<std::string>;
 		mpClientCommands = new std::queue<ObjectCommandQueueData>;
-		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient, mpClientCommands);
+		mpIncomingClientsWhoNeedScene = new std::queue<RakNet::SystemAddress>;
+		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient, mpClientCommands, mpIncomingClientsWhoNeedScene);
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
 		mObjectHasBeenDeleted = false;
@@ -64,7 +65,7 @@ private:
 
 	// options for networking
 	void networkingOptions(bool &showMenu);
-	void addAllObjectsToNewClient();
+	void serverAddAllObjectsToNewClient(RakNet::SystemAddress newClientAddress);
 
 	std::vector<int> getInput(bool active);	//active determines whether or not to have active search for keys
 
@@ -107,6 +108,7 @@ private:
 	NetworkManager* mpNetworkManager;
 	std::vector<std::string>* mpChatHistoryClient;
 	std::vector<std::string>* mpServerHistory;
+	std::queue<RakNet::SystemAddress>* mpIncomingClientsWhoNeedScene;
 	std::queue<ObjectCommandQueueData>* mpClientCommands;
 	bool mCurrentlyAClient = false;								//we have this out here, because our normal functionality for networking gets integrated with out editor
 };

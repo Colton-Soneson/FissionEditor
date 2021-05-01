@@ -1414,6 +1414,13 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		{
 			ImGui::Text("SERVER IS ONLINE AND UPDATING");
 			mpNetworkManager->updateServer();
+
+			if (!mpIncomingClientsWhoNeedScene->empty())
+			{
+				//we have a checker in networking that prevents first client to send this data to itself
+				serverAddAllObjectsToNewClient(mpIncomingClientsWhoNeedScene->front());
+				mpIncomingClientsWhoNeedScene->pop();
+			}
 		}
 		ImGui::Text(" ");
 
@@ -1568,9 +1575,24 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	}
 }
 
-void OptionsWindow::addAllObjectsToNewClient()
+void OptionsWindow::serverAddAllObjectsToNewClient(RakNet::SystemAddress newClientAddress)
 {
+	for (int i = 0; i < mScene->getObjects().size(); ++i)
+	{
+		glm::mat4 tempServ = mScene->getObjects().at(i).msUBO.model;
+		MatrixMath mMathServ;
+		glm::vec3 tempServPos = mMathServ.extractTranslation(tempServ);
+		glm::vec3 tempServScale = mMathServ.extractScale(tempServ);
+		glm::vec3 tempServRot = mMathServ.extractEulerRotation(tempServ);
 
+		bool activatelightingServ = mScene->getObjects().at(i).msUBO.activeLight;
+		float ambModServ = mScene->getObjects().at(i).msUBO.ambientMod;
+
+		//send object adds to the ONLY NEW CLIENTS
+		//mpNetworkManager->clientObjectAddSend(i, tempServPos, tempServScale, tempServRot, ambModServ, activatelightingServ);	//this doesnt work to well because its ALL clients
+		//mpNetworkManager->clientObjectAddSendToNewClient(newClientAddress, i, tempServPos, tempServScale, tempServRot, ambModServ, activatelightingServ);
+		mpNetworkManager->serverObjectAddSendToNewClient(newClientAddress, i, tempServPos, tempServScale, tempServRot, ambModServ, activatelightingServ);
+	}
 }
 
 std::vector<int> OptionsWindow::getInput(bool active)

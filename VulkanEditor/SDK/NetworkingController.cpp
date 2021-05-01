@@ -124,6 +124,14 @@ void NetworkManager::clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::ve
 	}
 }
 
+void NetworkManager::clientObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	if (mClientActive)
+	{
+		clientIL_AddObjectToNewClient(newClientAddress, objectIndex, pos, scale, rot, ambMod, activatelighting);
+	}
+}
+
 void NetworkManager::clientObjectEditSend(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
 {
 	if (mClientActive)
@@ -146,6 +154,14 @@ void NetworkManager::sendServerMessage(char mesKB[512])
 	if (mServerActive)
 	{
 		serverIL_GenericMessage(mesKB);
+	}
+}
+
+void NetworkManager::serverObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	if (mServerActive)
+	{
+		serverIL_AddObjectToNewClient(newClientAddress, objectIndex, pos, scale, rot, ambMod, activatelighting);
 	}
 }
 
@@ -259,6 +275,39 @@ void NetworkManager::serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec
 
 }
 
+void NetworkManager::serverIL_AddObjectToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+
+	GameObjectChange msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_ADD_NEW_CLIENT,
+			objectIndex,
+			pos.x,			//use these down to just floats rather than glm because passing that data would be a nightmare
+			pos.y,
+			pos.z,
+			scale.x,
+			scale.y,
+			scale.z,
+			rot.x,
+			rot.y,
+			rot.z,
+			ambMod,
+			activatelighting,
+			newClientAddress,
+			"[SERVER] Object Added For New Client"
+	};
+
+	mpServerHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, false);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+}
+
 void NetworkManager::serverIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
 {
 
@@ -316,6 +365,126 @@ void NetworkManager::serverIL_DeleteObject(int selectionInHierarchy)
 
 }
 
+void NetworkManager::serverHandleInputRemote()
+{
+	RakNet::Packet* packet;
+
+	while (packet = mpServerPeer->Receive())
+	{
+		switch (getPacketIdentifier(packet))
+		{
+		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
+			printf("Another client has disconnected.\n");
+			mpServerHistory->push_back("Another client has disconnected");
+			break;
+		case ID_REMOTE_CONNECTION_LOST:
+			printf("Another client has lost the connection.\n");
+			mpServerHistory->push_back("Another client has lost the connection.");
+			break;
+		case ID_REMOTE_NEW_INCOMING_CONNECTION:
+		{
+			printf("Another client has connected.\n");
+			mpServerHistory->push_back("Another client has connected.");
+
+			//int startOfTempAddr = sizeof(unsigned char) + sizeof(RakNet::Time) + sizeof(unsigned char)
+			//	+ sizeof(int)
+			//	+ sizeof(float) + sizeof(float) + sizeof(float)
+			//	+ sizeof(float) + sizeof(float) + sizeof(float)
+			//	+ sizeof(float) + sizeof(float) + sizeof(float)
+			//	+ sizeof(float)
+			//	+ sizeof(bool);
+			//int endOfTempAddr = startOfTempAddr + sizeof(RakNet::SystemAddress);
+
+			////system address needs const char* (maybe not const) to be the input
+			//RakNet::SystemAddress tempAddress = (char *)packet->data[startOfTempAddr];
+
+			GameObjectChange* s = (GameObjectChange*)packet->data;
+			assert(packet->length == sizeof(GameObjectChange));
+			if (packet->length != sizeof(GameObjectChange))
+			{
+				return;
+			}
+
+			//make sure its not our first clients address, so we dont resend the first client their own data (remember this is a server command)
+			//if (mpServOps->playerList.at(0).second.first != s->sysAddr)
+			if (!mpServOps->playerList.at(0).second.first.EqualsExcludingPort(s->sysAddr))
+			{
+				mpServerHistory->push_back("Queueing Scene Data to be sent to new client");
+				mpNewClients->push(s->sysAddr);
+			}
+		}
+		break;
+		case ID_CONNECTION_REQUEST_ACCEPTED:
+		{
+			printf("Our connection request has been accepted.\n");
+			mpServerHistory->push_back("Our connection request has been accepted.");
+		}
+		break;
+		case ID_NEW_INCOMING_CONNECTION:
+			printf("A connection is incoming.\n");
+			mpServerHistory->push_back("A connection is incoming.");
+			break;
+		case ID_NO_FREE_INCOMING_CONNECTIONS:
+			printf("The server is full.\n");
+			mpServerHistory->push_back("The server is full.");
+			break;
+		case ID_DISCONNECTION_NOTIFICATION:
+		{
+			printf("A client has disconnected.\n");
+			mpServerHistory->push_back("A client has disconnected.");
+		}
+		break;
+		case ID_CONNECTION_LOST:
+		{
+			printf("A client lost the connection.\n");
+			mpServerHistory->push_back("A client lost the connection.");
+		}
+		break;
+
+		case ID_GAME_MESSAGE_GENERIC:
+		{
+			serverPacketHandlerGameMessageGeneric(packet);	//recieve the game message one
+		}
+		break;
+		case ID_GAME_LOG_ON:
+		{
+			serverPacketHandlerGameLogOn(packet);
+		}
+		break;
+		case ID_GAME_REGISTER_NAME:
+		{
+			serverPacketHandlerIncomingPlayer(packet);
+		}
+		break;
+		case ID_GAME_OBJECT_ADD:
+		{
+			serverPacketHandlerGameObjectAdd(packet);
+		}
+		break;
+		case ID_GAME_OBJECT_EDIT:
+		{
+			serverPacketHandlerGameObjectEdit(packet);
+		}
+		break;
+		case ID_GAME_OBJECT_REMOVE:
+		{
+			serverPacketHandlerGameObjectDelete(packet);
+		}
+		break;
+		case ID_GAME_OBJECT_ADD_NEW_CLIENT:
+		{
+			serverPacketHandlerGameObjectAddToNewClient(packet);
+		}
+		break;
+		default:
+			printf("SERVER: Message with identifier %i has arrived.\n", packet->data[0]);
+			break;
+		}
+
+
+		mpServerPeer->DeallocatePacket(packet);
+	}
+}
 
 void NetworkManager::serverPacketHandlerGameObjectAdd(RakNet::Packet* p)
 {
@@ -337,6 +506,28 @@ void NetworkManager::serverPacketHandlerGameObjectAdd(RakNet::Packet* p)
 			HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
 			p->systemAddress, true);			//internet		SEND TO ALL BUT THIS ADDRESS (true is checked)
 	
+}
+
+void NetworkManager::serverPacketHandlerGameObjectAddToNewClient(RakNet::Packet* p)
+{
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
+	{
+		return;
+	}
+
+
+	std::string smsg = "[SERVER RECIEVED] ";
+	smsg += s->ownerStatement;
+	mpServerHistory->push_back(smsg);
+
+	//send game message one to everyone BUT who originally sent it
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&(*s), sizeof(*s),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		s->sysAddr, false);			//internet		SEND TO ALL BUT THIS ADDRESS (true is checked)
+
 }
 
 void NetworkManager::serverPacketHandlerGameObjectEdit(RakNet::Packet* p)
@@ -606,93 +797,6 @@ void NetworkManager::serverPacketHandlerGameMessageGeneric(RakNet::Packet* p)
 
 }
 
-void NetworkManager::serverHandleInputRemote()
-{
-	RakNet::Packet* packet;
-
-	while (packet = mpServerPeer->Receive())
-	{
-		switch (getPacketIdentifier(packet))
-		{
-		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
-			printf("Another client has disconnected.\n");
-			mpServerHistory->push_back("Another client has disconnected");
-			break;
-		case ID_REMOTE_CONNECTION_LOST:
-			printf("Another client has lost the connection.\n");
-			mpServerHistory->push_back("Another client has lost the connection.");
-			break;
-		case ID_REMOTE_NEW_INCOMING_CONNECTION:
-			printf("Another client has connected.\n");
-			mpServerHistory->push_back("Another client has connected.");
-			break;
-		case ID_CONNECTION_REQUEST_ACCEPTED:
-		{
-			printf("Our connection request has been accepted.\n");
-			mpServerHistory->push_back("Our connection request has been accepted.");
-		}
-		break;
-		case ID_NEW_INCOMING_CONNECTION:
-			printf("A connection is incoming.\n");
-			mpServerHistory->push_back("A connection is incoming.");
-			break;
-		case ID_NO_FREE_INCOMING_CONNECTIONS:
-			printf("The server is full.\n");
-			mpServerHistory->push_back("The server is full.");
-			break;
-		case ID_DISCONNECTION_NOTIFICATION:
-		{
-			printf("A client has disconnected.\n");
-			mpServerHistory->push_back("A client has disconnected.");
-		}
-		break;
-		case ID_CONNECTION_LOST:
-		{
-			printf("A client lost the connection.\n");
-			mpServerHistory->push_back("A client lost the connection.");
-		}
-		break;
-
-		case ID_GAME_MESSAGE_GENERIC:
-		{
-			serverPacketHandlerGameMessageGeneric(packet);	//recieve the game message one
-		}
-		break;
-		case ID_GAME_LOG_ON:
-		{
-			serverPacketHandlerGameLogOn(packet);
-		}
-		break;
-		case ID_GAME_REGISTER_NAME:
-		{
-			serverPacketHandlerIncomingPlayer(packet);
-		}
-		break;
-		case ID_GAME_OBJECT_ADD:
-		{
-			serverPacketHandlerGameObjectAdd(packet);
-		}
-		break;
-		case ID_GAME_OBJECT_EDIT:
-		{
-			serverPacketHandlerGameObjectEdit(packet);
-		}
-		break;
-		case ID_GAME_OBJECT_REMOVE:
-		{
-			serverPacketHandlerGameObjectDelete(packet);
-		}
-		break;
-		default:
-			printf("SERVER: Message with identifier %i has arrived.\n", packet->data[0]);
-			break;
-		}
-
-
-		mpServerPeer->DeallocatePacket(packet);
-	}
-}
-
 void NetworkManager::serverPacketHandlerIncomingPlayer(RakNet::Packet* p)
 {
 	GameMessageGeneric* s = (GameMessageGeneric*)p->data;
@@ -806,6 +910,28 @@ void NetworkManager::clientPacketHandlerGameObjectAdd(RakNet::Packet* p)
 	}
 
 	mpClientChatHistory->push_back("[CLIENT] Recieved Object Added");
+	ObjectCommandQueueData ocq;
+	ocq.commandType = (unsigned char)OCQ_OBJECT_ADD;
+	ocq.objectIndex = s->msgObjectIndex;
+	ocq.pos = glm::vec3(s->msgPosX, s->msgPosY, s->msgPosZ);
+	ocq.scale = glm::vec3(s->msgScaleX, s->msgScaleY, s->msgScaleZ);
+	ocq.rot = glm::vec3(s->msgRotX, s->msgRotY, s->msgRotZ);
+	ocq.ambMod = s->msgAmbMod;
+	ocq.activatelighting = s->msgActivatelighting;
+
+	mpClientCommands->push(ocq);
+}
+
+void NetworkManager::clientPacketHandlerGameObjectAddToNewClient(RakNet::Packet* p)
+{
+	GameObjectChange* s = (GameObjectChange*)p->data;
+	assert(p->length == sizeof(GameObjectChange));
+	if (p->length != sizeof(GameObjectChange))
+	{
+		return;
+	}
+
+	mpClientChatHistory->push_back("[CLIENT] Recieved Object From NEW CLIENT STATUS Added");
 	ObjectCommandQueueData ocq;
 	ocq.commandType = (unsigned char)OCQ_OBJECT_ADD;
 	ocq.objectIndex = s->msgObjectIndex;
@@ -973,6 +1099,43 @@ void NetworkManager::clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec
 		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
 }
 
+void NetworkManager::clientIL_AddObjectToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
+{
+	RakNet::RakPeerInterface* peer = mGS->clientPeer;
+	//RakNet::Packet* packet;
+	//RakNet::MessageID msg = packet->data[0];
+
+	GameObjectChange msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_ADD_NEW_CLIENT,
+			objectIndex,
+			pos.x,			//use these down to just floats rather than glm because passing that data would be a nightmare
+			pos.y,
+			pos.z,
+			scale.x,
+			scale.y,
+			scale.z,
+			rot.x,
+			rot.y,
+			rot.z,
+			ambMod,
+			activatelighting,
+			newClientAddress,
+			"[CLIENT] Object Added For New Client Server Command"
+	};
+
+
+	mpClientChatHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	peer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, false);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+}
+
 void NetworkManager::clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting)
 {
 	RakNet::RakPeerInterface* peer = mGS->clientPeer;
@@ -1117,7 +1280,11 @@ void NetworkManager::clientHandleInputRemote()
 			clientPacketHandlerGameObjectDelete(packet);
 		}
 		break;
-
+		case ID_GAME_OBJECT_ADD_NEW_CLIENT:
+		{
+			clientPacketHandlerGameObjectAddToNewClient(packet);
+		}
+		break;
 		default:
 			printf("CLIENT: Message with identifier %i has arrived.\n", packet->data[0]);
 			break;

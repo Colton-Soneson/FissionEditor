@@ -20,7 +20,8 @@ enum GameMessages
 	ID_GAME_REGISTER_NAME = ID_USER_PACKET_ENUM + 3,
 	ID_GAME_OBJECT_ADD = ID_USER_PACKET_ENUM + 4,
 	ID_GAME_OBJECT_EDIT = ID_USER_PACKET_ENUM + 5,
-	ID_GAME_OBJECT_REMOVE = ID_USER_PACKET_ENUM + 6
+	ID_GAME_OBJECT_REMOVE = ID_USER_PACKET_ENUM + 6,
+	ID_GAME_OBJECT_ADD_NEW_CLIENT = ID_USER_PACKET_ENUM + 7
 };
 
 struct GameState
@@ -137,7 +138,7 @@ struct GameObjectDelete
 class NetworkManager
 {
 public:
-	NetworkManager(std::vector<std::string>* serverHistory, std::vector<std::string>* clientChatHistory, std::queue<ObjectCommandQueueData>* ocqList)
+	NetworkManager(std::vector<std::string>* serverHistory, std::vector<std::string>* clientChatHistory, std::queue<ObjectCommandQueueData>* ocqList, std::queue<RakNet::SystemAddress>* newClients)
 	{
 		mpServerPeer = nullptr;
 		mServerActive = false;
@@ -146,6 +147,7 @@ public:
 		mpClientChatHistory = clientChatHistory;
 		mpServerHistory = serverHistory;
 		mpClientCommands = ocqList;
+		mpNewClients = newClients;
 	};
 	~NetworkManager() {};
 
@@ -164,10 +166,12 @@ public:
 	void clientInputPasswordGuess(char mesKB[512]);
 	void sendClientAdminRequest(char mesKB[512]);
 	void clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void clientObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientObjectEditSend(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientObjectDeleteSend(int selectionInHierarchy);
 
 	void sendServerMessage(char mesKB[512]);
+	void serverObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 
 	bool isLocalServerActive() { return mServerActive; };
 	bool isLocalClientActive() { return mClientActive; };
@@ -179,6 +183,7 @@ private:
 	//server specific
 	void serverIL_GenericMessage(char mesKB[512]);
 	void serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void serverIL_AddObjectToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void serverIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void serverIL_DeleteObject(int selectionInHierarchy);
 	void serverHandleInputRemote();
@@ -186,17 +191,20 @@ private:
 	void serverPacketHandlerIncomingPlayer(RakNet::Packet* p);
 	void serverPacketHandlerGameLogOn(RakNet::Packet* p);
 	void serverPacketHandlerGameObjectAdd(RakNet::Packet* p);
+	void serverPacketHandlerGameObjectAddToNewClient(RakNet::Packet* p);
 	void serverPacketHandlerGameObjectEdit(RakNet::Packet* p);
 	void serverPacketHandlerGameObjectDelete(RakNet::Packet* p);
 
 	//client specific
 	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void clientPacketHandlerGameObjectAdd(RakNet::Packet* p);
+	void clientPacketHandlerGameObjectAddToNewClient(RakNet::Packet* p);
 	void clientPacketHandlerGameObjectEdit(RakNet::Packet* p);
 	void clientPacketHandlerGameObjectDelete(RakNet::Packet* p);
 	void clientIL_AdminPassEnter(char mesKB[512]);
 	void clientIL_GenericMessage(char mesKB[512]);
 	void clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void clientIL_AddObjectToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientIL_DeleteObject(int selectionInHierarchy);
 	void clientHandleInputRemote();
@@ -215,4 +223,7 @@ private:
 
 	//Queue Pointer (owned by options window)
 	std::queue<ObjectCommandQueueData>* mpClientCommands;
+
+	//new clients to give current map data to
+	std::queue<RakNet::SystemAddress>* mpNewClients;
 };
