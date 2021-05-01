@@ -110,6 +110,29 @@ struct GameObjectChange
 };
 #pragma pack (pop)
 
+#pragma pack (push)	
+#pragma pack (1)		//number of bytes to pack
+struct GameObjectDelete
+{
+	//HAS TO BE THIS ORDER
+	// if timespaming, then 1) time ID, 2) time
+	unsigned char timeID;
+	RakNet::Time timeStamp; //assign using RakNet::GetTime();		
+
+	// id: use char for byte limit
+	unsigned char msgID;
+
+	// contains actual data
+	int msgObjectIndex;
+
+	//system address of the player that owns the msgID
+	RakNet::SystemAddress sysAddr;
+
+	//owner name
+	char ownerStatement[512];
+};
+#pragma pack (pop)
+
 
 class NetworkManager
 {
@@ -142,6 +165,7 @@ public:
 	void sendClientAdminRequest(char mesKB[512]);
 	void clientObjectAddSend(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientObjectEditSend(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void clientObjectDeleteSend(int selectionInHierarchy);
 
 	void sendServerMessage(char mesKB[512]);
 
@@ -156,21 +180,25 @@ private:
 	void serverIL_GenericMessage(char mesKB[512]);
 	void serverIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void serverIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void serverIL_DeleteObject(int selectionInHierarchy);
 	void serverHandleInputRemote();
 	void serverPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void serverPacketHandlerIncomingPlayer(RakNet::Packet* p);
 	void serverPacketHandlerGameLogOn(RakNet::Packet* p);
 	void serverPacketHandlerGameObjectAdd(RakNet::Packet* p);
 	void serverPacketHandlerGameObjectEdit(RakNet::Packet* p);
+	void serverPacketHandlerGameObjectDelete(RakNet::Packet* p);
 
 	//client specific
 	void clientPacketHandlerGameMessageGeneric(RakNet::Packet* p);
 	void clientPacketHandlerGameObjectAdd(RakNet::Packet* p);
 	void clientPacketHandlerGameObjectEdit(RakNet::Packet* p);
+	void clientPacketHandlerGameObjectDelete(RakNet::Packet* p);
 	void clientIL_AdminPassEnter(char mesKB[512]);
 	void clientIL_GenericMessage(char mesKB[512]);
 	void clientIL_AddObject(int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
+	void clientIL_DeleteObject(int selectionInHierarchy);
 	void clientHandleInputRemote();
 
 	GameState mGS[1] = { 0 };				//array of size one gives address

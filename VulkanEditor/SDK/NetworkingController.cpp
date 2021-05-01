@@ -132,6 +132,14 @@ void NetworkManager::clientObjectEditSend(int selectionInHierarchy, glm::vec3 po
 	}
 }
 
+void NetworkManager::clientObjectDeleteSend(int selectionInHierarchy)
+{
+	if (mClientActive)
+	{
+		clientIL_DeleteObject(selectionInHierarchy);
+	}
+}
+
 void NetworkManager::sendServerMessage(char mesKB[512])
 {
 	//make sure we have a server to send the message on
@@ -285,6 +293,30 @@ void NetworkManager::serverIL_EditObject(int selectionInHierarchy, glm::vec3 pos
 
 }
 
+void NetworkManager::serverIL_DeleteObject(int selectionInHierarchy)
+{
+
+	GameObjectDelete msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_REMOVE,
+			selectionInHierarchy,
+			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+			"[SERVER] Object Removed"
+	};
+
+	mpServerHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, true);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+
+}
+
+
 void NetworkManager::serverPacketHandlerGameObjectAdd(RakNet::Packet* p)
 {
 	GameObjectChange* s = (GameObjectChange*)p->data;
@@ -312,6 +344,28 @@ void NetworkManager::serverPacketHandlerGameObjectEdit(RakNet::Packet* p)
 	GameObjectChange* s = (GameObjectChange*)p->data;
 	assert(p->length == sizeof(GameObjectChange));
 	if (p->length != sizeof(GameObjectChange))
+	{
+		return;
+	}
+
+
+	std::string smsg = "[SERVER RECIEVED] ";
+	smsg += s->ownerStatement;
+	mpServerHistory->push_back(smsg);
+
+	//send game message one to everyone BUT who originally sent it
+	//send function in raknet follows UDP Rules
+	mpServerPeer->Send((char*)&(*s), sizeof(*s),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		p->systemAddress, true);			//internet		SEND TO ALL BUT THIS ADDRESS (true is checked)
+
+}
+
+void NetworkManager::serverPacketHandlerGameObjectDelete(RakNet::Packet* p)
+{
+	GameObjectDelete* s = (GameObjectDelete*)p->data;
+	assert(p->length == sizeof(GameObjectDelete));
+	if (p->length != sizeof(GameObjectDelete))
 	{
 		return;
 	}
@@ -624,6 +678,11 @@ void NetworkManager::serverHandleInputRemote()
 			serverPacketHandlerGameObjectEdit(packet);
 		}
 		break;
+		case ID_GAME_OBJECT_REMOVE:
+		{
+			serverPacketHandlerGameObjectDelete(packet);
+		}
+		break;
 		default:
 			printf("SERVER: Message with identifier %i has arrived.\n", packet->data[0]);
 			break;
@@ -781,6 +840,22 @@ void NetworkManager::clientPacketHandlerGameObjectEdit(RakNet::Packet* p)
 	mpClientCommands->push(ocq);
 }
 
+void NetworkManager::clientPacketHandlerGameObjectDelete(RakNet::Packet* p)
+{
+	GameObjectDelete* s = (GameObjectDelete*)p->data;
+	assert(p->length == sizeof(GameObjectDelete));
+	if (p->length != sizeof(GameObjectDelete))
+	{
+		return;
+	}
+
+	mpClientChatHistory->push_back("[CLIENT] Recieved Object Deleted");
+	ObjectCommandQueueData ocq;
+	ocq.commandType = (unsigned char)OCQ_OBJECT_REMOVE;
+	ocq.objectIndex = s->msgObjectIndex;
+	mpClientCommands->push(ocq);
+}
+
 void NetworkManager::clientIL_GenericMessage(char mesKB[512])
 {
 	RakNet::RakPeerInterface* peer = mGS->clientPeer;
@@ -935,6 +1010,32 @@ void NetworkManager::clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos
 		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
 }
 
+void NetworkManager::clientIL_DeleteObject(int selectionInHierarchy)
+{
+	RakNet::RakPeerInterface* peer = mGS->clientPeer;
+	//RakNet::Packet* packet;
+	//RakNet::MessageID msg = packet->data[0];
+
+	GameObjectDelete msg = {
+			(unsigned char)ID_TIMESTAMP,
+			RakNet::GetTime(),
+			(unsigned char)ID_GAME_OBJECT_REMOVE,
+			selectionInHierarchy,
+			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+			"[CLIENT] Object Delete Server Command"
+	};
+
+
+	mpClientChatHistory->push_back(msg.ownerStatement);
+
+	//send function in raknet follows UDP Rules
+	peer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, true);			//internet
+		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
+		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+}
+
 void NetworkManager::clientHandleInputRemote()
 {
 	//recieve packets, merge with above
@@ -1008,6 +1109,12 @@ void NetworkManager::clientHandleInputRemote()
 		case ID_GAME_OBJECT_EDIT:
 		{
 			clientPacketHandlerGameObjectEdit(packet);
+		}
+		break;
+
+		case ID_GAME_OBJECT_REMOVE:
+		{
+			clientPacketHandlerGameObjectDelete(packet);
 		}
 		break;
 

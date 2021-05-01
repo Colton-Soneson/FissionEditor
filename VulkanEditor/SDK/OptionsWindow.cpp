@@ -502,6 +502,7 @@ void OptionsWindow::run()
 		
 		static bool readyToCreate = false;
 		static bool readyToEdit = false;
+		static bool readyToDelete = false;
 		static int objectIndex = 0;
 		static float posX = 0;
 		static float posY = 0;
@@ -518,6 +519,7 @@ void OptionsWindow::run()
 
 		static int objectSelectionAnim = 0;
 		static int objectSelectionEdit = 0;
+		static int objectSelectionDelete = 0;
 		
 		//animation stuff
 		static const char* channels[]{ "x axis", "y axis", "z axis" };
@@ -721,6 +723,61 @@ void OptionsWindow::run()
 						if (mCurrentlyAClient)
 						{
 							mpNetworkManager->clientObjectEditSend(objectSelectionEdit, glm::vec3(posX, posY, posZ), glm::vec3(scaleX, scaleY, scaleZ), glm::vec3(rotX, rotY, rotZ), ambMod, activatelighting);
+						}
+					}
+				}
+			}
+
+			ImGui::Checkbox("DELETE OBJECT MODE", &readyToDelete);
+
+			if (readyToDelete)
+			{
+				ImGui::Text("CHOOSE OBJECT:");
+				if (mScene->getObjects().size() != 0)
+				{
+					if (ImGui::Button("Next"))
+					{
+
+						objectSelectionDelete++;
+
+						if (objectSelectionDelete >= mScene->getObjects().size())
+						{
+							objectSelectionDelete = 0;
+						}
+
+						glm::mat4 temp = mScene->getObjects().at(objectSelectionDelete).msUBO.model;
+						MatrixMath mMath;
+						glm::vec3 tempPos = mMath.extractTranslation(temp);
+						glm::vec3 tempScale = mMath.extractScale(temp);
+						glm::vec3 tempRot = mMath.extractEulerRotation(temp);
+
+						posX = tempPos.x;
+						posY = tempPos.y;
+						posZ = tempPos.z;
+						scaleX = tempScale.x;
+						scaleY = tempScale.y;
+						scaleZ = tempScale.z;
+						rotX = tempRot.x;
+						rotY = tempRot.y;
+						rotZ = tempRot.z;
+						activatelighting = mScene->getObjects().at(objectSelectionDelete).msUBO.activeLight;
+						ambMod = mScene->getObjects().at(objectSelectionDelete).msUBO.ambientMod;
+					}
+
+
+
+					ImGui::Text("Chosen Object:");
+					ImGui::Text(mScene->getObjects().at(objectSelectionDelete).msName.c_str());
+					
+					
+					if (ImGui::Button("REMOVE THE OBJECT"))
+					{
+						mScene->removeObject(objectSelectionDelete);
+						mObjectHasBeenDeleted = true;
+
+						if (mCurrentlyAClient)
+						{
+							mpNetworkManager->clientObjectDeleteSend(objectSelectionDelete);
 						}
 					}
 				}
@@ -1260,28 +1317,6 @@ void OptionsWindow::run()
 				}
 
 
-				/*
-
-
-				ImGui::InputFloat("x axis keyframe:", &justDataX);
-				ImGui::InputFloat("y axis keyframe:", &justDataY);
-				ImGui::InputFloat("z axis keyframe:", &justDataZ);
-
-				ImGui::Combo("Channel Selection", &channelSelection, channels, IM_ARRAYSIZE(channels), 2);
-
-				if (channelSelection == 0)
-				{
-
-				}
-				else if (channelSelection == 1)
-				{
-
-				}
-				else
-				{
-
-				}*/
-
 				ImGui::Text("_________________________");
 
 				ImGui::Checkbox("Lerp Update Mode [UNSTABLE] ", &lerpUpdateMode);
@@ -1339,6 +1374,11 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 	static char serverPasswordSet[512] = "default_password";
 	static char clientPasswordGuess[512] = "default_guess";
 
+	static bool localRemoveFlag = false;
+	static bool localAddServerContentFlag = false;
+	static int localRemovalCount = -1;
+	static int localAddCount = 0;
+
 
 	if (showMenu)
 	{
@@ -1390,6 +1430,17 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			if (ImGui::Button("Join Server"))
 			{
 				mCurrentlyAClient = true;
+
+				if (ownPersonalServer == false)
+				{
+					//when you join a server not your own, wipe all current local scene objects
+					if (mScene->getObjects().size() != 0)
+					{
+						localRemoveFlag = true;
+						localRemovalCount = mScene->getObjects().size() - 1;		// i think minus one
+					}
+				}
+
 				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
 			}
 
@@ -1418,34 +1469,48 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 		}
 		if (mCurrentlyAClient)
 		{
-			ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
-			mpNetworkManager->updateClient();
-
-			//UPDATE THE OBJECTS  (MAYBE TRY MULTITHREADING)
-			if (!mpClientCommands->empty())
+			if (localRemoveFlag)
 			{
-				ObjectCommandQueueData cmd = mpClientCommands->front();
+				mScene->removeObject(localRemovalCount);
+				localRemovalCount--;
+				mObjectHasBeenDeleted = true;
 
-				if (cmd.commandType == (unsigned char)OCQ_OBJECT_ADD)
+				if (localRemovalCount == -1)
 				{
-					mObjectHasBeenAdded = true;
-					mScene->instantiateObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
+					localRemoveFlag = false;
 				}
-				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_EDIT)
+			}
+			else
+			{
+				ImGui::Text("CLIENT IS ONLINE AND CONNECTING");
+				mpNetworkManager->updateClient();
+
+				//UPDATE THE OBJECTS  (MAYBE TRY MULTITHREADING)
+				if (!mpClientCommands->empty())
 				{
-					mScene->adjustObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
-				}
-				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_REMOVE)
-				{ 
+					ObjectCommandQueueData cmd = mpClientCommands->front();
 
-				}
-				else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
-				{
+					if (cmd.commandType == (unsigned char)OCQ_OBJECT_ADD)
+					{
+						mObjectHasBeenAdded = true;
+						mScene->instantiateObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
+					}
+					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_EDIT)
+					{
+						mScene->adjustObject(cmd.objectIndex, cmd.pos, cmd.scale, cmd.rot, cmd.ambMod, cmd.activatelighting);
+					}
+					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_REMOVE)
+					{
 
-				}
+					}
+					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
+					{
 
-				//end with getting first element out
-				mpClientCommands->pop();
+					}
+
+					//end with getting first element out
+					mpClientCommands->pop();
+				}
 			}
 		}
 
@@ -1501,6 +1566,11 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 			openChatWindow = false;
 		ImGui::End();
 	}
+}
+
+void OptionsWindow::addAllObjectsToNewClient()
+{
+
 }
 
 std::vector<int> OptionsWindow::getInput(bool active)

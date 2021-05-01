@@ -1685,9 +1685,9 @@ void DemoApplication::drawFrame()
 	
 	mpOpWindow->run();
 
-	if (mpOpWindow->getObjectAddedStatus() || mpOpWindow->getObjectChangedStatus())
+	if (mpOpWindow->getObjectAddedStatus() || mpOpWindow->getObjectChangedStatus() || mpOpWindow->getObjectDeletedStatus())
 	{
-		//mpOpWindow->setObjectChangedStatus(false);
+		mpOpWindow->setObjectDeletedStatus(false);
 		recreateSwapChain();
 		return;
 	}

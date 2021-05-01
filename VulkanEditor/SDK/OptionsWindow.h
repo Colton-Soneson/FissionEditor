@@ -24,6 +24,7 @@ public:
 		mpNetworkManager = new NetworkManager(mpServerHistory, mpChatHistoryClient, mpClientCommands);
 		mObjectHasBeenChanged = false;
 		mObjectHasBeenAdded = false;
+		mObjectHasBeenDeleted = false;
 	}
 
 	~OptionsWindow() {};
@@ -38,6 +39,9 @@ public:
 
 	bool getObjectChangedStatus() { return mObjectHasBeenChanged; };
 	void setObjectChangedStatus(bool tmp) { mObjectHasBeenChanged = tmp; };
+
+	bool getObjectDeletedStatus() { return mObjectHasBeenDeleted; };
+	void setObjectDeletedStatus(bool tmp) { mObjectHasBeenDeleted = tmp; };
 
 private:
 
@@ -60,6 +64,7 @@ private:
 
 	// options for networking
 	void networkingOptions(bool &showMenu);
+	void addAllObjectsToNewClient();
 
 	std::vector<int> getInput(bool active);	//active determines whether or not to have active search for keys
 
@@ -93,6 +98,7 @@ private:
 
 	bool mObjectHasBeenAdded;
 	bool mObjectHasBeenChanged;
+	bool mObjectHasBeenDeleted;
 
 	std::vector<int> mInputFromKeyboard;
 	

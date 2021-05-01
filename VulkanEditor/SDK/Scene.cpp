@@ -92,6 +92,11 @@ void Scene::adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 sc
 	mSceneContent.insert(sci, temp3D);
 }
 
+void Scene::removeObject(int sceneContentIndex)
+{
+	mSceneContent.erase(mSceneContent.begin() + sceneContentIndex);
+}
+
 void Scene::storeLight(light3D light, std::string name)
 {
 	//mLightSources.mLightPositions.push_back(light.lightPos);

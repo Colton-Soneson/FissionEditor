@@ -63,6 +63,7 @@ public:
 	int getIndexFromObjectName(std::string name);
 
 	void adjustObject(int sceneContentIndex, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, float ambientMod, bool activateLighting);
+	void removeObject(int sceneContentIndex);
 	//void storeObject(sourced3D obj, std::string name);
 	//void storeObject(std::string texturePath, std::string modelPath, glm::vec3 position, glm::vec3 scale, glm::vec3 rotation, std::string name);	//call this when creating new object in GUI
 
