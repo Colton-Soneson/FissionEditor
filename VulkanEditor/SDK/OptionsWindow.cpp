@@ -1340,6 +1340,11 @@ void OptionsWindow::run()
 						}
 
 						mScene->adjustObject(i, pos, scale, rot, ambMod, activatelighting);
+
+						if (mCurrentlyAClient)
+						{
+							mpNetworkManager->clientObjectEditSend(i, pos, scale, rot, ambMod, activatelighting);
+						}
 					}
 				}
 
