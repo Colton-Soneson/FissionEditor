@@ -67,24 +67,32 @@ void NetworkManager::initClient(char nameType[512], unsigned short serverPort, c
 	printf("Starting the client.\n");
 	mpClientChatHistory->push_back("Starting the local client.");
 
-	strcpy(mGS->clientName, nameType);
+	//strcpy(mGS->clientName, nameType);
 
-	GameMessageGeneric msg = {
-				(unsigned char)ID_TIMESTAMP,
-				RakNet::GetTime(),
-				(unsigned char)ID_GAME_REGISTER_NAME,		// This time, we only use this for log ons
-				"Registering...",
-				RakNet::UNASSIGNED_SYSTEM_ADDRESS,
-				"UNUSED"
-	};
+	//GameMessageGeneric msg = {
+	//			(unsigned char)ID_TIMESTAMP,
+	//			RakNet::GetTime(),
+	//			(unsigned char)ID_GAME_REGISTER_NAME,		// This time, we only use this for log ons
+	//			"Registering...",
+	//			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+	//			"UNUSED"
+	//};
 
-	strcpy(msg.ownerName, mGS->clientName);
+	//strcpy(msg.ownerName, mGS->clientName);
 
-	mGS->clientPeer->Send((char*)&msg, sizeof(msg),			//application
-		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
-		msg.sysAddr, true);			//internet
+	//mGS->clientPeer->Send((char*)&msg, sizeof(msg),			//application
+	//	HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+	//	msg.sysAddr, true);			//internet
 
 	mClientActive = true;
+}
+
+void NetworkManager::clientRegisterName(char nameType[512])
+{
+	if (mClientActive)
+	{
+		clientIL_RegisterName(nameType);
+	}
 }
 
 void NetworkManager::updateClient()
@@ -386,32 +394,8 @@ void NetworkManager::serverHandleInputRemote()
 			printf("Another client has connected.\n");
 			mpServerHistory->push_back("Another client has connected.");
 
-			//int startOfTempAddr = sizeof(unsigned char) + sizeof(RakNet::Time) + sizeof(unsigned char)
-			//	+ sizeof(int)
-			//	+ sizeof(float) + sizeof(float) + sizeof(float)
-			//	+ sizeof(float) + sizeof(float) + sizeof(float)
-			//	+ sizeof(float) + sizeof(float) + sizeof(float)
-			//	+ sizeof(float)
-			//	+ sizeof(bool);
-			//int endOfTempAddr = startOfTempAddr + sizeof(RakNet::SystemAddress);
-
 			////system address needs const char* (maybe not const) to be the input
 			//RakNet::SystemAddress tempAddress = (char *)packet->data[startOfTempAddr];
-
-			GameObjectChange* s = (GameObjectChange*)packet->data;
-			assert(packet->length == sizeof(GameObjectChange));
-			if (packet->length != sizeof(GameObjectChange))
-			{
-				return;
-			}
-
-			//make sure its not our first clients address, so we dont resend the first client their own data (remember this is a server command)
-			//if (mpServOps->playerList.at(0).second.first != s->sysAddr)
-			if (!mpServOps->playerList.at(0).second.first.EqualsExcludingPort(s->sysAddr))
-			{
-				mpServerHistory->push_back("Queueing Scene Data to be sent to new client");
-				mpNewClients->push(s->sysAddr);
-			}
 		}
 		break;
 		case ID_CONNECTION_REQUEST_ACCEPTED:
@@ -421,9 +405,36 @@ void NetworkManager::serverHandleInputRemote()
 		}
 		break;
 		case ID_NEW_INCOMING_CONNECTION:
+		{
 			printf("A connection is incoming.\n");
 			mpServerHistory->push_back("A connection is incoming.");
-			break;
+
+			//not this because the cast aint right, we recieve this from a packet we dont define ourselves
+			/*GameObjectChange* s = (GameObjectChange*)packet->data;
+			assert(packet->length == sizeof(GameObjectChange));
+			if (packet->length != sizeof(GameObjectChange))
+			{
+				return;
+			}*/
+
+			if (!mpServOps->playerList.empty())
+			{
+				const char* newClientAddr = packet->systemAddress.ToString();
+				const char* firstClientAddr = mpServOps->playerList.at(0).second.first.ToString();
+
+				//by doing it via string comp not the built in compare, we take the different port variation into account, therefore not caring for ip being the same
+				if (strcmp(newClientAddr, firstClientAddr) != 0)
+				{
+					mpServerHistory->push_back("Queueing Scene Data to be sent to new client");
+					mpNewClients->push(packet->systemAddress);
+				}
+			}
+			else
+			{
+				mpServerHistory->push_back("[WARNING] Scene data not being sent to new client");
+			}
+		}
+		break;
 		case ID_NO_FREE_INCOMING_CONNECTIONS:
 			printf("The server is full.\n");
 			mpServerHistory->push_back("The server is full.");
@@ -1197,6 +1208,28 @@ void NetworkManager::clientIL_DeleteObject(int selectionInHierarchy)
 		msg.sysAddr, true);			//internet
 		//packet->systemAddress, true);			//putting in "true" for broadcast will send to all connected system addresses EXCEPT the "packet->systemAddress"
 		//RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); // send to all connections
+}
+
+void NetworkManager::clientIL_RegisterName(char nameType[512])
+{
+	strcpy(mGS->clientName, nameType);
+
+	GameMessageGeneric msg = {
+				(unsigned char)ID_TIMESTAMP,
+				RakNet::GetTime(),
+				(unsigned char)ID_GAME_REGISTER_NAME,		// This time, we only use this for log ons
+				"Registering...",
+				RakNet::UNASSIGNED_SYSTEM_ADDRESS,
+				"UNUSED"
+	};
+
+	strcpy(msg.ownerName, mGS->clientName);
+
+	mpClientChatHistory->push_back("[CLIENT] Registering name");
+
+	mGS->clientPeer->Send((char*)&msg, sizeof(msg),			//application
+		HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
+		msg.sysAddr, true);			//internet
 }
 
 void NetworkManager::clientHandleInputRemote()

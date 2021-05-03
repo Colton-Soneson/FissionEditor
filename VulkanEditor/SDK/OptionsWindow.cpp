@@ -1451,16 +1451,24 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
 			}
 
-			if (ImGui::Button("Request Admin Access"))
+			if (mCurrentlyAClient == true)
 			{
-				mpNetworkManager->sendClientAdminRequest(clientPasswordGuess);
-			}
+				if (ImGui::Button("Register Name"))
+				{
+					mpNetworkManager->clientRegisterName(clientJoinName);
+				}
 
-			if (ImGui::Button("Ping Yourself (admin only)"))
-			{
-				char msg[512] = "-pi ";
-				strcat(msg, clientJoinName);
-				mpNetworkManager->sendClientMessage(msg);
+				if (ImGui::Button("Request Admin Access"))
+				{
+					mpNetworkManager->sendClientAdminRequest(clientPasswordGuess);
+				}
+
+				if (ImGui::Button("Ping Yourself (admin only)"))
+				{
+					char msg[512] = "-pi ";
+					strcat(msg, clientJoinName);
+					mpNetworkManager->sendClientMessage(msg);
+				}
 			}
 			ImGui::Text(" ");
 

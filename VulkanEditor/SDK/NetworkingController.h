@@ -169,6 +169,7 @@ public:
 	void clientObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientObjectEditSend(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientObjectDeleteSend(int selectionInHierarchy);
+	void clientRegisterName(char nameType[512]);
 
 	void sendServerMessage(char mesKB[512]);
 	void serverObjectAddSendToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
@@ -207,6 +208,7 @@ private:
 	void clientIL_AddObjectToNewClient(RakNet::SystemAddress newClientAddress, int objectIndex, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientIL_EditObject(int selectionInHierarchy, glm::vec3 pos, glm::vec3 scale, glm::vec3 rot, float ambMod, bool activatelighting);
 	void clientIL_DeleteObject(int selectionInHierarchy);
+	void clientIL_RegisterName(char nameType[512]);
 	void clientHandleInputRemote();
 
 	GameState mGS[1] = { 0 };				//array of size one gives address
