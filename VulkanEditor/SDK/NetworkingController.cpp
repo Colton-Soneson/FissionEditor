@@ -1274,7 +1274,6 @@ void NetworkManager::clientHandleInputRemote()
 			clientPacketHandlerGameObjectEdit(packet);
 		}
 		break;
-
 		case ID_GAME_OBJECT_REMOVE:
 		{
 			clientPacketHandlerGameObjectDelete(packet);

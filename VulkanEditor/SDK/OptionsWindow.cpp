@@ -1508,7 +1508,8 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 					}
 					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_REMOVE)
 					{
-
+						mObjectHasBeenDeleted = true;
+						mScene->removeObject((cmd.commandType - 1));
 					}
 					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
 					{
