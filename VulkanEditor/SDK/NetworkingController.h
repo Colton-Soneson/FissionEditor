@@ -154,7 +154,7 @@ public:
 	void init();
 	
 	void initServer(unsigned short port, unsigned short maxConnections, char serverPass[512]);
-	void initClient(char nameType[512], unsigned short serverPort, char* serverIP);
+	void initClient(unsigned short serverPort, char* serverIP);
 
 	void updateServer();
 	void updateClient();

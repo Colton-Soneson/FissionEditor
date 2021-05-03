@@ -42,7 +42,7 @@ void NetworkManager::closeServer()
 	}
 }
 
-void NetworkManager::initClient(char nameType[512], unsigned short serverPort, char* serverIP)
+void NetworkManager::initClient(unsigned short serverPort, char* serverIP)
 {
 	//char str[512];
 	//const unsigned short SERVER_PORT = 4024;
@@ -66,23 +66,6 @@ void NetworkManager::initClient(char nameType[512], unsigned short serverPort, c
 	mGS->clientPeer->Connect(mGS->SERVER_IP, mGS->SERVER_PORT, 0, 0);
 	printf("Starting the client.\n");
 	mpClientChatHistory->push_back("Starting the local client.");
-
-	//strcpy(mGS->clientName, nameType);
-
-	//GameMessageGeneric msg = {
-	//			(unsigned char)ID_TIMESTAMP,
-	//			RakNet::GetTime(),
-	//			(unsigned char)ID_GAME_REGISTER_NAME,		// This time, we only use this for log ons
-	//			"Registering...",
-	//			RakNet::UNASSIGNED_SYSTEM_ADDRESS,
-	//			"UNUSED"
-	//};
-
-	//strcpy(msg.ownerName, mGS->clientName);
-
-	//mGS->clientPeer->Send((char*)&msg, sizeof(msg),			//application
-	//	HIGH_PRIORITY, RELIABLE_ORDERED, 0,		//transport
-	//	msg.sysAddr, true);			//internet
 
 	mClientActive = true;
 }

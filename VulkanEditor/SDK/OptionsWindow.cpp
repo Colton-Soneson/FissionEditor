@@ -1453,7 +1453,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 					}
 				}
 
-				mpNetworkManager->initClient(clientJoinName, 60000, clientJoinServerAddress);
+				mpNetworkManager->initClient(60000, clientJoinServerAddress);
 			}
 
 			if (mCurrentlyAClient == true)
@@ -1524,10 +1524,7 @@ void OptionsWindow::networkingOptions(bool &showMenu)
 						mObjectHasBeenDeleted = true;
 						mScene->removeObject((cmd.commandType - 1));
 					}
-					else if (cmd.commandType == (unsigned char)OCQ_OBJECT_ANIMATE)
-					{
-
-					}
+					
 
 					//end with getting first element out
 					mpClientCommands->pop();
